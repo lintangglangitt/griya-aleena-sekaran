@@ -53,6 +53,8 @@ function renderAll(c) {
   console.log('✅ All sections rendered');
 }
 
+
+
 // ─── 1. META & OG ──────────────────────────────────────────────
 function renderMeta(c) {
   const s = c.site || {};
@@ -127,8 +129,10 @@ function renderNav(c) {
   const sub = document.getElementById('nav-brand-sub');
   const logo = document.getElementById('nav-logo');
   const cta = document.getElementById('nav-cta');
-  if (brand) brand.textContent = s.title || 'Griya Aleena Sekaran';
-  if (sub) sub.textContent = s.tagline || 'Kos Putri Kampus UNNES';
+  
+  // 🔥 Gunakan navbarTitle dan navbarSubtitle
+  if (brand) brand.textContent = s.navbarTitle || s.titleBrowser || 'Griya Aleena Sekaran';
+  if (sub) sub.textContent = s.navbarSubtitle || s.tagline || 'Kos Putri Kampus UNNES';
   if (logo) logo.textContent = s.navLogo || '🏠';
   if (cta) cta.textContent = s.navCta || 'Hubungi Kami';
 }

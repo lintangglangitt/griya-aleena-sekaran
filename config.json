@@ -2,7 +2,10 @@
   "site": {
     "title": "Griya Aleena Sekaran",
     "titleSuffix": " – Kos Putri Kampus UNNES",
-    "tagline": "Kos Putri<br>UNIVERSITAS NEGERI SEMARANG",
+
+    "navbarTitle": "GRIYA ALEENA SEKARAN",
+    "navbarSubtitle": "Kos Putri Kampus UNNES",
+
     "url": "https://lintangglangitt.github.io/griya-aleena-sekaran/",
     "ogImage": "foto/og.jpg",
     "metaDescription": "Kos putri baru di Sekaran dekat UNNES. Fasilitas lengkap: AC, kamar mandi dalam, WiFi, dapur bersama, CCTV. Diskon Early Bird & Prestasi.",
