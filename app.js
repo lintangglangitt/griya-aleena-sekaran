@@ -539,6 +539,38 @@ async function initCounter() {
   }
 }
 
+// ─── HANDLE IMAGE ERROR ──────────────────────────────────────
+function handleImageError(img) {
+  const parent = img.closest('.galeri-item');
+  if (!parent) return;
+  
+  img.style.display = 'none';
+  const fallback = parent.querySelector('.no-image');
+  if (fallback) {
+    fallback.style.display = 'flex';
+  }
+}
+
+// ─── CLICK GALERI UNTUK ZOOM (Opsional) ─────────────────────
+function initGaleriClick() {
+  document.querySelectorAll('.galeri-item img').forEach(img => {
+    img.addEventListener('click', function() {
+      // Bisa ditambah lightbox sederhana
+      const src = this.src;
+      if (src && !src.includes('segera')) {
+        window.open(src, '_blank');
+      }
+    });
+  });
+}
+
+// Panggil di renderAll atau setelah DOM load
+document.addEventListener('DOMContentLoaded', () => {
+  // Tunggu 2 detik agar gambar selesai load
+  setTimeout(initGaleriClick, 2000);
+});
+
+
 // ─── INIT ──────────────────────────────────────────────────────
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', loadConfig);

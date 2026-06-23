@@ -111,27 +111,47 @@
 </section>
 
 
-<!-- GALERI FOTO -->
+<!-- GALERI FOTO - VERSI 1 (Grid dengan Fallback) -->
 <section id="galeri">
   <div class="container">
     <p class="section-eye">Foto Kos</p>
     <h2 class="section-title">Lihat Sendiri,<br>Bangunan Baru & Bersih</h2>
     <p class="section-desc">Kamar dan fasilitas siap ditempati.</p>
     <div class="galeri-grid">
-      <div class="galeri-item main">
-        <img src="foto/tampak-depan.jpg" alt="Tampak Depan Griya Aleena Sekaran" loading="lazy">
+      <div class="galeri-item main" data-src="foto/tampak-depan.jpg">
+        <img src="foto/tampak-depan.jpg" alt="Tampak Depan Griya Aleena Sekaran" loading="lazy" onerror="handleImageError(this)">
+        <div class="no-image" style="display:none;">
+          <span>🏠</span>
+          <p>Tampak Depan<br><small>Foto segera hadir</small></p>
+        </div>
       </div>
-      <div class="galeri-item">
-        <img src="foto/kamar-ac.jpg" alt="Kamar AC Griya Aleena" loading="lazy">
+      <div class="galeri-item" data-src="foto/kamar-ac.jpg">
+        <img src="foto/kamar-ac.jpg" alt="Kamar AC Griya Aleena" loading="lazy" onerror="handleImageError(this)">
+        <div class="no-image" style="display:none;">
+          <span>🛏️</span>
+          <p>Kamar AC<br><small>Foto segera hadir</small></p>
+        </div>
       </div>
-      <div class="galeri-item">
-        <img src="foto/kamar-mandi.jpg" alt="Kamar Mandi Dalam" loading="lazy">
+      <div class="galeri-item" data-src="foto/kamar-mandi.jpg">
+        <img src="foto/kamar-mandi.jpg" alt="Kamar Mandi Dalam" loading="lazy" onerror="handleImageError(this)">
+        <div class="no-image" style="display:none;">
+          <span>🚿</span>
+          <p>Kamar Mandi<br><small>Foto segera hadir</small></p>
+        </div>
       </div>
-      <div class="galeri-item">
-        <img src="foto/dapur-bersama.jpg" alt="Dapur Bersama" loading="lazy">
+      <div class="galeri-item" data-src="foto/dapur-bersama.jpg">
+        <img src="foto/dapur-bersama.jpg" alt="Dapur Bersama" loading="lazy" onerror="handleImageError(this)">
+        <div class="no-image" style="display:none;">
+          <span>🍳</span>
+          <p>Dapur Bersama<br><small>Foto segera hadir</small></p>
+        </div>
       </div>
-      <div class="galeri-item">
-        <img src="foto/garasi.jpg" alt="Garasi Motor" loading="lazy">
+      <div class="galeri-item" data-src="foto/garasi.jpg">
+        <img src="foto/garasi.jpg" alt="Garasi Motor" loading="lazy" onerror="handleImageError(this)">
+        <div class="no-image" style="display:none;">
+          <span>🛵</span>
+          <p>Garasi<br><small>Foto segera hadir</small></p>
+        </div>
       </div>
     </div>
   </div>
