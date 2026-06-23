@@ -59,8 +59,10 @@ function renderAll(config) {
   document.querySelectorAll('.loading-text').forEach(el => {
     el.style.display = 'none';
   });
-  
+
   console.log('✅ All sections rendered successfully');
+
+
 }
 
 // ─── ERROR MESSAGE ────────────────────────────────────────────
