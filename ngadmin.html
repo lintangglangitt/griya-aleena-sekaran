@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Admin – Griya Aleena</title>
+<link rel="icon" type="image/png" sizes="32x32" href="foto/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="foto/favicon.png">
+<link rel="apple-touch-icon" href="foto/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ngadmin.css">
+<link rel="stylesheet" href="print.css">
+</head>
+<body class="admin-body">
+
+<!-- HEADER -->
+<header class="admin-header">
+  <div class="admin-brand">
+    <img src="foto/logo.png" alt="" onerror="this.style.display='none'">
+    <div>
+      <strong>Griya Aleena</strong>
+      <small>Dashboard Okupansi</small>
+    </div>
+  </div>
+  <div class="admin-user">
+    <span id="user-name">—</span>
+    <button id="btn-users" class="btn-nav">👥 Users</button>
+    <button id="btn-logout" class="btn-nav">Logout</button>
+  </div>
+</header>
+
+<!-- STATS ROW 1 -->
+<section class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Total Kamar</div><div class="stat-num" id="st-total">–</div></div>
+  <div class="stat-card"><div class="stat-label">Terisi</div><div class="stat-num green" id="st-terisi">–</div></div>
+  <div class="stat-card"><div class="stat-label">Kosong</div><div class="stat-num red" id="st-kosong">–</div></div>
+  <div class="stat-card"><div class="stat-label">Okupansi</div><div class="stat-num amber" id="st-okupansi">–</div></div>
+</section>
+
+<!-- STATS ROW 2 -->
+<section class="stats-grid income-grid">
+  <div class="stat-card income clickable" id="card-income-all" data-filter="all" role="button" tabindex="0">
+    <div class="stat-label">Pembayaran Keseluruhan</div>
+    <div class="stat-num teal" id="st-income-all">–</div>
+    <div class="active-badge">🔍 Filter Aktif</div>
+  </div>
+  <div class="stat-card income clickable" id="card-income-year" data-filter="year" role="button" tabindex="0">
+    <div class="stat-label">Pembayaran Tahun Ini</div>
+    <div class="stat-num green" id="st-income-year">–</div>
+    <div class="active-badge">🔍 Filter Aktif</div>
+  </div>
+  <div class="stat-card income clickable" id="card-income-month" data-filter="month" role="button" tabindex="0">
+    <div class="stat-label">Pembayaran Bulan Ini</div>
+    <div class="stat-num amber" id="st-income-month">–</div>
+    <div class="active-badge">🔍 Filter Aktif</div>
+  </div>
+</section>
+
+<!-- ROOM CARDS -->
+<section class="section-block">
+  <h2 class="section-h">Status Kamar <small id="today-label"></small></h2>
+  <div class="rooms-grid" id="rooms-grid"></div>
+</section>
+
+<!-- FILTER + TABLE -->
+<section class="section-block">
+  <div class="table-head">
+    <h2 class="section-h">Riwayat Okupansi</h2>
+    <div class="table-actions">
+      <button class="btn-primary" id="btn-add">+ Tambah</button>
+      <input type="search" id="search" placeholder="🔍 Cari nama…" />
+      <select id="filter-tahun">
+        <option value="">Semua Tahun</option>
+      </select>
+      <select id="filter-status">
+        <option value="">Semua Status</option>
+        <option value="lunas">✅ Lunas</option>
+        <option value="dp">⏳ DP</option>
+        <option value="belum">❌ Belum</option>
+      </select>
+      <button class="btn-ghost" id="btn-export">⬇ Export CSV</button>
+      <button class="btn-ghost" id="btn-import">⬆ Import CSV</button>
+      <input type="file" id="import-file" accept=".csv" style="display:none">
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="occ-table">
+      <thead>
+        <tr>
+          <th>Kamar</th><th>Penyewa</th><th>No. HP</th><th>Tipe</th>
+          <th>Mulai</th><th>Selesai</th><th>Total</th>
+          <th>Status</th><th>Kontrak</th><th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="occ-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- MODAL: Okupansi -->
+<div class="modal" id="modal-occ">
+  <div class="modal-card modal-card-wide">
+    <h3 id="modal-title">Tambah Okupansi</h3>
+    <form id="form-occ">
+      <input type="hidden" id="f-id">
+
+      <!-- ═══ DATA KONTRAK ═══ -->
+      <div class="form-section">
+        <div class="form-section-title">📋 Data Kontrak</div>
+        <div class="grid-2">
+          <label>Kamar
+            <select id="f-room" required></select>
+          </label>
+          <label>Tipe Sewa
+            <select id="f-tipe" required>
+              <option value="harian">Harian</option>
+              <option value="mingguan">Mingguan</option>
+              <option value="bulanan" selected>Bulanan</option>
+              <option value="semesteran">Semesteran</option>
+              <option value="tahunan">Tahunan</option>
+            </select>
+          </label>
+          <label>Tanggal Mulai
+            <input type="date" id="f-mulai" required>
+          </label>
+          <label>Tanggal Selesai
+            <input type="date" id="f-selesai" required>
+          </label>
+          <label>Harga Total (Rp)
+            <input type="number" id="f-harga" min="0" step="1000" required>
+          </label>
+          <label>Link Kontrak (Drive/URL)
+            <input type="url" id="f-link" placeholder="https://drive.google.com/…">
+          </label>
+          <label>Status Bayar
+            <select id="f-status" required>
+              <option value="lunas">✅ Lunas</option>
+              <option value="dp">⏳ DP</option>
+              <option value="belum">❌ Belum</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- ═══ DATA PENYEWA ═══ -->
+      <div class="form-section">
+        <div class="form-section-title">👤 Data Penyewa</div>
+        <label>Nama Penyewa
+          <input type="text" id="f-nama" required>
+        </label>
+        <label>No. KTP/SIM
+          <input type="text" id="f-ktp" placeholder="16 digit NIK / No SIM">
+        </label>
+        <label>Alamat
+          <input type="text" id="f-alamat" placeholder="Alamat lengkap sesuai KTP">
+        </label>
+        <label>Nomor HP
+          <input type="text" id="f-hp" placeholder="08xx…">
+        </label>
+        <label>Asal Kampus (opsional)
+          <input type="text" id="f-kampus" placeholder="UNNES, dll.">
+        </label>
+      </div>
+
+      <!-- ═══ DATA ORTU/WALI ═══ -->
+      <div class="form-section">
+        <div class="form-section-title">👨‍👩‍👧 Data Orang Tua/Wali <small>(Opsional untuk perjanjian)</small></div>
+        <label>Nama Orang Tua/Wali
+          <input type="text" id="f-nama-ortu" placeholder="Nama lengkap orang tua/wali">
+        </label>
+        <label>No. KTP/SIM
+          <input type="text" id="f-ktp-ortu" placeholder="16 digit NIK / No SIM">
+        </label>
+        <label>Alamat
+          <input type="text" id="f-alamat-ortu" placeholder="Alamat lengkap orang tua/wali">
+        </label>
+        <label>Nomor HP
+          <input type="text" id="f-hp-ortu" placeholder="08xx…">
+        </label>
+      </div>
+
+      <!-- ═══ CATATAN ═══ -->
+      <div class="form-section">
+        <div class="form-section-title">📝 Catatan</div>
+        <label>
+          <textarea id="f-catatan" rows="2" placeholder="Mis. dapat diskon prestasi"></textarea>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close>Batal</button>
+        <button type="submit" class="btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Invoice -->
+<div class="invoice-modal" id="invoice-modal">
+  <div class="invoice-wrapper" id="invoice-content"></div>
+</div>
+
+<!-- MODAL: Kuitansi -->
+<div class="invoice-modal" id="kuitansi-modal">
+  <div class="invoice-wrapper" id="kuitansi-content"></div>
+</div>
+
+<!-- MODAL: Perjanjian -->
+<div class="invoice-modal" id="perjanjian-modal">
+  <div class="invoice-wrapper perjanjian-wrapper" id="perjanjian-content"></div>
+</div>
+
+<!-- MODAL: Import Result -->
+<div class="modal" id="modal-import-result">
+  <div class="modal-card">
+    <h3>Hasil Import CSV</h3>
+    <div id="import-result"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-primary" data-close>Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Users -->
+<div class="modal" id="modal-users">
+  <div class="modal-card">
+    <h3>Kelola User</h3>
+    <div id="users-list"></div>
+    <hr style="margin:20px 0;border:none;border-top:1px solid #eee">
+    <h4>Tambah User</h4>
+    <form id="form-user">
+      <div class="grid-2">
+        <label>Username <input type="text" id="u-username" required></label>
+        <label>Nama Lengkap <input type="text" id="u-nama"></label>
+        <label>Password <input type="password" id="u-pass" minlength="6" required></label>
+        <label>Role
+          <select id="u-role">
+            <option value="admin">Admin</option>
+            <option value="owner">Owner</option>
+          </select>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close>Tutup</button>
+        <button type="submit" class="btn-primary">Tambah User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="ngadmin.js"></script>
+</body>
+</html>
