@@ -283,7 +283,7 @@ function renderRooms() {
       const sisa = daysBetween(today, active.tanggal_selesai);
       if (active.status_bayar === 'lunas') {
         statusClass = sisa <= 14 ? 'status-habis' : 'status-terisi';
-        statusLabel = sisa <= 14 ? `⚠️ Habis dalam ${sisa} hari` : 'Terisi';
+        statusLabel = sisa <= 14 ? `⚠️ Habis dalam<br>${sisa} hari` : 'Terisi';
       } else {
         statusClass = 'status-dp';
         statusLabel = active.status_bayar === 'dp' ? 'DP' : 'Belum Bayar';
@@ -298,7 +298,7 @@ function renderRooms() {
         <div class="room-tipe">${escapeHtml(room.tipe)}</div>
         <div class="room-penyewa">${escapeHtml(penyewa)}</div>
         <div class="room-tanggal">${escapeHtml(tanggal)}</div>
-        <span class="room-status">${escapeHtml(statusLabel)}</span>
+        <span class="room-status">${statusLabel}</span>
       </div>
     `;
   }).join('');
