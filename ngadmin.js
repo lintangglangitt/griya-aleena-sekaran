@@ -697,8 +697,7 @@ function openPerjanjian(id) {
     <h2>Pasal 2 – Masa Sewa</h2>
     <ol>
       <li>Masa sewa kamar kos dimulai pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong> dan akan berakhir pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_selesai))}</strong>.</li>
-      <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 30 (tiga puluh) hari sebelum masa sewa berakhir.</li>
-      <li>Keterlambatan menginformasikan perpanjangan/pengakhiran sewa kepada Pemilik dapat berakibat denda bagi Penyewa.</li>
+      <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 10 (sepuluh) hari sebelum masa sewa berakhir.</li>
     </ol>
 
     <h2>Pasal 3 – Biaya Sewa dan Pembayaran</h2>
