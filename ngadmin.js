@@ -1245,6 +1245,21 @@ async function loadAnalytics() {
   try {
     const data = await api(`/analytics?days=${days}`);
     wrap.innerHTML = renderAnalytics(data, Number(days));
+
+    try {
+      const unseen = await api('/analytics/logs/unseen-count');
+      const badge = document.getElementById('unseen-badge');
+      if (badge) {
+        if (unseen.count > 0) {
+          badge.textContent = unseen.count > 99 ? '99+' : unseen.count;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    } catch (e) {
+      console.error('Unseen count error:', e);
+    }
   } catch (err) {
     wrap.innerHTML = `<div class="analytics-loading" style="color:#e74c3c;">❌ Gagal memuat: ${escapeHtml(err.message)}</div>`;
   }
@@ -1327,13 +1342,15 @@ function renderAnalytics(d, days) {
     </div>
 
     <div class="analytics-footer">
-      <button class="btn-ghost" id="btn-view-logs">📋 Lihat Detail Log</button>
+      <button class="btn-ghost" id="btn-view-logs" style="position:relative;">
+        📋 Lihat Detail Log
+        <span id="unseen-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:50px;box-shadow:0 2px 6px rgba(231,76,60,0.5);">0</span>
+      </button>
       <button class="btn-ghost" id="btn-export-logs">⬇ Export CSV</button>
     </div>
   `;
 }
 
-// ─── Handle klik tombol di dalam modal analitik ────────────
 document.getElementById('modal-analytics').addEventListener('click', (e) => {
   if (e.target.id === 'btn-view-logs') {
     openLogsModal();
@@ -1356,6 +1373,22 @@ async function loadLogsModal() {
     const data = await api('/analytics/logs?limit=200');
     window.__logsCache = data.logs || [];
     wrap.innerHTML = renderLogsTable(window.__logsCache);
+
+    const unseenIds = window.__logsCache.filter(l => !l.viewed).map(l => l.id);
+    if (unseenIds.length > 0) {
+      fetch(`${API}/analytics/logs/mark-viewed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${TOKEN}`,
+        },
+        body: JSON.stringify({ ids: unseenIds }),
+      }).then(() => {
+        window.__logsCache.forEach(l => {
+          if (unseenIds.includes(l.id)) l.viewed = 1;
+        });
+      }).catch(err => console.error('Mark viewed failed:', err));
+    }
 
     const searchInput = document.getElementById('log-search');
     if (searchInput && !searchInput.dataset.bound) {
@@ -1391,28 +1424,36 @@ function renderLogsTable(logs) {
     });
   };
 
-  const rows = logs.map(l => `
-    <tr>
-      <td><code style="font-size:0.68rem;">${escapeHtml(String(l.id || '—'))}</code></td>
-      <td><small style="white-space:nowrap;">${fmtDT(l.visited_at)}</small></td>
-      <td><code style="font-size:0.72rem;">${escapeHtml(l.ip || '—')}</code></td>
-      <td>${escapeHtml(l.country || '—')}</td>
-      <td>${escapeHtml(l.country_name || '—')}</td>
-      <td>${escapeHtml(l.city || '—')}</td>
-      <td>${escapeHtml(l.region || '—')}</td>
-      <td><small>${escapeHtml(l.timezone || '—')}</small></td>
-      <td><small>${escapeHtml(l.latitude || '—')}</small></td>
-      <td><small>${escapeHtml(l.longitude || '—')}</small></td>
-      <td><small style="color:#5a7373;">${escapeHtml(l.isp || '—')}</small></td>
-      <td>${escapeHtml(l.browser || '—')}</td>
-      <td><small>${escapeHtml(l.browser_version || '—')}</small></td>
-      <td>${escapeHtml(l.os || '—')}</td>
-      <td><span style="display:inline-block;padding:2px 8px;border-radius:50px;background:#e0f0f0;color:#1a5c5c;font-size:0.7rem;font-weight:700;">${escapeHtml(l.device_type || '—')}</span></td>
-      <td><small style="color:#5a7373;">${escapeHtml((l.referer || 'Direct').substring(0, 50))}</small></td>
-      <td><code style="font-size:0.7rem;">${escapeHtml(l.path || '/')}</code></td>
-      <td><small style="color:#8b9494;font-size:0.68rem;">${escapeHtml((l.user_agent || '—').substring(0, 60))}${(l.user_agent || '').length > 60 ? '…' : ''}</small></td>
-    </tr>
-  `).join('');
+  const rows = logs.map(l => {
+    const isNew = !l.viewed;
+    const rowClass = isNew ? 'log-new' : 'log-seen';
+
+    return `
+      <tr class="${rowClass}">
+        <td>
+          <code style="font-size:0.68rem;">${escapeHtml(String(l.id || '—'))}</code>
+          ${isNew ? '<span class="log-badge-new">BARU</span>' : ''}
+        </td>
+        <td><small style="white-space:nowrap;">${fmtDT(l.visited_at)}</small></td>
+        <td><code style="font-size:0.72rem;">${escapeHtml(l.ip || '—')}</code></td>
+        <td>${escapeHtml(l.country || '—')}</td>
+        <td>${escapeHtml(l.country_name || '—')}</td>
+        <td>${escapeHtml(l.city || '—')}</td>
+        <td>${escapeHtml(l.region || '—')}</td>
+        <td><small>${escapeHtml(l.timezone || '—')}</small></td>
+        <td><small>${escapeHtml(l.latitude || '—')}</small></td>
+        <td><small>${escapeHtml(l.longitude || '—')}</small></td>
+        <td><small style="color:#5a7373;">${escapeHtml(l.isp || '—')}</small></td>
+        <td>${escapeHtml(l.browser || '—')}</td>
+        <td><small>${escapeHtml(l.browser_version || '—')}</small></td>
+        <td>${escapeHtml(l.os || '—')}</td>
+        <td><span style="display:inline-block;padding:2px 8px;border-radius:50px;background:#e0f0f0;color:#1a5c5c;font-size:0.7rem;font-weight:700;">${escapeHtml(l.device_type || '—')}</span></td>
+        <td><small style="color:#5a7373;">${escapeHtml((l.referer || 'Direct').substring(0, 50))}</small></td>
+        <td><code style="font-size:0.7rem;">${escapeHtml(l.path || '/')}</code></td>
+        <td><small style="color:#8b9494;font-size:0.68rem;">${escapeHtml((l.user_agent || '—').substring(0, 60))}${(l.user_agent || '').length > 60 ? '…' : ''}</small></td>
+      </tr>
+    `;
+  }).join('');
 
   return `
     <div style="overflow-x:auto;max-height:65vh;overflow-y:auto;border:1px solid #e3ebeb;border-radius:8px;">
@@ -1445,10 +1486,13 @@ function renderLogsTable(logs) {
       </table>
     </div>
     <div style="margin-top:12px;font-size:0.78rem;color:#5a7373;text-align:center;">
-      Menampilkan ${logs.length} log terakhir — scroll horizontal untuk lihat semua kolom →
+      Menampilkan ${logs.length} log terakhir 
+      — <strong style="color:#1a5c5c;">${logs.filter(l => !l.viewed).length}</strong> log baru 
+      — scroll horizontal untuk lihat semua kolom →
     </div>
   `;
 }
+
 document.querySelectorAll('[data-close-logs]').forEach(b =>
   b.addEventListener('click', () => document.getElementById('modal-logs').classList.remove('open')));
 
@@ -1468,11 +1512,13 @@ async function exportLogsCsv() {
       return;
     }
 
-    const headers = ['IP', 'Country', 'Country Name', 'City', 'Region', 'Timezone',
-                     'Latitude', 'Longitude', 'ISP', 'Browser', 'Browser Version',
-                     'OS', 'Device', 'Referer', 'Path', 'Waktu'];
+    const headers = ['ID', 'Waktu', 'IP', 'Kode Negara', 'Negara', 'Kota', 'Provinsi',
+                     'Timezone', 'Latitude', 'Longitude', 'ISP', 'Browser', 'Versi',
+                     'OS', 'Device', 'Referer', 'Path', 'User Agent', 'Viewed', 'Viewed At'];
 
     const rows = logs.map(l => [
+      l.id || '',
+      l.visited_at || '',
       l.ip || '',
       l.country || '',
       l.country_name || '',
@@ -1488,7 +1534,9 @@ async function exportLogsCsv() {
       l.device_type || '',
       l.referer || '',
       l.path || '',
-      l.visited_at || ''
+      l.user_agent || '',
+      l.viewed ? 'Ya' : 'Belum',
+      l.viewed_at || ''
     ]);
 
     const csv = [headers, ...rows]
