@@ -961,3 +961,23 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
 }
+
+
+/* ═══════════════════════════════════════════ */
+/* BADGE ANGKA DI TOMBOL ANALITIK */
+/* ═══════════════════════════════════════════ */
+
+#analytics-badge {
+  animation: pulse-badge-header 1.8s infinite;
+}
+
+@keyframes pulse-badge-header {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.5);
+  }
+  50% { 
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.7);
+  }
+}
