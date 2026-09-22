@@ -25,7 +25,12 @@
 
   <div class="admin-user">
     <span id="user-name">—</span>
-    <button id="btn-analytics" class="btn-nav">📊 Analitik</button>
+   
+<button id="btn-analytics" class="btn-nav" style="position:relative;">
+  📊 Analitik
+  <span id="analytics-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:0.62rem;font-weight:800;padding:2px 7px;border-radius:50px;box-shadow:0 2px 6px rgba(231,76,60,0.5);min-width:18px;text-align:center;line-height:1.2;">0</span>
+</button>
+    
     <button id="btn-users" class="btn-nav">👥 Users</button>
     <button id="btn-logout" class="btn-nav">Logout</button>
   </div>
