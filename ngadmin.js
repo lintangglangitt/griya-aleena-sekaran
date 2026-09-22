@@ -176,6 +176,29 @@ async function init() {
   if (USER.role !== 'owner') {
     document.getElementById('btn-users').style.display = 'none';
   }
+
+  // Load badge analitik + auto-refresh tiap 5 menit
+  updateAnalyticsBadge();
+  setInterval(updateAnalyticsBadge, 5 * 60 * 1000);
+}
+
+// ─── Badge Angka di Tombol Analitik ────────────────────────
+async function updateAnalyticsBadge() {
+  try {
+    const data = await api('/analytics/logs/unseen-count');
+    const badge = document.getElementById('analytics-badge');
+    if (!badge) return;
+
+    if (data.count > 0) {
+      badge.textContent = data.count > 99 ? '99+' : data.count;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (err) {
+    // Silent fail — jangan ganggu user
+    console.log('Analytics badge error:', err.message);
+  }
 }
 
 async function loadRooms() {
@@ -1387,6 +1410,8 @@ async function loadLogsModal() {
         window.__logsCache.forEach(l => {
           if (unseenIds.includes(l.id)) l.viewed = 1;
         });
+        // Refresh badge angka di tombol Analitik
+        updateAnalyticsBadge();
       }).catch(err => console.error('Mark viewed failed:', err));
     }
 
@@ -1498,11 +1523,15 @@ function renderLogsTable(logs) {
 }
 
 document.querySelectorAll('[data-close-logs]').forEach(b =>
-  b.addEventListener('click', () => document.getElementById('modal-logs').classList.remove('open')));
+  b.addEventListener('click', () => {
+    document.getElementById('modal-logs').classList.remove('open');
+    updateAnalyticsBadge();
+  }));
 
 document.getElementById('modal-logs').addEventListener('click', (e) => {
   if (e.target.id === 'modal-logs') {
     document.getElementById('modal-logs').classList.remove('open');
+    updateAnalyticsBadge();
   }
 });
 
