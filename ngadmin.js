@@ -1430,10 +1430,14 @@ function renderLogsTable(logs) {
 
     return `
       <tr class="${rowClass}">
-        <td>
-          <code style="font-size:0.68rem;">${escapeHtml(String(l.id || '—'))}</code>
-          ${isNew ? '<span class="log-badge-new">BARU</span>' : ''}
+
+        <td style="min-width:70px;">
+          <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+            <code style="font-size:0.68rem;">${escapeHtml(String(l.id || '—'))}</code>
+            ${isNew ? '<span class="log-badge-new">BARU</span>' : ''}
+          </div>
         </td>
+        
         <td><small style="white-space:nowrap;">${fmtDT(l.visited_at)}</small></td>
         <td><code style="font-size:0.72rem;">${escapeHtml(l.ip || '—')}</code></td>
         <td>${escapeHtml(l.country || '—')}</td>
