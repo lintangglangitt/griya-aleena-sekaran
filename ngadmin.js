@@ -1364,23 +1364,16 @@ function renderAnalytics(d, days) {
       </div>
     </div>
 
-    <div class="analytics-footer">
-      <button class="btn-ghost" id="btn-view-logs" style="position:relative;">
-        📋 Lihat Detail Log
-        <span id="unseen-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:50px;box-shadow:0 2px 6px rgba(231,76,60,0.5);">0</span>
-      </button>
-      <button class="btn-ghost" id="btn-export-logs">⬇ Export CSV</button>
-    </div>
+
   `;
 }
 
-document.getElementById('modal-analytics').addEventListener('click', (e) => {
-  if (e.target.id === 'btn-view-logs') {
-    openLogsModal();
-  }
-  if (e.target.id === 'btn-export-logs') {
-    exportLogsCsv();
-  }
+document.getElementById('btn-view-logs-header').addEventListener('click', () => {
+  openLogsModal();
+});
+
+document.getElementById('btn-export-logs-header').addEventListener('click', () => {
+  exportLogsCsv();
 });
 
 async function openLogsModal() {
