@@ -1442,11 +1442,26 @@ function renderLogsTable(logs) {
 
   const fmtDT = (s) => {
     if (!s) return '—';
-    const d = new Date(s);
+    
+    // Pastikan waktu dianggap UTC (kalau dari server belum ada timezone)
+    let iso = s;
+    if (!s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
+      iso = s.replace(' ', 'T') + 'Z';
+    }
+    
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return s;
+    
+    // Format waktu di timezone Asia/Jakarta (WIB, GMT+7)
     return d.toLocaleString('id-ID', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Jakarta',
+      hour12: false
+    }).replace(/\./g, ':').replace(',', '');
   };
 
   const rows = logs.map(l => {
