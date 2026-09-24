@@ -1505,7 +1505,7 @@ function renderLogsTable(logs) {
         <thead style="position:sticky;top:0;background:#1a5c5c;color:white;z-index:1;">
           <tr>
             <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">ID</th>
-            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Waktu</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Waktu (GMT+7)</th>
             <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">IP</th>
             <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Kode Negara</th>
             <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Negara</th>
