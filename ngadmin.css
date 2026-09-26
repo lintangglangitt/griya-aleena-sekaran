@@ -388,15 +388,37 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
 .badge.belum { background: #fcdcdc; color: #a81f1f; }
 .badge.tipe { background: #e0f0f0; color: var(--teal); }
 
-.btn-row { display: flex; gap: 6px; }
-.btn-icon {
-  background: none; border: 1px solid var(--border);
-  width: 30px; height: 30px; border-radius: 6px;
-  cursor: pointer; font-size: 0.9rem;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
+
+.btn-row { 
+  display: flex; 
+  gap: 6px;
+  position: relative;
+  z-index: 5;
 }
-.btn-icon:hover { background: var(--gray); }
+.btn-icon {
+  background: none; 
+  border: 1px solid var(--border);
+  width: 30px; 
+  height: 30px; 
+  border-radius: 6px;
+  cursor: pointer; 
+  font-size: 0.9rem;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  transition: background 0.15s, transform 0.15s;
+  position: relative;
+  z-index: 6;
+  pointer-events: auto;
+}
+.btn-icon:hover { 
+  background: var(--gray); 
+  transform: scale(1.05);
+}
+.btn-icon:active {
+  transform: scale(0.95);
+}
+
 .btn-icon.danger:hover { background: #fdecec; border-color: var(--red); }
 
 /* ── BUTTONS ── */
