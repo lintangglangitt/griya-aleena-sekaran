@@ -2065,10 +2065,25 @@ document.getElementById('form-user').addEventListener('submit', async (e) => {
 // ═══════════════════════════════════════════════════════════
 
 document.addEventListener('click', (e) => {
+  // ─── Tombol Aksi Tabel (PRIORITAS TERTINGGI) ───
+  const btnInvoice = e.target.closest('[data-invoice]');
+  if (btnInvoice) { openInvoice(Number(btnInvoice.dataset.invoice)); return; }
 
+  const btnKuitansi = e.target.closest('[data-kuitansi]');
+  if (btnKuitansi) { openKuitansi(Number(btnKuitansi.dataset.kuitansi)); return; }
 
-    // ─── Tombol Tutup Modal ───
+  const btnPerjanjian = e.target.closest('[data-perjanjian]');
+  if (btnPerjanjian) { openPerjanjian(Number(btnPerjanjian.dataset.perjanjian)); return; }
+
+  const btnEdit = e.target.closest('[data-edit]');
+  if (btnEdit) { openModal(Number(btnEdit.dataset.edit)); return; }
+
+  const btnDel = e.target.closest('[data-del]');
+  if (btnDel) { deleteOcc(Number(btnDel.dataset.del)); return; }
+
+  // ─── Tombol Tutup Modal ───
   if (e.target.closest('.inv-btn-close')) {
+    
     const modal = e.target.closest('.invoice-modal');
     if (modal) {
       modal.classList.remove('open');
@@ -2124,7 +2139,7 @@ document.addEventListener('click', (e) => {
   // Semua modal (invoice, kuitansi, perjanjian, users, analytics, logs,
   // import-result, occ) hanya bisa ditutup via tombol close eksplisit.
   // Tidak ada auto-close via backdrop.
-});
+}, true);   // ⬅️ CAPTURE: true
 
 // ─── Event Delegation untuk Input File (change) ───
 document.addEventListener('change', async (e) => {
