@@ -444,16 +444,6 @@ function renderTable() {
     `;
   }).join('');
 
-  tbody.querySelectorAll('[data-invoice]').forEach(b =>
-    b.addEventListener('click', () => openInvoice(Number(b.dataset.invoice))));
-  tbody.querySelectorAll('[data-kuitansi]').forEach(b =>
-    b.addEventListener('click', () => openKuitansi(Number(b.dataset.kuitansi))));
-  tbody.querySelectorAll('[data-perjanjian]').forEach(b =>
-    b.addEventListener('click', () => openPerjanjian(Number(b.dataset.perjanjian))));
-  tbody.querySelectorAll('[data-edit]').forEach(b =>
-    b.addEventListener('click', () => openModal(Number(b.dataset.edit))));
-  tbody.querySelectorAll('[data-del]').forEach(b =>
-    b.addEventListener('click', () => deleteOcc(Number(b.dataset.del))));
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2087,6 +2077,23 @@ document.addEventListener('click', (e) => {
     if (cfg) deleteUploadedFile(cfg);
     return;
   }
+
+
+    // ─── Tombol Aksi Tabel ───
+  const btnInvoice = e.target.closest('[data-invoice]');
+  if (btnInvoice) { openInvoice(Number(btnInvoice.dataset.invoice)); return; }
+
+  const btnKuitansi = e.target.closest('[data-kuitansi]');
+  if (btnKuitansi) { openKuitansi(Number(btnKuitansi.dataset.kuitansi)); return; }
+
+  const btnPerjanjian = e.target.closest('[data-perjanjian]');
+  if (btnPerjanjian) { openPerjanjian(Number(btnPerjanjian.dataset.perjanjian)); return; }
+
+  const btnEdit = e.target.closest('[data-edit]');
+  if (btnEdit) { openModal(Number(btnEdit.dataset.edit)); return; }
+
+  const btnDel = e.target.closest('[data-del]');
+  if (btnDel) { deleteOcc(Number(btnDel.dataset.del)); return; }
   
   // ─── Klik Backdrop Modal → TIDAK menutup ───
   // Semua modal (invoice, kuitansi, perjanjian, users, analytics, logs,
