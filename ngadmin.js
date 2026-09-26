@@ -1299,8 +1299,17 @@ async function uploadDokumen(file, cfg) {
       xhr.send(formData);
     });
 
-    // ⬇️ Simpan URL ke memori (BELUM ke DB)
+        // ⬇️ Simpan URL ke memori (BELUM ke DB)
     MODAL_STATE.pendingUploads[cfg.field] = result.url;
+
+    // ⬇️ Kalau ada file LAMA di DB untuk field ini, tandai untuk dihapus setelah Simpan.
+    // Ini berlaku baik user klik 🗑️ dulu atau tidak — karena file lama sudah DIGANTI,
+    // jadi harus dihapus dari R2 supaya tidak orphan.
+    if (EDITING_ID && MODAL_STATE.originalUrls[cfg.field]) {
+      if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
+        MODAL_STATE.pendingDeletes.push(cfg.field);
+      }
+    }
 
     // Update UI
     linkInput.value = result.url;
@@ -1308,13 +1317,11 @@ async function uploadDokumen(file, cfg) {
     status.className = 'upload-status loading';
     preview.innerHTML = `<a href="${escapeHtml(result.url)}" target="_blank">📄 Lihat file (belum disimpan)</a>`;
 
-    // Kalau field ini tadinya ada di pendingDeletes, batal hapus
-    MODAL_STATE.pendingDeletes = MODAL_STATE.pendingDeletes.filter(f => f !== cfg.field);
-
     // Tampilkan tombol Hapus
     const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
     if (btnDelete) btnDelete.style.display = 'inline-block';
 
+    
   } catch (err) {
     status.innerHTML = `❌ Gagal: ${escapeHtml(err.message)}`;
     status.className = 'upload-status error';
@@ -1360,9 +1367,10 @@ async function deleteUploadedFile(cfg) {
   if (!confirmed) return;
 
   const isPendingUpload = MODAL_STATE.pendingUploads[cfg.field] === urlInField;
+  const hasOriginal = !!MODAL_STATE.originalUrls[cfg.field];
 
   if (isPendingUpload) {
-    // ─── KASUS A: File baru di-upload sesi ini → hapus dari R2 langsung ───
+    // ─── KASUS A/C: File baru di-upload sesi ini → hapus dari R2 langsung ───
     status.innerHTML = '🗑️ Menghapus...';
     status.className = 'upload-status loading';
     try {
@@ -1373,15 +1381,26 @@ async function deleteUploadedFile(cfg) {
       delete MODAL_STATE.pendingUploads[cfg.field];
       linkInput.value = '';
       preview.innerHTML = '';
-      status.innerHTML = '🗑️ File dihapus';
-      status.className = 'upload-status success';
-      if (btnDelete) btnDelete.style.display = 'none';
+
+      // ⬇️ Kalau ada file LAMA di DB, tandai untuk dihapus setelah Simpan
+      if (EDITING_ID && hasOriginal) {
+        if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
+          MODAL_STATE.pendingDeletes.push(cfg.field);
+        }
+        status.innerHTML = '🗑️ File baru dihapus · file lama akan dihapus saat Simpan';
+        status.className = 'upload-status loading';
+        if (btnDelete) btnDelete.style.display = 'none';
+      } else {
+        status.innerHTML = '🗑️ File dihapus';
+        status.className = 'upload-status success';
+        if (btnDelete) btnDelete.style.display = 'none';
+      }
     } catch (err) {
       status.innerHTML = `❌ Gagal hapus: ${escapeHtml(err.message)}`;
       status.className = 'upload-status error';
     }
   } else {
-    // ─── KASUS B: File lama di DB → tandai pending delete ───
+    // ─── KASUS B: File lama di DB (belum diganti) → tandai pending delete ───
     if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
       MODAL_STATE.pendingDeletes.push(cfg.field);
     }
@@ -1392,7 +1411,6 @@ async function deleteUploadedFile(cfg) {
     if (btnDelete) btnDelete.style.display = 'none';
   }
 }
-
 // ═══════════════════════════════════════════════════════════
 // CEK FILE MASIH ADA DI R2
 // ═══════════════════════════════════════════════════════════
