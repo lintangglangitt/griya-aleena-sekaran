@@ -30,6 +30,14 @@ const HARGA_DEFAULT = {
   tahunan: 9100000,
 };
 
+// ─── Konfigurasi Upload Dokumen (4 file) ───────────────────
+const UPLOAD_CONFIGS = [
+  { key: 'f-ktp-penyewa', statusId: 'upload-status-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', field: 'file_ktp_penyewa' },
+  { key: 'f-ktp-ortu',    statusId: 'upload-status-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    field: 'file_ktp_ortu' },
+  { key: 'f-ktm',         statusId: 'upload-status-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         field: 'file_ktm' },
+  { key: 'f-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
+];
+
 if (!TOKEN) window.location.href = 'ibun.html';
 
 // ─── API helper ────────────────────────────────────────────
@@ -1018,13 +1026,6 @@ async function deleteOcc(id) {
 // ═══════════════════════════════════════════════════════════
 // UPLOAD DOKUMEN KE R2 (4 File)
 // ═══════════════════════════════════════════════════════════
-
-const UPLOAD_CONFIGS = [
-  { key: 'f-ktp-penyewa', statusId: 'upload-status-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', field: 'file_ktp_penyewa' },
-  { key: 'f-ktp-ortu',    statusId: 'upload-status-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    field: 'file_ktp_ortu' },
-  { key: 'f-ktm',         statusId: 'upload-status-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         field: 'file_ktm' },
-  { key: 'f-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
-];
 
 // Pasang event listener untuk semua tombol upload
 document.querySelectorAll('[data-upload-trigger]').forEach(btn => {
