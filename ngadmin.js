@@ -736,6 +736,7 @@ function openPerjanjian(id) {
         </ul>
         <p><strong>b. Fasilitas Umum</strong> (dipakai bersama dengan penghuni kos lainnya)</p>
         <ul>
+          <li>Jaringan Internet (WiFi)</li>
           <li>Dapur bersama</li>
           <li>Kulkas bersama</li>
           <li>Mesin cuci bersama dan tempat jemuran</li>
