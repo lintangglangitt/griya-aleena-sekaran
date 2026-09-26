@@ -189,7 +189,7 @@ function forceCloseAllModals() {
   );
   allModals.forEach(m => {
     m.classList.remove('open');
-    m.style.display = '';   // ⬅️ jangan set inline 'none' — biarkan class yang atur
+    m.style.removeProperty('display');
   });
 }
 
@@ -197,27 +197,43 @@ function forceCloseAllModals() {
 // EXCLUSIVE MODAL OPENER
 // - Menutup SEMUA modal lain sebelum membuka modal yang dituju
 //   (mencegah beberapa modal aktif/bertumpuk bersamaan)
-// - Memaksa reflow setelah menambah class 'open', supaya browser
-//   (khususnya Safari/WebView) langsung repaint elemen `position: fixed`
-//   dan tidak "menunda" render-nya sampai ada perubahan DOM lain.
+// - TIDAK bergantung pada CSS class + specificity/timing browser.
+//   display diatur LANGSUNG lewat inline style dengan !important,
+//   yang di cascade CSS selalu menang di atas rule di stylesheet
+//   manapun (termasuk yang juga pakai !important). Ini menghilangkan
+//   segala kemungkinan race/caching/specificity yang membuat modal
+//   "telat" muncul.
 // ═══════════════════════════════════════════════════════════
 function closeAllModals(except = null) {
   document.querySelectorAll('.modal.open, .invoice-modal.open').forEach(m => {
     if (m !== except) {
       m.classList.remove('open');
-      m.style.display = '';
+      m.style.removeProperty('display');
     }
   });
 }
 
 function openModalExclusive(modalEl) {
-  if (!modalEl) return;
+  if (!modalEl) {
+    console.error('openModalExclusive: elemen modal tidak ditemukan');
+    return;
+  }
   closeAllModals(modalEl);
   modalEl.classList.add('open');
-  // Paksa reflow — memastikan browser repaint elemen fixed ini SEKARANG,
-  // bukan menunggu perubahan DOM lain (ini penyebab "muncul bareng"
-  // saat modal lain baru dibuka).
+  // Paksa tampil lewat inline style !important — tidak menunggu CSS/cache/repaint.
+  modalEl.style.setProperty('display', 'flex', 'important');
+  // Paksa reflow supaya perubahan di atas langsung ditampilkan browser.
   void modalEl.offsetHeight;
+}
+
+// Selalu pakai ini untuk MENUTUP modal satuan (bukan closeAllModals),
+// supaya inline style display:flex!important yang di-set oleh
+// openModalExclusive() ikut dibersihkan — kalau tidak, modal akan
+// tetap tampil walau class 'open' sudah dilepas.
+function closeModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.classList.remove('open');
+  modalEl.style.removeProperty('display');
 }
 
 // ─── Init ──────────────────────────────────────────────────
@@ -920,14 +936,14 @@ function openPerjanjian(id) {
 
 
 function closePerjanjian() {
-  document.getElementById('perjanjian-modal').classList.remove('open');
+  closeModal(document.getElementById('perjanjian-modal'));
 }
 
 // Close modal saat klik backdrop
 ['invoice-modal', 'kuitansi-modal', 'perjanjian-modal'].forEach(id => {
   document.getElementById(id).addEventListener('click', (e) => {
     if (e.target.id === id) {
-      document.getElementById(id).classList.remove('open');
+      closeModal(document.getElementById(id));
     }
   });
 });
@@ -1000,7 +1016,7 @@ async function cancelModal() {
   // 3. Reset state & tutup
   resetModalState();
   formOcc.reset();
-  modalOcc.classList.remove('open');
+  closeModal(modalOcc);
 }
 
 function fillRoomSelect(currentEditingId = null) {
@@ -1239,7 +1255,7 @@ formOcc.addEventListener('submit', async (e) => {
 
     // ─── 3. Reset state & tutup modal ───
     resetModalState();
-    modalOcc.classList.remove('open');
+    closeModal(modalOcc);
 
     await Promise.all([loadOccs(), loadStats()]);
     fillYearFilter();
@@ -1652,10 +1668,10 @@ function normalizeDate(s) {
 }
 
 document.getElementById('modal-import-result').querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => document.getElementById('modal-import-result').classList.remove('open')));
+  b.addEventListener('click', () => closeModal(document.getElementById('modal-import-result'))));
 document.getElementById('modal-import-result').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-import-result')) {
-    document.getElementById('modal-import-result').classList.remove('open');
+    closeModal(document.getElementById('modal-import-result'));
   }
 });
 
@@ -1671,11 +1687,11 @@ document.getElementById('btn-analytics').addEventListener('click', async () => {
 document.getElementById('analytics-period').addEventListener('change', loadAnalytics);
 
 document.querySelectorAll('[data-close-analytics]').forEach(b =>
-  b.addEventListener('click', () => document.getElementById('modal-analytics').classList.remove('open')));
+  b.addEventListener('click', () => closeModal(document.getElementById('modal-analytics'))));
 
 document.getElementById('modal-analytics').addEventListener('click', e => {
   if (e.target.id === 'modal-analytics') {
-    document.getElementById('modal-analytics').classList.remove('open');
+    closeModal(document.getElementById('modal-analytics'));
   }
 });
 
@@ -1952,13 +1968,13 @@ function renderLogsTable(logs) {
 
 document.querySelectorAll('[data-close-logs]').forEach(b =>
   b.addEventListener('click', () => {
-    document.getElementById('modal-logs').classList.remove('open');
+    closeModal(document.getElementById('modal-logs'));
     updateAnalyticsBadge();
   }));
 
 document.getElementById('modal-logs').addEventListener('click', (e) => {
   if (e.target.id === 'modal-logs') {
-    document.getElementById('modal-logs').classList.remove('open');
+    closeModal(document.getElementById('modal-logs'));
     updateAnalyticsBadge();
   }
 });
@@ -2023,9 +2039,9 @@ document.getElementById('btn-users').addEventListener('click', async () => {
   await renderUsersList();
 });
 modalUsers.querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => modalUsers.classList.remove('open')));
+  b.addEventListener('click', () => closeModal(modalUsers)));
 modalUsers.addEventListener('click', e => {
-  if (e.target === modalUsers) modalUsers.classList.remove('open');
+  if (e.target === modalUsers) closeModal(modalUsers);
 });
 
 async function renderUsersList() {
@@ -2095,7 +2111,7 @@ document.addEventListener('click', (e) => {
     const modal = e.target.closest('.invoice-modal');
     if (modal) {
       modal.classList.remove('open');
-      modal.style.display = '';   // ⬅️ jangan pakai inline 'none', biar konsisten dgn class .open
+      modal.style.removeProperty('display');
       return;
     }
   }
