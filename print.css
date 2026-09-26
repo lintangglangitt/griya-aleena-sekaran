@@ -341,10 +341,19 @@
   font-size: 0.9rem;
   margin-bottom: 80px;
 }
-.perjanjian-wrapper .pj-sign-col .pj-sign-name {
+
+.perjanjian-wrapper .pj-sign-col .pj-sign-space {
+  height: 60px;
+}
+
+.perjanjian-wrapper .pj-sign-col .pj-sign-name-line {
   border-top: 1.5px solid #1c2e2e;
   padding-top: 6px;
   min-height: 30px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1c2e2e;
+  text-align: center;
 }
 
 .perjanjian-wrapper .pj-lampiran {
