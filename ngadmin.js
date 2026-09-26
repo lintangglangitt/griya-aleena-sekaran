@@ -2143,21 +2143,41 @@ document.addEventListener('click', (e) => {
   }
 
 
-    // ─── Tombol Aksi Tabel ───
+     // ─── Tombol Aksi Tabel ───
   const btnInvoice = e.target.closest('[data-invoice]');
-  if (btnInvoice) { openInvoice(Number(btnInvoice.dataset.invoice)); return; }
+  if (btnInvoice) {
+    try { openInvoice(Number(btnInvoice.dataset.invoice)); }
+    catch (err) { console.error('openInvoice error:', err); alert('Error Invoice: ' + err.message); }
+    return;
+  }
 
   const btnKuitansi = e.target.closest('[data-kuitansi]');
-  if (btnKuitansi) { openKuitansi(Number(btnKuitansi.dataset.kuitansi)); return; }
+  if (btnKuitansi) {
+    try { openKuitansi(Number(btnKuitansi.dataset.kuitansi)); }
+    catch (err) { console.error('openKuitansi error:', err); alert('Error Kuitansi: ' + err.message); }
+    return;
+  }
 
   const btnPerjanjian = e.target.closest('[data-perjanjian]');
-  if (btnPerjanjian) { openPerjanjian(Number(btnPerjanjian.dataset.perjanjian)); return; }
+  if (btnPerjanjian) {
+    try { openPerjanjian(Number(btnPerjanjian.dataset.perjanjian)); }
+    catch (err) { console.error('openPerjanjian error:', err); alert('Error Perjanjian: ' + err.message); }
+    return;
+  }
 
   const btnEdit = e.target.closest('[data-edit]');
-  if (btnEdit) { openModal(Number(btnEdit.dataset.edit)); return; }
+  if (btnEdit) {
+    try { openModal(Number(btnEdit.dataset.edit)); }
+    catch (err) { console.error('openModal error:', err); alert('Error Edit: ' + err.message); }
+    return;
+  }
 
   const btnDel = e.target.closest('[data-del]');
-  if (btnDel) { deleteOcc(Number(btnDel.dataset.del)); return; }
+  if (btnDel) {
+    try { deleteOcc(Number(btnDel.dataset.del)); }
+    catch (err) { console.error('deleteOcc error:', err); alert('Error Hapus: ' + err.message); }
+    return;
+  }
   
   // ─── Klik Backdrop Modal → TIDAK menutup ───
   // Semua modal (invoice, kuitansi, perjanjian, users, analytics, logs,
