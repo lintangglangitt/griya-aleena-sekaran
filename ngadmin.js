@@ -489,7 +489,6 @@ function openInvoice(id) {
       <dl class="inv-info-grid">
         <dt>Nama</dt><dd>${escapeHtml(o.nama_penyewa)}</dd>
         ${o.no_hp ? `<dt>No. HP</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
-        ${o.asal_kampus ? `<dt>Kampus</dt><dd>${escapeHtml(o.asal_kampus)}</dd>` : ''}
         <dt>Kamar</dt><dd>${escapeHtml(o.nama_kamar)} (${escapeHtml(o.tipe)})</dd>
       </dl>
     </div>
@@ -521,17 +520,21 @@ function openInvoice(id) {
       <div class="inv-total-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
     </div>
 
+    <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
+      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Silakan dibayarkan sebelum menempati kamar kos.
+    </p>
+
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div>
       <div>Hormat kami,</div>
-      <div class="inv-sign-line">&nbsp;</div>
+      <div style="margin-top:40px;font-weight:700;">${escapeHtml(PEMILIK.nama)}</div>
       <div class="inv-sign-role">Pemilik Griya Aleena</div>
     </div>
 
     <div class="inv-footer">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Simpan sebagai bukti pembayaran yang sah.
+      Terima kasih atas kepercayaan Anda. Semoga betah tinggal di Griya Aleena. 🏠
     </div>
 
     <div class="invoice-actions">
@@ -542,10 +545,6 @@ function openInvoice(id) {
 
   document.getElementById('invoice-content').innerHTML = html;
   document.getElementById('invoice-modal').classList.add('open');
-}
-
-function closeInvoice() {
-  document.getElementById('invoice-modal').classList.remove('open');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -603,15 +602,14 @@ function openKuitansi(id) {
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
-    <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;">
-      Kuitansi ini merupakan bukti sah pembayaran sewa kamar kos di Griya Aleena.
-      Mohon disimpan dengan baik.
+    <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
+      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti sah pembayaran sewa kamar kos di Griya Aleena. Mohon disimpan dengan baik.
     </p>
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div>
-      <div>Penerima,</div>
-      <div class="inv-sign-line">&nbsp;</div>
+      <div>Hormat kami,</div>
+      <div style="margin-top:40px;font-weight:700;">${escapeHtml(PEMILIK.nama)}</div>
       <div class="inv-sign-role">Pemilik Griya Aleena</div>
     </div>
 
@@ -627,10 +625,6 @@ function openKuitansi(id) {
 
   document.getElementById('kuitansi-content').innerHTML = html;
   document.getElementById('kuitansi-modal').classList.add('open');
-}
-
-function closeKuitansi() {
-  document.getElementById('kuitansi-modal').classList.remove('open');
 }
 
 // ═══════════════════════════════════════════════════════════
