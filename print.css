@@ -342,18 +342,19 @@
   margin-bottom: 80px;
 }
 
+
 .perjanjian-wrapper .pj-sign-col .pj-sign-space {
-  height: 60px;
+  height: 50px;
 }
 
 .perjanjian-wrapper .pj-sign-col .pj-sign-name-line {
-  border-top: 1.5px solid #1c2e2e;
-  padding-top: 6px;
-  min-height: 30px;
   font-weight: 700;
   font-size: 0.95rem;
   color: #1c2e2e;
   text-align: center;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid #1c2e2e;
+  min-height: 30px;
 }
 
 .perjanjian-wrapper .pj-lampiran {
