@@ -1088,6 +1088,10 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   font-family: inherit;
   font-size: 0.85rem;
   background: white;
+  flex: 0 0 auto;      /* ⬅️ TAMBAH: jangan melebar */
+  width: auto;         /* ⬅️ TAMBAH: lebar mengikuti konten */
+  min-width: 140px;    /* ⬅️ TAMBAH: minimal 140px */
+  max-width: 180px;    /* ⬅️ TAMBAH: maksimal 180px */
 }
 
 /* Tombol silang di pojok kanan atas modal */
@@ -1136,6 +1140,14 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   .modal-top-actions > * {
     flex: 1 1 auto;
   }
+  /* ⬇️ TAMBAH: select tetap kecil di mobile */
+  .modal-top-actions select {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 160px;
+  }
+  
+  
 }
 /* ═══════════════════════════════════════════ */
 /* MODAL TOP BAR + TOMBOL SILANG              */
