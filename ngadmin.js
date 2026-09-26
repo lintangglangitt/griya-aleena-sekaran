@@ -552,6 +552,7 @@ function openInvoice(id) {
       btnPrint.onclick = () => printDoc(btnPrint.dataset.filename);
     }
   }, 0);
+}
 
 // ═══════════════════════════════════════════════════════════
 // KUITANSI
