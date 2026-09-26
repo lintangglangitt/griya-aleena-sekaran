@@ -25,16 +25,13 @@
 
   <div class="admin-user">
     <span id="user-name">—</span>
-   
-<button id="btn-analytics" class="btn-nav" style="position:relative;">
-  📊 Analitik
-  <span id="analytics-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:0.62rem;font-weight:800;padding:2px 7px;border-radius:50px;box-shadow:0 2px 6px rgba(231,76,60,0.5);min-width:18px;text-align:center;line-height:1.2;">0</span>
-</button>
-    
+    <button id="btn-analytics" class="btn-nav" style="position:relative;">
+      📊 Analitik
+      <span id="analytics-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:0.62rem;font-weight:800;padding:2px 7px;border-radius:50px;box-shadow:0 2px 6px rgba(231,76,60,0.5);min-width:18px;text-align:center;line-height:1.2;">0</span>
+    </button>
     <button id="btn-users" class="btn-nav">👥 Users</button>
     <button id="btn-logout" class="btn-nav">Logout</button>
   </div>
-  
 </header>
 
 <!-- STATS ROW 1 -->
@@ -106,14 +103,15 @@
   </div>
 </section>
 
-<!-- MODAL: Okupansi -->
-<div class="modal" id="modal-occ">
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: Okupansi
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal" id="modal-occ" data-modal>
   <div class="modal-card modal-card-wide">
     <h3 id="modal-title">Tambah Okupansi</h3>
     <form id="form-occ">
       <input type="hidden" id="f-id">
 
-           <!-- ═══ DATA KONTRAK ═══ -->
       <div class="form-section">
         <div class="form-section-title">📋 Data Kontrak</div>
         <div class="grid-2">
@@ -137,7 +135,7 @@
           </label>
           <label>Harga Total (Rp)
             <input type="number" id="f-harga" min="0" step="1000" required placeholder="Otomatis sesuai tipe sewa">
-          </label>          
+          </label>
           <label>Status Bayar
             <select id="f-status" required>
               <option value="lunas">✅ Lunas</option>
@@ -147,138 +145,86 @@
           </label>
         </div>
 
-
-            <!-- ═══ UPLOAD DOKUMEN ═══ -->
         <div style="margin-top:20px;">
           <div style="font-weight:700;color:var(--teal);font-size:0.85rem;margin-bottom:12px;padding-bottom:6px;border-bottom:1px dashed #e3ebeb;">
             📎 Dokumen Pendukung (PDF/JPG/PNG · max 5 MB)
           </div>
 
-          <!-- File 1: KTP Penyewa -->
           <label>KTP/SIM Penyewa
             <div class="upload-box">
               <input type="file" id="f-file-ktp-penyewa" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
-              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktp-penyewa">
-                📎 Pilih File KTP Penyewa
-              </button>
+              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktp-penyewa">📎 Pilih File KTP Penyewa</button>
               <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
               <div id="upload-status-ktp-penyewa" class="upload-status"></div>
               <input type="hidden" id="f-link-ktp-penyewa">
               <div id="link-preview-ktp-penyewa" class="link-preview"></div>
-              <button type="button" class="btn-delete-file" data-delete-file="f-file-ktp-penyewa" style="display:none;">
-                🗑️ Hapus File
-              </button>
+              <button type="button" class="btn-delete-file" data-delete-file="f-file-ktp-penyewa" style="display:none;">🗑️ Hapus File</button>
             </div>
           </label>
 
-          <!-- File 2: KTP Ortu -->
           <label>KTP/SIM Ortu/Wali/Kontak Darurat
             <div class="upload-box">
               <input type="file" id="f-file-ktp-ortu" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
-              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktp-ortu">
-                📎 Pilih File KTP Ortu
-              </button>
+              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktp-ortu">📎 Pilih File KTP Ortu</button>
               <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
               <div id="upload-status-ktp-ortu" class="upload-status"></div>
               <input type="hidden" id="f-link-ktp-ortu">
               <div id="link-preview-ktp-ortu" class="link-preview"></div>
-              <button type="button" class="btn-delete-file" data-delete-file="f-file-ktp-ortu" style="display:none;">
-                🗑️ Hapus File
-              </button>
+              <button type="button" class="btn-delete-file" data-delete-file="f-file-ktp-ortu" style="display:none;">🗑️ Hapus File</button>
             </div>
           </label>
 
-          <!-- File 3: KTM -->
           <label>Kartu Tanda Mahasiswa Penyewa
             <div class="upload-box">
               <input type="file" id="f-file-ktm" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
-              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktm">
-                📎 Pilih File KTM
-              </button>
+              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktm">📎 Pilih File KTM</button>
               <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
               <div id="upload-status-ktm" class="upload-status"></div>
               <input type="hidden" id="f-link-ktm">
               <div id="link-preview-ktm" class="link-preview"></div>
-              <button type="button" class="btn-delete-file" data-delete-file="f-file-ktm" style="display:none;">
-                🗑️ Hapus File
-              </button>
+              <button type="button" class="btn-delete-file" data-delete-file="f-file-ktm" style="display:none;">🗑️ Hapus File</button>
             </div>
           </label>
 
-          <!-- File 4: Perjanjian -->
           <label>Scan File Perjanjian (yang sudah ditandatangani)
             <div class="upload-box">
               <input type="file" id="f-file-perjanjian" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
-              <button type="button" class="btn-upload" data-upload-trigger="f-file-perjanjian">
-                📎 Pilih File Perjanjian
-              </button>
+              <button type="button" class="btn-upload" data-upload-trigger="f-file-perjanjian">📎 Pilih File Perjanjian</button>
               <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
               <div id="upload-status-perjanjian" class="upload-status"></div>
               <input type="hidden" id="f-link-perjanjian">
               <div id="link-preview-perjanjian" class="link-preview"></div>
-              <button type="button" class="btn-delete-file" data-delete-file="f-file-perjanjian" style="display:none;">
-                🗑️ Hapus File
-              </button>
+              <button type="button" class="btn-delete-file" data-delete-file="f-file-perjanjian" style="display:none;">🗑️ Hapus File</button>
             </div>
           </label>
         </div>
+      </div>
 
-      <!-- ═══ DATA PENYEWA ═══ -->
       <div class="form-section">
         <div class="form-section-title">👤 Data Penyewa</div>
-
-        <label>Nama Penyewa
-          <input type="text" id="f-nama" required placeholder="Nama lengkap penyewa">
-        </label>
-        
-        <label>No. KTP/SIM
-          <input type="text" id="f-ktp" placeholder="16 digit NIK / No SIM">
-        </label>
-        <label>Alamat
-          <input type="text" id="f-alamat" placeholder="Alamat lengkap sesuai KTP">
-        </label>
-        <label>Nomor HP/WA
-          <input type="text" id="f-hp" placeholder="08xx…">
-        </label>
-        <label>Prodi/Jurusan dan Kampus (Opsional)
-          <input type="text" id="f-kampus" placeholder="Mis. Teknik Informatika - UNNES">
-        </label>
+        <label>Nama Penyewa <input type="text" id="f-nama" required placeholder="Nama lengkap penyewa"></label>
+        <label>No. KTP/SIM <input type="text" id="f-ktp" placeholder="16 digit NIK / No SIM"></label>
+        <label>Alamat <input type="text" id="f-alamat" placeholder="Alamat lengkap sesuai KTP"></label>
+        <label>Nomor HP/WA <input type="text" id="f-hp" placeholder="08xx…"></label>
+        <label>Prodi/Jurusan dan Kampus (Opsional) <input type="text" id="f-kampus" placeholder="Mis. Teknik Informatika - UNNES"></label>
       </div>
 
-      <!-- ═══ DATA ORTU/WALI ═══ -->
       <div class="form-section">
-      
-         <div class="form-section-title">
-          👨‍👩‍👧 Data Orang Tua/Wali/Kontak Darurat
-        </div>
-        
-        <label>Nama Orang Tua/Wali/Kontak Darurat
-          <input type="text" id="f-nama-ortu" placeholder="Nama lengkap orang tua/wali">
-        </label>
-        <label>No. KTP/SIM
-          <input type="text" id="f-ktp-ortu" placeholder="16 digit NIK / No SIM">
-        </label>
-        <label>Alamat
-          <input type="text" id="f-alamat-ortu" placeholder="Alamat lengkap orang tua/wali">
-        </label>
-        <label>Nomor HP/WA
-          <input type="text" id="f-hp-ortu" placeholder="08xx…">
-        </label>
-        <label>Hubungan Keluarga
-          <input type="text" id="f-hubungan" placeholder="Mis. Ibu, Ayah, Wali">
-        </label>
+        <div class="form-section-title">👨‍👩‍👧 Data Orang Tua/Wali/Kontak Darurat</div>
+        <label>Nama Orang Tua/Wali/Kontak Darurat <input type="text" id="f-nama-ortu" placeholder="Nama lengkap orang tua/wali"></label>
+        <label>No. KTP/SIM <input type="text" id="f-ktp-ortu" placeholder="16 digit NIK / No SIM"></label>
+        <label>Alamat <input type="text" id="f-alamat-ortu" placeholder="Alamat lengkap orang tua/wali"></label>
+        <label>Nomor HP/WA <input type="text" id="f-hp-ortu" placeholder="08xx…"></label>
+        <label>Hubungan Keluarga <input type="text" id="f-hubungan" placeholder="Mis. Ibu, Ayah, Wali"></label>
       </div>
 
-      <!-- ═══ CATATAN ═══ -->
       <div class="form-section">
         <div class="form-section-title">📝 Catatan</div>
-        <label>
-          <textarea id="f-catatan" rows="2" placeholder="Mis. dapat diskon prestasi"></textarea>
-        </label>
+        <label><textarea id="f-catatan" rows="2" placeholder="Mis. dapat diskon prestasi"></textarea></label>
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn-ghost" data-close>Batal</button>
+        <button type="button" class="btn-ghost" data-close-modal>Batal</button>
         <button type="submit" class="btn-primary">Simpan</button>
       </div>
     </form>
@@ -286,33 +232,33 @@
 </div>
 
 <!-- MODAL: Invoice -->
-<div class="invoice-modal" id="invoice-modal">
+<div class="invoice-modal" id="invoice-modal" data-modal>
   <div class="invoice-wrapper" id="invoice-content"></div>
 </div>
 
 <!-- MODAL: Kuitansi -->
-<div class="invoice-modal" id="kuitansi-modal">
+<div class="invoice-modal" id="kuitansi-modal" data-modal>
   <div class="invoice-wrapper" id="kuitansi-content"></div>
 </div>
 
 <!-- MODAL: Perjanjian -->
-<div class="invoice-modal" id="perjanjian-modal">
+<div class="invoice-modal" id="perjanjian-modal" data-modal>
   <div class="invoice-wrapper perjanjian-wrapper" id="perjanjian-content"></div>
 </div>
 
 <!-- MODAL: Import Result -->
-<div class="modal" id="modal-import-result">
+<div class="modal" id="modal-import-result" data-modal>
   <div class="modal-card">
     <h3>Hasil Import CSV</h3>
     <div id="import-result"></div>
     <div class="modal-actions">
-      <button type="button" class="btn-primary" data-close>Tutup</button>
+      <button type="button" class="btn-primary" data-close-modal>Tutup</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ MODAL: USERS ═══ -->
-<div class="modal" id="modal-users">
+<!-- MODAL: USERS -->
+<div class="modal" id="modal-users" data-modal>
   <div class="modal-card">
     <h3>Kelola User</h3>
     <div id="users-list"></div>
@@ -331,15 +277,15 @@
         </label>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn-ghost" data-close>Tutup</button>
+        <button type="button" class="btn-ghost" data-close-modal>Tutup</button>
         <button type="submit" class="btn-primary">Tambah User</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- ═══ MODAL: ANALITIK ═══ -->
-<div class="modal modal-analytics" id="modal-analytics">
+<!-- MODAL: ANALITIK -->
+<div class="modal modal-analytics" id="modal-analytics" data-modal>
   <div class="modal-card modal-card-analytics">
     <div class="analytics-header">
       <h3>📊 Analitik Pengunjung</h3>
@@ -355,7 +301,7 @@
           <span id="unseen-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:50px;box-shadow:0 2px 6px rgba(231,76,60,0.5);">0</span>
         </button>
         <button class="btn-ghost" id="btn-export-logs-header">⬇ Export CSV</button>
-        <button class="btn-ghost" data-close-analytics>✕</button>
+        <button class="btn-ghost" data-close-modal>✕</button>
       </div>
     </div>
     <div id="analytics-content">
@@ -364,14 +310,14 @@
   </div>
 </div>
 
-<!-- ═══ MODAL: DETAIL LOG VISITOR ═══ -->
-<div class="modal modal-logs" id="modal-logs">
+<!-- MODAL: DETAIL LOG VISITOR -->
+<div class="modal modal-logs" id="modal-logs" data-modal>
   <div class="modal-card modal-card-logs">
     <div class="analytics-header">
       <h3>📋 Detail Log Pengunjung</h3>
       <div class="analytics-filter">
         <input type="search" id="log-search" placeholder="🔍 Cari IP / kota / browser…" style="padding:8px 12px;border:1.5px solid #e3ebeb;border-radius:8px;font-family:inherit;font-size:0.85rem;">
-        <button class="btn-ghost" data-close-logs>✕</button>
+        <button class="btn-ghost" data-close-modal>✕</button>
       </div>
     </div>
     <div id="logs-content">
@@ -380,7 +326,6 @@
   </div>
 </div>
 
-<!-- ═══ SCRIPT ═══ -->
 <script src="ngadmin.js"></script>
 </body>
 </html>
