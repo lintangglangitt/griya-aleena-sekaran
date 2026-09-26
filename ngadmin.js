@@ -11,6 +11,15 @@ let EDITING_ID = null;
 let ACTIVE_ROOM_FILTER = 'all';
 let ACTIVE_INCOME_FILTER = null;
 
+// ─── State Modal Okupansi (untuk upload & delete file) ─────
+const MODAL_STATE = {
+  editingId: null,
+  pendingUploads: {},   // { field: newUrl } — file baru yang di-upload (belum di DB)
+  pendingDeletes: [],   // [field, ...] — field yang mau dihapus (file lama di DB)
+  originalUrls: {},     // { field: oldUrl } — snapshot URL awal (mode edit)
+  pendingError: null,   // pesan error untuk ditampilkan setelah Simpan
+};
+
 // ─── Konfigurasi Pemilik ──────────────────────────────────
 const PEMILIK = {
   nama: 'Nawang Wulan',
@@ -899,11 +908,66 @@ const modalOcc = document.getElementById('modal-occ');
 const formOcc = document.getElementById('form-occ');
 
 document.getElementById('btn-add').addEventListener('click', () => openModal(null));
+
+// Tombol Batal di modal-occ → cancelModal (dengan konfirmasi + cleanup)
 modalOcc.querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => modalOcc.classList.remove('open')));
-modalOcc.addEventListener('click', e => {
-  if (e.target === modalOcc) modalOcc.classList.remove('open');
-});
+  b.addEventListener('click', () => cancelModal()));
+
+// CATATAN: klik backdrop TIDAK menutup modal-occ
+// Hanya tombol Batal atau Simpan yang bisa menutup
+
+// ═══════════════════════════════════════════════════════════
+// MODAL STATE MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+
+function resetModalState() {
+  MODAL_STATE.editingId = null;
+  MODAL_STATE.pendingUploads = {};
+  MODAL_STATE.pendingDeletes = [];
+  MODAL_STATE.originalUrls = {};
+  MODAL_STATE.pendingError = null;
+}
+
+// Batal: hapus semua file yang di-upload sesi ini, tutup modal
+async function cancelModal() {
+  const pendingUrls = Object.values(MODAL_STATE.pendingUploads).filter(Boolean);
+
+  // 1. Konfirmasi kalau ada pending upload
+  if (pendingUrls.length > 0) {
+    const confirmed = window.confirm(
+      `Ada ${pendingUrls.length} file yang belum disimpan.\n\n` +
+      `Klik OK untuk batalkan dan HAPUS file tersebut.\n` +
+      `Klik Cancel untuk kembali ke form.`
+    );
+    if (!confirmed) return;
+
+    // 2. Hapus dari R2
+    try {
+      const result = await api('/delete-files', {
+        method: 'POST',
+        body: JSON.stringify({ urls: pendingUrls }),
+      });
+
+      if (result.failed && result.failed.length > 0) {
+        alert(
+          `⚠️ Sebagian file gagal dihapus dari server:\n\n` +
+          result.failed.map(f => `• ${f.url}\n  (${f.error})`).join('\n\n') +
+          `\n\nFile yang gagal mungkin menjadi orphan. Hubungi admin.`
+        );
+      }
+    } catch (err) {
+      alert(
+        `⚠️ Gagal menghapus file sementara:\n${err.message}\n\n` +
+        `File mungkin menjadi orphan di server.`
+      );
+    }
+  }
+
+  // 3. Reset state & tutup
+  resetModalState();
+  formOcc.reset();
+  modalOcc.classList.remove('open');
+}
 
 function fillRoomSelect(currentEditingId = null) {
   const fr = document.getElementById('f-room');
@@ -938,6 +1002,13 @@ function openModal(id) {
   f.reset();
   fillRoomSelect(id);
   setupAutoHarga();
+
+  // ─── Reset state modal ───
+  MODAL_STATE.editingId = id;
+  MODAL_STATE.pendingUploads = {};
+  MODAL_STATE.pendingDeletes = [];
+  MODAL_STATE.originalUrls = {};
+  MODAL_STATE.pendingError = null;
 
   // Helper: safe set value (kalau element ada, kalau tidak skip)
   const safeSet = (elId, val) => {
@@ -983,13 +1054,19 @@ function openModal(id) {
     safeSet('f-catatan', o.catatan || '');
 
    
-        // Isi link & preview untuk 4 file
+        // Isi link & preview untuk 4 file + snapshot URL asli
     const fileMap = {
-      'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa' },
-      'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu' },
-      'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm' },
-      'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian' },
+      'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa', field: 'file_ktp_penyewa' },
+      'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu',    field: 'file_ktp_ortu' },
+      'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm',         field: 'file_ktm' },
+      'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
     };
+
+    // ─── Snapshot URL asli (untuk cleanup setelah Simpan) ───
+    Object.values(fileMap).forEach(item => {
+      if (item.link) MODAL_STATE.originalUrls[item.field] = item.link;
+    });
+
     
     Object.values(fileMap).forEach(item => {
       if (item.link) {
@@ -1059,6 +1136,7 @@ function openModal(id) {
   modalOcc.classList.add('open');
 }
 
+
 formOcc.addEventListener('submit', async (e) => {
   e.preventDefault();
   const payload = {
@@ -1087,36 +1165,63 @@ formOcc.addEventListener('submit', async (e) => {
   };
 
   try {
+    // ─── 1. Simpan ke DB ───
     if (EDITING_ID) {
       await api(`/occupancies/${EDITING_ID}`, { method: 'PUT', body: JSON.stringify(payload) });
     } else {
       await api('/occupancies', { method: 'POST', body: JSON.stringify(payload) });
     }
+
+    // ─── 2. Hapus file LAMA dari R2 (yang ditandai pending delete) ───
+    if (EDITING_ID && MODAL_STATE.pendingDeletes.length > 0) {
+      const urlsToDelete = MODAL_STATE.pendingDeletes
+        .map(f => MODAL_STATE.originalUrls[f])
+        .filter(Boolean);
+
+      if (urlsToDelete.length > 0) {
+        try {
+          const result = await api('/delete-files', {
+            method: 'POST',
+            body: JSON.stringify({ urls: urlsToDelete }),
+          });
+
+          if (result.failed && result.failed.length > 0) {
+            alert(
+              `✅ Data tersimpan.\n\n` +
+              `⚠️ Namun ${result.failed.length} file LAMA gagal dihapus dari server:\n\n` +
+              result.failed.map(f => `• ${f.url}\n  (${f.error})`).join('\n\n') +
+              `\n\nFile tersebut mungkin menjadi orphan. Hubungi admin.`
+            );
+          }
+        } catch (err) {
+          alert(
+            `✅ Data tersimpan.\n\n` +
+            `⚠️ Namun gagal menghapus file LAMA dari server:\n${err.message}\n\n` +
+            `File lama mungkin menjadi orphan. Hubungi admin.`
+          );
+        }
+      }
+    }
+
+    // ─── 3. Reset state & tutup modal ───
+    resetModalState();
     modalOcc.classList.remove('open');
+
     await Promise.all([loadOccs(), loadStats()]);
     fillYearFilter();
     renderRooms();
     renderTable();
+
   } catch (err) {
+    // Gagal simpan → JANGAN reset state, biar user bisa coba lagi
     alert('Gagal simpan: ' + err.message);
   }
 });
 
-async function deleteOcc(id) {
-  if (!confirm('Yakin hapus data ini?')) return;
-  try {
-    await api(`/occupancies/${id}`, { method: 'DELETE' });
-    await Promise.all([loadOccs(), loadStats()]);
-    fillYearFilter();
-    renderRooms();
-    renderTable();
-  } catch (err) {
-    alert('Gagal hapus: ' + err.message);
-  }
-}
-
 // ═══════════════════════════════════════════════════════════
 // UPLOAD DOKUMEN KE R2 (4 File)
+// Upload → simpan URL di MODAL_STATE.pendingUploads
+// Link BARU disimpan ke DB saat klik Simpan
 // ═══════════════════════════════════════════════════════════
 async function uploadDokumen(file, cfg) {
   const status = document.getElementById(cfg.statusId);
@@ -1137,19 +1242,20 @@ async function uploadDokumen(file, cfg) {
     return;
   }
 
-  // ⬇️ AUTO-DELETE: Kalau ada file lama, hapus dulu sebelum upload baru
-  const oldUrl = linkInput.value;
-  if (oldUrl) {
-    status.innerHTML = '🗑️ Menghapus file lama...';
+  // ─── Kalau di sesi ini sudah ada pending upload untuk field ini, hapus dulu ───
+  const prevUpload = MODAL_STATE.pendingUploads[cfg.field];
+  if (prevUpload) {
+    status.innerHTML = '🗑️ Menghapus file sebelumnya...';
     status.className = 'upload-status loading';
-    const deleted = await deleteFileFromR2(oldUrl);
-    if (deleted) {
-      console.log('File lama dihapus:', oldUrl);
-      linkInput.value = '';
-      preview.innerHTML = '';
-    } else {
-      console.warn('Gagal hapus file lama, lanjut upload file baru');
+    try {
+      await api('/delete-file', {
+        method: 'POST',
+        body: JSON.stringify({ url: prevUpload }),
+      });
+    } catch (e) {
+      console.warn('Gagal hapus pending upload sebelumnya:', e.message);
     }
+    delete MODAL_STATE.pendingUploads[cfg.field];
   }
 
   status.innerHTML = '⏳ Mengunggah... 0%';
@@ -1159,11 +1265,9 @@ async function uploadDokumen(file, cfg) {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Kirim room_id & jenis dokumen untuk rename file otomatis
     const roomId = document.getElementById('f-room')?.value || '';
     formData.append('room_id', roomId);
 
-    // file_ktp_penyewa → ktp-penyewa
     const jenisDokumen = (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-');
     formData.append('jenis', jenisDokumen);
 
@@ -1181,18 +1285,13 @@ async function uploadDokumen(file, cfg) {
 
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            resolve(JSON.parse(xhr.responseText));
-          } catch {
-            reject(new Error('Response tidak valid'));
-          }
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { reject(new Error('Response tidak valid')); }
         } else {
           try {
             const err = JSON.parse(xhr.responseText);
             reject(new Error(err.error || `HTTP ${xhr.status}`));
-          } catch {
-            reject(new Error(`HTTP ${xhr.status}`));
-          }
+          } catch { reject(new Error(`HTTP ${xhr.status}`)); }
         }
       };
 
@@ -1200,10 +1299,17 @@ async function uploadDokumen(file, cfg) {
       xhr.send(formData);
     });
 
+    // ⬇️ Simpan URL ke memori (BELUM ke DB)
+    MODAL_STATE.pendingUploads[cfg.field] = result.url;
+
+    // Update UI
     linkInput.value = result.url;
-    status.innerHTML = '✅ Upload berhasil';
-    status.className = 'upload-status success';
-    preview.innerHTML = `<a href="${escapeHtml(result.url)}" target="_blank">📄 Lihat file yang diunggah</a>`;
+    status.innerHTML = '⏳ Akan tersimpan saat klik Simpan';
+    status.className = 'upload-status loading';
+    preview.innerHTML = `<a href="${escapeHtml(result.url)}" target="_blank">📄 Lihat file (belum disimpan)</a>`;
+
+    // Kalau field ini tadinya ada di pendingDeletes, batal hapus
+    MODAL_STATE.pendingDeletes = MODAL_STATE.pendingDeletes.filter(f => f !== cfg.field);
 
     // Tampilkan tombol Hapus
     const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
@@ -1216,8 +1322,6 @@ async function uploadDokumen(file, cfg) {
     document.getElementById(cfg.key).value = '';
   }
 }
-
-
 // ═══════════════════════════════════════════════════════════
 // HAPUS FILE DARI R2
 // ═══════════════════════════════════════════════════════════
@@ -1238,35 +1342,56 @@ async function deleteFileFromR2(fileUrl) {
   }
 }
 
-// Hapus file by config (KTP, KTM, dll)
+// ═══════════════════════════════════════════════════════════
+// HAPUS FILE — 2 SKENARIO
+//  A. File baru di-upload sesi ini → hapus dari R2 langsung
+//  B. File lama di DB → tandai pending, hapus setelah Simpan
+// ═══════════════════════════════════════════════════════════
 async function deleteUploadedFile(cfg) {
   const linkInput = document.getElementById(cfg.linkId);
   const preview = document.getElementById(cfg.previewId);
   const status = document.getElementById(cfg.statusId);
+  const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
 
-  if (!linkInput.value) return;
+  const urlInField = linkInput.value;
+  if (!urlInField) return;
 
-  const confirm = window.confirm('Hapus file ini dari server?');
-  if (!confirm) return;
+  const confirmed = window.confirm('Hapus file ini?');
+  if (!confirmed) return;
 
-  const success = await deleteFileFromR2(linkInput.value);
-  if (success) {
-    linkInput.value = '';
-    if (preview) preview.innerHTML = '';
-    if (status) {
+  const isPendingUpload = MODAL_STATE.pendingUploads[cfg.field] === urlInField;
+
+  if (isPendingUpload) {
+    // ─── KASUS A: File baru di-upload sesi ini → hapus dari R2 langsung ───
+    status.innerHTML = '🗑️ Menghapus...';
+    status.className = 'upload-status loading';
+    try {
+      await api('/delete-file', {
+        method: 'POST',
+        body: JSON.stringify({ url: urlInField }),
+      });
+      delete MODAL_STATE.pendingUploads[cfg.field];
+      linkInput.value = '';
+      preview.innerHTML = '';
       status.innerHTML = '🗑️ File dihapus';
       status.className = 'upload-status success';
+      if (btnDelete) btnDelete.style.display = 'none';
+    } catch (err) {
+      status.innerHTML = `❌ Gagal hapus: ${escapeHtml(err.message)}`;
+      status.className = 'upload-status error';
     }
-
-    // ⬇️ TAMBAH: Sembunyikan tombol Hapus
-    const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
-    if (btnDelete) btnDelete.style.display = 'none'
-    
   } else {
-    alert('Gagal menghapus file');
+    // ─── KASUS B: File lama di DB → tandai pending delete ───
+    if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
+      MODAL_STATE.pendingDeletes.push(cfg.field);
+    }
+    linkInput.value = '';
+    preview.innerHTML = '';
+    status.innerHTML = '⏳ Akan dihapus saat klik Simpan';
+    status.className = 'upload-status loading';
+    if (btnDelete) btnDelete.style.display = 'none';
   }
 }
-
 
 // ═══════════════════════════════════════════════════════════
 // CEK FILE MASIH ADA DI R2
@@ -1945,10 +2070,10 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // ─── Klik Backdrop Modal → Tutup ───
-  if (e.target.classList.contains('invoice-modal')) {
-    e.target.classList.remove('open');
-  }
+  // ─── Klik Backdrop Modal → TIDAK menutup ───
+  // Semua modal (invoice, kuitansi, perjanjian, users, analytics, logs,
+  // import-result, occ) hanya bisa ditutup via tombol close eksplisit.
+  // Tidak ada auto-close via backdrop.
 });
 
 // ─── Event Delegation untuk Input File (change) ───
@@ -1966,6 +2091,25 @@ document.addEventListener('change', async (e) => {
   await uploadDokumen(file, cfg);
 });
 
+
+// ═══════════════════════════════════════════════════════════
+// DISABLE ESC KEY untuk Tutup Modal
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+
+  // Cek apakah ada modal yang terbuka
+  const openModals = document.querySelectorAll('.modal.open, .invoice-modal.open');
+  if (openModals.length === 0) return;
+
+  // Cegah default behavior
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Opsional: kasih feedback ke user
+  // (biarkan silent, biar tidak mengganggu)
+  return false;
+}, true);
 
 init().catch(err => {
   console.error(err);
