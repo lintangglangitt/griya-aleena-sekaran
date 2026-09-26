@@ -525,6 +525,7 @@ function openInvoice(id) {
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
   const html = `
+    <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     ${buildDocHeader('INVOICE', invoiceNo)}
 
     <div class="inv-section">
@@ -600,6 +601,7 @@ function openKuitansi(id) {
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
   const html = `
+    <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     ${buildDocHeader('KUITANSI', noKuitansi)}
 
     <div class="inv-section">
@@ -699,6 +701,7 @@ function openPerjanjian(id) {
   const kamarLabel = `${namaKamar} (${kamarTipe})`;
 
   const html = `
+    <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     <div class="perjanjian-logo">
       <img src="foto/logo.png" alt="Griya Aleena" onerror="this.style.display='none'">
     </div>
