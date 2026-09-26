@@ -610,7 +610,7 @@ function openKuitansi(id) {
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
-      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. Mohon disimpan dengan baik.
+      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. <br>Mohon disimpan dengan baik.
     </p>
 
     <div class="inv-signature">
