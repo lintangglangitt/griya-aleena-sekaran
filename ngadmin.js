@@ -11,16 +11,15 @@ let EDITING_ID = null;
 let ACTIVE_ROOM_FILTER = 'all';
 let ACTIVE_INCOME_FILTER = null;
 
-// ─── State Modal Okupansi (untuk upload & delete file) ─────
+// ─── State Modal Okupansi (upload & delete file) ───────────
 const MODAL_STATE = {
   editingId: null,
-  pendingUploads: {},   // { field: newUrl } — file baru yang di-upload (belum di DB)
-  pendingDeletes: [],   // [field, ...] — field yang mau dihapus (file lama di DB)
-  originalUrls: {},     // { field: oldUrl } — snapshot URL awal (mode edit)
-  pendingError: null,   // pesan error untuk ditampilkan setelah Simpan
+  pendingUploads: {},   // { field: newUrl }
+  pendingDeletes: [],   // [field, ...]
+  originalUrls: {},     // { field: oldUrl }
 };
 
-// ─── Konfigurasi Pemilik ──────────────────────────────────
+// ─── Konfigurasi Pemilik ───────────────────────────────────
 const PEMILIK = {
   nama: 'Nawang Wulan',
   no_ktp: '3304025911900001',
@@ -30,7 +29,6 @@ const PEMILIK = {
   no_hp_perjanjian: '0899-5677-419',
 };
 
-// ─── Harga Default per Tipe Sewa ───────────────────────────
 const HARGA_DEFAULT = {
   harian: 100000,
   mingguan: 500000,
@@ -39,8 +37,7 @@ const HARGA_DEFAULT = {
   tahunan: 9100000,
 };
 
-// ─── Konfigurasi Upload Dokumen (4 file) ───────────────────
-
+// ─── Konfigurasi Upload Dokumen ────────────────────────────
 const UPLOAD_CONFIGS = [
   { key: 'f-file-ktp-penyewa', statusId: 'upload-status-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', field: 'file_ktp_penyewa' },
   { key: 'f-file-ktp-ortu',    statusId: 'upload-status-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    field: 'file_ktp_ortu' },
@@ -148,9 +145,7 @@ function printDoc(namaFile) {
   const originalTitle = document.title;
   document.title = namaFile;
   window.print();
-  setTimeout(() => {
-    document.title = originalTitle;
-  }, 1500);
+  setTimeout(() => { document.title = originalTitle; }, 1500);
 }
 
 // ─── Auto-isi Harga Sesuai Tipe Sewa ───────────────────────
@@ -158,11 +153,8 @@ function updateHargaOtomatis() {
   const tipe = document.getElementById('f-tipe').value;
   const hargaInput = document.getElementById('f-harga');
   if (!tipe || !hargaInput) return;
-  if (HARGA_DEFAULT[tipe]) {
-    hargaInput.value = HARGA_DEFAULT[tipe];
-  }
+  if (HARGA_DEFAULT[tipe]) hargaInput.value = HARGA_DEFAULT[tipe];
 }
-
 function setupAutoHarga() {
   const tipeSelect = document.getElementById('f-tipe');
   if (tipeSelect && !tipeSelect.dataset.listenerBound) {
@@ -171,37 +163,23 @@ function setupAutoHarga() {
   }
 }
 
-// ─── Logout ────────────────────────────────────────────────
-document.getElementById('btn-logout').addEventListener('click', async () => {
-  try { await api('/auth/logout', { method: 'POST' }); } catch {}
-  localStorage.removeItem('ga_token');
-  localStorage.removeItem('ga_user');
-  window.location.href = 'ibun.html';
-});
-
-
-// ═══════════════════════════════════════════════════════════
-// PASTIKAN SEMUA MODAL TERTUTUP SAAT HALAMAN DIMUAT
-// ═══════════════════════════════════════════════════════════
+// ─── Force Close Semua Modal ───────────────────────────────
 function forceCloseAllModals() {
-  const allModals = document.querySelectorAll(
-    '.modal, .invoice-modal'
-  );
-  allModals.forEach(m => {
+  document.querySelectorAll('.modal, .invoice-modal').forEach(m => {
     m.classList.remove('open');
     m.style.display = 'none';
   });
-  // Kembalikan display ke default setelah 100ms (biar CSS class yang atur)
   setTimeout(() => {
-    allModals.forEach(m => { m.style.display = ''; });
+    document.querySelectorAll('.modal, .invoice-modal').forEach(m => {
+      m.style.display = '';
+    });
   }, 100);
 }
 
 // ─── Init ──────────────────────────────────────────────────
 async function init() {
+  forceCloseAllModals();
 
-  forceCloseAllModals();   // ⬅️ TAMBAH INI
-  
   document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
   document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
 
@@ -216,18 +194,16 @@ async function init() {
     document.getElementById('btn-users').style.display = 'none';
   }
 
-  // Load badge analitik + auto-refresh tiap 5 menit
   updateAnalyticsBadge();
   setInterval(updateAnalyticsBadge, 5 * 60 * 1000);
 }
 
-// ─── Badge Angka di Tombol Analitik ────────────────────────
+// ─── Badge Analitik ────────────────────────────────────────
 async function updateAnalyticsBadge() {
   try {
     const data = await api('/analytics/logs/unseen-count');
     const badge = document.getElementById('analytics-badge');
     if (!badge) return;
-
     if (data.count > 0) {
       badge.textContent = data.count > 99 ? '99+' : data.count;
       badge.style.display = 'inline-block';
@@ -235,11 +211,11 @@ async function updateAnalyticsBadge() {
       badge.style.display = 'none';
     }
   } catch (err) {
-    // Silent fail — jangan ganggu user
     console.log('Analytics badge error:', err.message);
   }
 }
 
+// ─── Load Data ─────────────────────────────────────────────
 async function loadRooms() {
   const data = await api('/rooms');
   ROOMS = data.rooms || [];
@@ -259,7 +235,7 @@ async function loadStats() {
   document.getElementById('st-income-month').textContent = rupiahFull(s.penghasilan_bulan_ini);
 }
 
-// ─── Kartu Pembayaran jadi Filter ──────────────────────────
+// ─── Kartu Income sebagai Filter ───────────────────────────
 function setupIncomeCardListeners() {
   document.querySelectorAll('.stat-card.clickable').forEach(card => {
     card.addEventListener('click', () => toggleIncomeFilter(card.dataset.filter));
@@ -271,7 +247,6 @@ function setupIncomeCardListeners() {
     });
   });
 }
-
 function toggleIncomeFilter(filter) {
   if (ACTIVE_INCOME_FILTER === filter) {
     ACTIVE_INCOME_FILTER = null;
@@ -286,7 +261,6 @@ function toggleIncomeFilter(filter) {
   renderRooms();
   renderTable();
 }
-
 function updateIncomeCardUI() {
   document.querySelectorAll('.stat-card.clickable').forEach(card => {
     card.classList.toggle('active', card.dataset.filter === ACTIVE_INCOME_FILTER);
@@ -298,21 +272,16 @@ function fillYearFilter() {
   const sel = document.getElementById('filter-tahun');
   const currentVal = sel.value;
   const years = new Set();
-
   OCCS.forEach(o => {
     if (!o.tanggal_mulai || !o.tanggal_selesai) return;
     const y1 = Number(o.tanggal_mulai.slice(0, 4));
     const y2 = Number(o.tanggal_selesai.slice(0, 4));
     for (let y = y1; y <= y2; y++) years.add(y);
   });
-
   const sorted = [...years].sort((a, b) => a - b);
   sel.innerHTML = '<option value="">Semua Tahun</option>' +
     sorted.map(y => `<option value="${y}">${y}</option>`).join('');
-
-  if (currentVal && sorted.includes(Number(currentVal))) {
-    sel.value = currentVal;
-  }
+  if (currentVal && sorted.includes(Number(currentVal))) sel.value = currentVal;
 }
 
 // ─── Render Room Cards ─────────────────────────────────────
@@ -378,17 +347,15 @@ function renderRooms() {
   });
 }
 
-// ─── Helper filter income ──────────────────────────────────
+// ─── Helper Filter Income ──────────────────────────────────
 function passesIncomeFilter(o) {
   if (!ACTIVE_INCOME_FILTER) return true;
   if (o.status_bayar !== 'lunas') return false;
-
   const now = new Date();
   const curYear = now.getFullYear();
   const curMonth = String(now.getMonth() + 1).padStart(2, '0');
   const startY = o.tanggal_mulai.slice(0, 4);
   const startM = o.tanggal_mulai.slice(5, 7);
-
   if (ACTIVE_INCOME_FILTER === 'all') return true;
   if (ACTIVE_INCOME_FILTER === 'year') return startY === String(curYear);
   if (ACTIVE_INCOME_FILTER === 'month') return startY === String(curYear) && startM === curMonth;
@@ -404,7 +371,6 @@ function renderTable() {
 
   const filtered = OCCS.filter(o => {
     if (!passesIncomeFilter(o)) return false;
-
     if (!ACTIVE_INCOME_FILTER) {
       if (fTahun) {
         const y1 = Number(o.tanggal_mulai.slice(0, 4));
@@ -415,9 +381,7 @@ function renderTable() {
       if (fs && o.status_bayar !== fs) return false;
       if (q && !(o.nama_penyewa.toLowerCase().includes(q) || (o.no_hp || '').includes(q))) return false;
     }
-
     if (ACTIVE_ROOM_FILTER !== 'all' && String(o.room_id) !== String(ACTIVE_ROOM_FILTER)) return false;
-
     return true;
   });
 
@@ -464,13 +428,11 @@ function renderTable() {
       </tr>
     `;
   }).join('');
-
 }
 
 // ═══════════════════════════════════════════════════════════
-// HEADER BERSAMA
+// DOKUMEN: Header Bersama
 // ═══════════════════════════════════════════════════════════
-
 function buildDocHeader(title, no) {
   return `
     <div class="inv-header">
@@ -534,9 +496,7 @@ function openInvoice(id) {
     </table>
 
     <div class="inv-total">
-      <div>
-        <div class="inv-total-label">Total Tagihan</div>
-      </div>
+      <div><div class="inv-total-label">Total Tagihan</div></div>
       <div class="inv-total-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
     </div>
 
@@ -565,14 +525,6 @@ function openInvoice(id) {
 
   document.getElementById('invoice-content').innerHTML = html;
   document.getElementById('invoice-modal').classList.add('open');
-
-  // Attach event listener tombol Print
-  setTimeout(() => {
-    const btnPrint = document.getElementById('inv-btn-print');
-    if (btnPrint) {
-      btnPrint.onclick = () => printDoc(btnPrint.dataset.filename);
-    }
-  }, 0);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -652,31 +604,17 @@ function openKuitansi(id) {
 
   document.getElementById('kuitansi-content').innerHTML = html;
   document.getElementById('kuitansi-modal').classList.add('open');
-
-  // Attach event listener tombol Tutup
-
-    setTimeout(() => {
-    const btnPrint = document.getElementById('kui-btn-print');
-    if (btnPrint) {
-      btnPrint.onclick = () => printDoc(btnPrint.dataset.filename);
-    }
-  }, 0);
 }
+
 // ═══════════════════════════════════════════════════════════
 // PERJANJIAN
 // ═══════════════════════════════════════════════════════════
-
 function openPerjanjian(id) {
   const o = OCCS.find(x => x.id === id);
   if (!o) return;
 
-  // Helper: kapitalkan semua teks (kecuali angka & simbol)
-  const toUpper = (s) => {
-    if (!s) return '';
-    return String(s).toUpperCase();
-  };
+  const toUpper = (s) => s ? String(s).toUpperCase() : '';
 
-  // Field yang tidak di-uppercase (untuk angka/rupiah)
   const fieldRaw = (label, value) => `
     <div class="pj-field">
       <div class="pj-label">${escapeHtml(label)}</div>
@@ -696,8 +634,8 @@ function openPerjanjian(id) {
   const totalBiaya = rupiahFull(o.harga_total);
   const tipeUpper = o.tipe_sewa.toUpperCase();
   const kamarTipe = o.tipe === 'AC' ? 'AC' : 'NON AC';
-  const namaKamar = (o.nama_kamar || 'Kamar').toUpperCase();  // ⬅️ TAMBAH
-  const kamarLabel = `${namaKamar} (${kamarTipe})`;            // ⬅️ TAMBAH
+  const namaKamar = (o.nama_kamar || 'Kamar').toUpperCase();
+  const kamarLabel = `${namaKamar} (${kamarTipe})`;
 
   const html = `
     <div class="perjanjian-logo">
@@ -878,72 +816,28 @@ function openPerjanjian(id) {
     </div>
 
     <div class="invoice-actions">
-      <button class="inv-btn-close" onclick="closePerjanjian()">Tutup</button>
+      <button class="inv-btn-close">Tutup</button>
       <button class="inv-btn-print" id="perj-btn-print" data-filename="Perjanjian - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
   document.getElementById('perjanjian-content').innerHTML = html;
   document.getElementById('perjanjian-modal').classList.add('open');
-
-  // Attach event listener tombol Print
-  setTimeout(() => {
-    const btnPrint = document.getElementById('perj-btn-print');
-    if (btnPrint) {
-      btnPrint.onclick = () => printDoc(btnPrint.dataset.filename);
-    }
-  }, 0);
 }
-
-
-function closePerjanjian() {
-  document.getElementById('perjanjian-modal').classList.remove('open');
-}
-
-// Close modal saat klik backdrop
-['invoice-modal', 'kuitansi-modal', 'perjanjian-modal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', (e) => {
-    if (e.target.id === id) {
-      document.getElementById(id).classList.remove('open');
-    }
-  });
-});
-
-// ─── Filters ───────────────────────────────────────────────
-document.getElementById('search').addEventListener('input', renderTable);
-document.getElementById('filter-tahun').addEventListener('change', renderTable);
-document.getElementById('filter-status').addEventListener('change', renderTable);
-
-// ─── Modal Okupansi ────────────────────────────────────────
-const modalOcc = document.getElementById('modal-occ');
-const formOcc = document.getElementById('form-occ');
-
-document.getElementById('btn-add').addEventListener('click', () => openModal(null));
-
-// Tombol Batal di modal-occ → cancelModal (dengan konfirmasi + cleanup)
-modalOcc.querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => cancelModal()));
-
-// CATATAN: klik backdrop TIDAK menutup modal-occ
-// Hanya tombol Batal atau Simpan yang bisa menutup
 
 // ═══════════════════════════════════════════════════════════
 // MODAL STATE MANAGEMENT
 // ═══════════════════════════════════════════════════════════
-
 function resetModalState() {
   MODAL_STATE.editingId = null;
   MODAL_STATE.pendingUploads = {};
   MODAL_STATE.pendingDeletes = [];
   MODAL_STATE.originalUrls = {};
-  MODAL_STATE.pendingError = null;
 }
 
-// Batal: hapus semua file yang di-upload sesi ini, tutup modal
 async function cancelModal() {
   const pendingUrls = Object.values(MODAL_STATE.pendingUploads).filter(Boolean);
 
-  // 1. Konfirmasi kalau ada pending upload
   if (pendingUrls.length > 0) {
     const confirmed = window.confirm(
       `Ada ${pendingUrls.length} file yang belum disimpan.\n\n` +
@@ -952,7 +846,6 @@ async function cancelModal() {
     );
     if (!confirmed) return;
 
-    // 2. Hapus dari R2
     try {
       const result = await api('/delete-files', {
         method: 'POST',
@@ -974,12 +867,14 @@ async function cancelModal() {
     }
   }
 
-  // 3. Reset state & tutup
   resetModalState();
-  formOcc.reset();
-  modalOcc.classList.remove('open');
+  document.getElementById('form-occ').reset();
+  document.getElementById('modal-occ').classList.remove('open');
 }
 
+// ═══════════════════════════════════════════════════════════
+// MODAL OKUPANSI
+// ═══════════════════════════════════════════════════════════
 function fillRoomSelect(currentEditingId = null) {
   const fr = document.getElementById('f-room');
   const today = todayISO();
@@ -996,49 +891,43 @@ function fillRoomSelect(currentEditingId = null) {
       o.tanggal_mulai <= today &&
       o.tanggal_selesai >= today
     );
-
     const isDisabled = activeOcc && activeOcc.room_id !== editingRoomId;
     const disabledAttr = isDisabled ? 'disabled' : '';
     const label = isDisabled
       ? `${r.nama_kamar} (${r.tipe}) — TERISI`
       : `${r.nama_kamar} (${r.tipe})`;
-
     return `<option value="${r.id}" ${disabledAttr}>${escapeHtml(label)}</option>`;
   }).join('');
 }
 
 function openModal(id) {
   EDITING_ID = id;
-  const f = formOcc;
+  const f = document.getElementById('form-occ');
   f.reset();
   fillRoomSelect(id);
   setupAutoHarga();
 
-  // ─── Reset state modal ───
   MODAL_STATE.editingId = id;
   MODAL_STATE.pendingUploads = {};
   MODAL_STATE.pendingDeletes = [];
   MODAL_STATE.originalUrls = {};
-  MODAL_STATE.pendingError = null;
 
-  // Helper: safe set value (kalau element ada, kalau tidak skip)
   const safeSet = (elId, val) => {
     const el = document.getElementById(elId);
     if (el) el.value = val !== undefined && val !== null ? val : '';
-    else console.warn('Element tidak ditemukan:', elId);
   };
 
-  // Reset semua upload UI
-  if (typeof UPLOAD_CONFIGS !== 'undefined') {
-    UPLOAD_CONFIGS.forEach(cfg => {
-      const status = document.getElementById(cfg.statusId);
-      const preview = document.getElementById(cfg.previewId);
-      const link = document.getElementById(cfg.linkId);
-      if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
-      if (preview) preview.innerHTML = '';
-      if (link) link.value = '';
-    });
-  }
+  // Reset UI upload
+  UPLOAD_CONFIGS.forEach(cfg => {
+    const status = document.getElementById(cfg.statusId);
+    const preview = document.getElementById(cfg.previewId);
+    const link = document.getElementById(cfg.linkId);
+    if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
+    if (preview) preview.innerHTML = '';
+    if (link) link.value = '';
+    const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
+    if (btnDelete) btnDelete.style.display = 'none';
+  });
 
   if (id) {
     const o = OCCS.find(x => x.id === id);
@@ -1050,7 +939,6 @@ function openModal(id) {
     safeSet('f-mulai', o.tanggal_mulai);
     safeSet('f-selesai', o.tanggal_selesai);
     safeSet('f-harga', o.harga_total);
-    // safeSet('f-link', o.link_kontrak || '');
     safeSet('f-status', o.status_bayar);
     safeSet('f-nama', o.nama_penyewa);
     safeSet('f-ktp', o.no_ktp || '');
@@ -1064,8 +952,6 @@ function openModal(id) {
     safeSet('f-hubungan', o.hubungan_keluarga || '');
     safeSet('f-catatan', o.catatan || '');
 
-   
-        // Isi link & preview untuk 4 file + snapshot URL asli
     const fileMap = {
       'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa', field: 'file_ktp_penyewa' },
       'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu',    field: 'file_ktp_ortu' },
@@ -1073,12 +959,10 @@ function openModal(id) {
       'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
     };
 
-    // ─── Snapshot URL asli (untuk cleanup setelah Simpan) ───
     Object.values(fileMap).forEach(item => {
       if (item.link) MODAL_STATE.originalUrls[item.field] = item.link;
     });
 
-    
     Object.values(fileMap).forEach(item => {
       if (item.link) {
         const hidden = document.getElementById(item.hidden);
@@ -1088,7 +972,6 @@ function openModal(id) {
       }
     });
 
-    // Tampilkan tombol Hapus kalau ada file tersimpan
     UPLOAD_CONFIGS.forEach(cfg => {
       const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
       if (btnDelete) {
@@ -1097,7 +980,6 @@ function openModal(id) {
       }
     });
 
-          // ⬇️ Validasi semua link ke R2 (async, tidak blocking)
     const linksToCheck = Object.values(fileMap).map(item => item.link).filter(Boolean);
     if (linksToCheck.length > 0) {
       checkFilesExist(linksToCheck).then(results => {
@@ -1105,50 +987,34 @@ function openModal(id) {
           if (!item.link) return;
           const preview = document.getElementById(item.preview);
           const hidden = document.getElementById(item.hidden);
-          
-          // Cari key dari UPLOAD_CONFIGS untuk tombol Hapus
           const cfg = UPLOAD_CONFIGS.find(c => c.linkId === item.hidden);
           const deleteBtn = cfg ? document.querySelector(`[data-delete-file="${cfg.key}"]`) : null;
           const status = cfg ? document.getElementById(cfg.statusId) : null;
-
           const exist = results[item.link];
           if (exist === true) {
-            // ✅ File ada → tampilkan link normal + tombol Hapus
             if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
             if (deleteBtn) deleteBtn.style.display = 'inline-block';
           } else if (exist === false) {
-            // ❌ File TIDAK ada → tampilkan POLOS (seperti belum upload)
             if (preview) preview.innerHTML = '';
             if (deleteBtn) deleteBtn.style.display = 'none';
             if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
-            
-            // Bersihkan link tersembunyi biar tidak tersimpan URL mati
             if (hidden) hidden.value = '';
           }
         });
       }).catch(err => {
         console.warn('Gagal validasi file:', err);
-        // Fallback: sembunyikan preview (biar tidak tampil link mati)
-        Object.values(fileMap).forEach(item => {
-          if (!item.link) return;
-          const preview = document.getElementById(item.preview);
-          const hidden = document.getElementById(item.hidden);
-          if (preview) preview.innerHTML = '';
-          if (hidden) hidden.value = '';
-        });
       });
     }
-
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Okupansi';
     safeSet('f-mulai', todayISO());
     updateHargaOtomatis();
   }
-  modalOcc.classList.add('open');
+  document.getElementById('modal-occ').classList.add('open');
 }
 
-
-formOcc.addEventListener('submit', async (e) => {
+// ─── Submit Form Okupansi ──────────────────────────────────
+document.getElementById('form-occ').addEventListener('submit', async (e) => {
   e.preventDefault();
   const payload = {
     room_id: Number(document.getElementById('f-room').value),
@@ -1176,14 +1042,13 @@ formOcc.addEventListener('submit', async (e) => {
   };
 
   try {
-    // ─── 1. Simpan ke DB ───
     if (EDITING_ID) {
       await api(`/occupancies/${EDITING_ID}`, { method: 'PUT', body: JSON.stringify(payload) });
     } else {
       await api('/occupancies', { method: 'POST', body: JSON.stringify(payload) });
     }
 
-    // ─── 2. Hapus file LAMA dari R2 (yang ditandai pending delete) ───
+    // Hapus file LAMA dari R2
     if (EDITING_ID && MODAL_STATE.pendingDeletes.length > 0) {
       const urlsToDelete = MODAL_STATE.pendingDeletes
         .map(f => MODAL_STATE.originalUrls[f])
@@ -1195,7 +1060,6 @@ formOcc.addEventListener('submit', async (e) => {
             method: 'POST',
             body: JSON.stringify({ urls: urlsToDelete }),
           });
-
           if (result.failed && result.failed.length > 0) {
             alert(
               `✅ Data tersimpan.\n\n` +
@@ -1214,9 +1078,8 @@ formOcc.addEventListener('submit', async (e) => {
       }
     }
 
-    // ─── 3. Reset state & tutup modal ───
     resetModalState();
-    modalOcc.classList.remove('open');
+    document.getElementById('modal-occ').classList.remove('open');
 
     await Promise.all([loadOccs(), loadStats()]);
     fillYearFilter();
@@ -1224,15 +1087,12 @@ formOcc.addEventListener('submit', async (e) => {
     renderTable();
 
   } catch (err) {
-    // Gagal simpan → JANGAN reset state, biar user bisa coba lagi
     alert('Gagal simpan: ' + err.message);
   }
 });
 
 // ═══════════════════════════════════════════════════════════
-// UPLOAD DOKUMEN KE R2 (4 File)
-// Upload → simpan URL di MODAL_STATE.pendingUploads
-// Link BARU disimpan ke DB saat klik Simpan
+// UPLOAD DOKUMEN KE R2
 // ═══════════════════════════════════════════════════════════
 async function uploadDokumen(file, cfg) {
   const status = document.getElementById(cfg.statusId);
@@ -1253,7 +1113,7 @@ async function uploadDokumen(file, cfg) {
     return;
   }
 
-  // ─── Kalau di sesi ini sudah ada pending upload untuk field ini, hapus dulu ───
+  // Hapus pending upload sebelumnya di field ini
   const prevUpload = MODAL_STATE.pendingUploads[cfg.field];
   if (prevUpload) {
     status.innerHTML = '🗑️ Menghapus file sebelumnya...';
@@ -1275,10 +1135,8 @@ async function uploadDokumen(file, cfg) {
   try {
     const formData = new FormData();
     formData.append('file', file);
-
     const roomId = document.getElementById('f-room')?.value || '';
     formData.append('room_id', roomId);
-
     const jenisDokumen = (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-');
     formData.append('jenis', jenisDokumen);
 
@@ -1310,29 +1168,23 @@ async function uploadDokumen(file, cfg) {
       xhr.send(formData);
     });
 
-        // ⬇️ Simpan URL ke memori (BELUM ke DB)
     MODAL_STATE.pendingUploads[cfg.field] = result.url;
 
-    // ⬇️ Kalau ada file LAMA di DB untuk field ini, tandai untuk dihapus setelah Simpan.
-    // Ini berlaku baik user klik 🗑️ dulu atau tidak — karena file lama sudah DIGANTI,
-    // jadi harus dihapus dari R2 supaya tidak orphan.
+    // Kalau ada file LAMA di DB, tandai untuk dihapus setelah Simpan
     if (EDITING_ID && MODAL_STATE.originalUrls[cfg.field]) {
       if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
         MODAL_STATE.pendingDeletes.push(cfg.field);
       }
     }
 
-    // Update UI
     linkInput.value = result.url;
     status.innerHTML = '⏳ Akan tersimpan saat klik Simpan';
     status.className = 'upload-status loading';
     preview.innerHTML = `<a href="${escapeHtml(result.url)}" target="_blank">📄 Lihat file (belum disimpan)</a>`;
 
-    // Tampilkan tombol Hapus
     const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
     if (btnDelete) btnDelete.style.display = 'inline-block';
 
-    
   } catch (err) {
     status.innerHTML = `❌ Gagal: ${escapeHtml(err.message)}`;
     status.className = 'upload-status error';
@@ -1340,30 +1192,9 @@ async function uploadDokumen(file, cfg) {
     document.getElementById(cfg.key).value = '';
   }
 }
-// ═══════════════════════════════════════════════════════════
-// HAPUS FILE DARI R2
-// ═══════════════════════════════════════════════════════════
-
-async function deleteFileFromR2(fileUrl) {
-  if (!fileUrl) return false;
-  
-  try {
-    const result = await api('/delete-file', {
-      method: 'POST',
-      body: JSON.stringify({ url: fileUrl }),
-    });
-    console.log('File dihapus:', result.deleted);
-    return true;
-  } catch (err) {
-    console.error('Gagal hapus file:', err.message);
-    return false;
-  }
-}
 
 // ═══════════════════════════════════════════════════════════
-// HAPUS FILE — 2 SKENARIO
-//  A. File baru di-upload sesi ini → hapus dari R2 langsung
-//  B. File lama di DB → tandai pending, hapus setelah Simpan
+// HAPUS FILE
 // ═══════════════════════════════════════════════════════════
 async function deleteUploadedFile(cfg) {
   const linkInput = document.getElementById(cfg.linkId);
@@ -1381,7 +1212,7 @@ async function deleteUploadedFile(cfg) {
   const hasOriginal = !!MODAL_STATE.originalUrls[cfg.field];
 
   if (isPendingUpload) {
-    // ─── KASUS A/C: File baru di-upload sesi ini → hapus dari R2 langsung ───
+    // File baru di-upload sesi ini → hapus dari R2 langsung
     status.innerHTML = '🗑️ Menghapus...';
     status.className = 'upload-status loading';
     try {
@@ -1393,25 +1224,23 @@ async function deleteUploadedFile(cfg) {
       linkInput.value = '';
       preview.innerHTML = '';
 
-      // ⬇️ Kalau ada file LAMA di DB, tandai untuk dihapus setelah Simpan
       if (EDITING_ID && hasOriginal) {
         if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
           MODAL_STATE.pendingDeletes.push(cfg.field);
         }
         status.innerHTML = '🗑️ File baru dihapus · file lama akan dihapus saat Simpan';
         status.className = 'upload-status loading';
-        if (btnDelete) btnDelete.style.display = 'none';
       } else {
         status.innerHTML = '🗑️ File dihapus';
         status.className = 'upload-status success';
-        if (btnDelete) btnDelete.style.display = 'none';
       }
+      if (btnDelete) btnDelete.style.display = 'none';
     } catch (err) {
       status.innerHTML = `❌ Gagal hapus: ${escapeHtml(err.message)}`;
       status.className = 'upload-status error';
     }
   } else {
-    // ─── KASUS B: File lama di DB (belum diganti) → tandai pending delete ───
+    // File lama di DB → tandai pending delete
     if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
       MODAL_STATE.pendingDeletes.push(cfg.field);
     }
@@ -1422,15 +1251,27 @@ async function deleteUploadedFile(cfg) {
     if (btnDelete) btnDelete.style.display = 'none';
   }
 }
-// ═══════════════════════════════════════════════════════════
-// CEK FILE MASIH ADA DI R2
-// ═══════════════════════════════════════════════════════════
 
+async function deleteFileFromR2(fileUrl) {
+  if (!fileUrl) return false;
+  try {
+    await api('/delete-file', {
+      method: 'POST',
+      body: JSON.stringify({ url: fileUrl }),
+    });
+    return true;
+  } catch (err) {
+    console.error('Gagal hapus file:', err.message);
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CEK FILE DI R2
+// ═══════════════════════════════════════════════════════════
 async function checkFilesExist(urls) {
-  // Filter URL yang valid
   const validUrls = urls.filter(u => u && typeof u === 'string');
   if (validUrls.length === 0) return {};
-
   try {
     const result = await api('/check-file', {
       method: 'POST',
@@ -1443,8 +1284,26 @@ async function checkFilesExist(urls) {
   }
 }
 
-// ─── Export CSV ────────────────────────────────────────────
-document.getElementById('btn-export').addEventListener('click', () => {
+// ═══════════════════════════════════════════════════════════
+// DELETE OKUPANSI
+// ═══════════════════════════════════════════════════════════
+async function deleteOcc(id) {
+  if (!confirm('Yakin hapus data ini?')) return;
+  try {
+    await api(`/occupancies/${id}`, { method: 'DELETE' });
+    await Promise.all([loadOccs(), loadStats()]);
+    fillYearFilter();
+    renderRooms();
+    renderTable();
+  } catch (err) {
+    alert('Gagal hapus: ' + err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT / IMPORT CSV
+// ═══════════════════════════════════════════════════════════
+function exportCSV() {
   const rows = [
     [
       'Kamar','Penyewa','No HP','Prodi/Jurusan & Kampus','Tipe Sewa','Mulai','Selesai','Total','Status',
@@ -1453,28 +1312,12 @@ document.getElementById('btn-export').addEventListener('click', () => {
       'File KTP Penyewa','File KTP Ortu','File KTM','File Perjanjian'
     ],
     ...OCCS.map(o => [
-      o.nama_kamar || '',
-      o.nama_penyewa || '',
-      o.no_hp || '',
-      o.asal_kampus || '',
-      o.tipe_sewa || '',
-      o.tanggal_mulai || '',
-      o.tanggal_selesai || '',
-      o.harga_total || '',
-      o.status_bayar || '',
-      o.link_kontrak || '',
-      o.catatan || '',
-      o.no_ktp || '',
-      o.alamat_penyewa || '',
-      o.nama_ortu || '',
-      o.no_ktp_ortu || '',
-      o.no_hp_ortu || '',
-      o.alamat_ortu || '',
-      o.hubungan_keluarga || '',
-      o.file_ktp_penyewa || '',
-      o.file_ktp_ortu || '',
-      o.file_ktm || '',
-      o.file_perjanjian || ''
+      o.nama_kamar || '', o.nama_penyewa || '', o.no_hp || '', o.asal_kampus || '',
+      o.tipe_sewa || '', o.tanggal_mulai || '', o.tanggal_selesai || '',
+      o.harga_total || '', o.status_bayar || '', o.link_kontrak || '', o.catatan || '',
+      o.no_ktp || '', o.alamat_penyewa || '', o.nama_ortu || '', o.no_ktp_ortu || '',
+      o.no_hp_ortu || '', o.alamat_ortu || '', o.hubungan_keluarga || '',
+      o.file_ktp_penyewa || '', o.file_ktp_ortu || '', o.file_ktm || '', o.file_perjanjian || ''
     ])
   ];
   const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -1485,32 +1328,78 @@ document.getElementById('btn-export').addEventListener('click', () => {
   a.download = `okupansi-griya-aleena-${todayISO()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-});
+}
 
-// ─── Import CSV ────────────────────────────────────────────
-document.getElementById('btn-import').addEventListener('click', () => {
-  document.getElementById('import-file').click();
-});
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const values = parseCSVLine(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h.trim()] = (values[idx] || '').trim(); });
+    rows.push(obj);
+  }
+  return rows;
+}
 
-document.getElementById('import-file').addEventListener('change', async (e) => {
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '';
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+      else { inQuote = !inQuote; }
+    } else if (c === ',' && !inQuote) {
+      result.push(cur); cur = '';
+    } else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function normalizeDate(s) {
+  if (!s) return '';
+  s = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const months = {
+    jan: '01', feb: '02', mar: '03', apr: '04', mei: '05', may: '05',
+    jun: '06', jul: '07', agu: '08', aug: '08', sep: '09', okt: '10', oct: '10',
+    nov: '11', des: '12', dec: '12',
+    januari: '01', februari: '02', maret: '03', april: '04',
+    juni: '06', juli: '07', agustus: '08', september: '09',
+    oktober: '10', november: '11', desember: '12'
+  };
+  const m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+  if (m) {
+    const day = m[1].padStart(2, '0');
+    const mon = months[m[2].toLowerCase()] || '01';
+    return `${m[3]}-${mon}-${day}`;
+  }
+  const m2 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m2) return `${m2[3]}-${m2[2].padStart(2, '0')}-${m2[1].padStart(2, '0')}`;
+  return s;
+}
+
+async function handleImportFile(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   if (!confirm(`Import ${file.name}?\n\nPastikan format CSV sesuai template export.`)) {
     e.target.value = '';
     return;
   }
-
   try {
     const text = await file.text();
     const rows = parseCSV(text);
-
     if (rows.length === 0) {
       alert('CSV kosong atau format tidak valid');
       e.target.value = '';
       return;
     }
-
     const payload = rows.map(r => ({
       nama_kamar: r['Kamar'] || r['kamar'] || '',
       nama_penyewa: r['Penyewa'] || r['penyewa'] || '',
@@ -1566,106 +1455,23 @@ document.getElementById('import-file').addEventListener('change', async (e) => {
   } finally {
     e.target.value = '';
   }
-});
-
-
-
-
-function parseCSV(text) {
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
-  if (lines.length < 2) return [];
-  const headers = parseCSVLine(lines[0]);
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    const values = parseCSVLine(lines[i]);
-    const obj = {};
-    headers.forEach((h, idx) => {
-      obj[h.trim()] = (values[idx] || '').trim();
-    });
-    rows.push(obj);
-  }
-  return rows;
 }
-
-function parseCSVLine(line) {
-  const result = [];
-  let cur = '';
-  let inQuote = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
-      else { inQuote = !inQuote; }
-    } else if (c === ',' && !inQuote) {
-      result.push(cur); cur = '';
-    } else { cur += c; }
-  }
-  result.push(cur);
-  return result;
-}
-
-function normalizeDate(s) {
-  if (!s) return '';
-  s = String(s).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const months = {
-    jan: '01', feb: '02', mar: '03', apr: '04', mei: '05', may: '05',
-    jun: '06', jul: '07', agu: '08', aug: '08', sep: '09', okt: '10', oct: '10',
-    nov: '11', des: '12', dec: '12',
-    januari: '01', februari: '02', maret: '03', april: '04',
-    juni: '06', juli: '07', agustus: '08', september: '09',
-    oktober: '10', november: '11', desember: '12'
-  };
-  const m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
-  if (m) {
-    const day = m[1].padStart(2, '0');
-    const mon = months[m[2].toLowerCase()] || '01';
-    return `${m[3]}-${mon}-${day}`;
-  }
-  const m2 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (m2) return `${m2[3]}-${m2[2].padStart(2, '0')}-${m2[1].padStart(2, '0')}`;
-  return s;
-}
-
-document.getElementById('modal-import-result').querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => document.getElementById('modal-import-result').classList.remove('open')));
-document.getElementById('modal-import-result').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal-import-result')) {
-    document.getElementById('modal-import-result').classList.remove('open');
-  }
-});
 
 // ═══════════════════════════════════════════════════════════
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════
-
-document.getElementById('btn-analytics').addEventListener('click', async () => {
+async function openAnalytics() {
   document.getElementById('modal-analytics').classList.add('open');
   await loadAnalytics();
-});
-
-document.getElementById('analytics-period').addEventListener('change', loadAnalytics);
-
-document.querySelectorAll('[data-close-analytics]').forEach(b =>
-  b.addEventListener('click', () => document.getElementById('modal-analytics').classList.remove('open')));
-
-document.getElementById('modal-analytics').addEventListener('click', e => {
-  if (e.target.id === 'modal-analytics') {
-    document.getElementById('modal-analytics').classList.remove('open');
-  }
-});
+}
 
 async function loadAnalytics() {
   const wrap = document.getElementById('analytics-content');
   wrap.innerHTML = '<div class="analytics-loading">⏳ Memuat data...</div>';
-
   const days = document.getElementById('analytics-period').value;
-
   try {
     const data = await api(`/analytics?days=${days}`);
     wrap.innerHTML = renderAnalytics(data, Number(days));
-
     try {
       const unseen = await api('/analytics/logs/unseen-count');
       const badge = document.getElementById('unseen-badge');
@@ -1735,43 +1541,15 @@ function renderAnalytics(d, days) {
     </div>
 
     <div class="analytics-grid-2">
-      <div class="analytics-block">
-        <h4>🌐 Browser</h4>
-        ${renderList(d.browsers, 'browser')}
-      </div>
-      <div class="analytics-block">
-        <h4>💻 Sistem Operasi</h4>
-        ${renderList(d.os_list, 'os')}
-      </div>
-      <div class="analytics-block">
-        <h4>📱 Device</h4>
-        ${renderList(d.devices, 'device_type')}
-      </div>
-      <div class="analytics-block">
-        <h4>🔗 Sumber Traffic</h4>
-        ${renderList(d.referers, 'source')}
-      </div>
-      <div class="analytics-block">
-        <h4>📍 Kota</h4>
-        ${renderList(d.cities, 'city', 'country_name')}
-      </div>
-      <div class="analytics-block">
-        <h4>📡 ISP</h4>
-        ${renderList(d.isps, 'isp')}
-      </div>
+      <div class="analytics-block"><h4>🌐 Browser</h4>${renderList(d.browsers, 'browser')}</div>
+      <div class="analytics-block"><h4>💻 Sistem Operasi</h4>${renderList(d.os_list, 'os')}</div>
+      <div class="analytics-block"><h4>📱 Device</h4>${renderList(d.devices, 'device_type')}</div>
+      <div class="analytics-block"><h4>🔗 Sumber Traffic</h4>${renderList(d.referers, 'source')}</div>
+      <div class="analytics-block"><h4>📍 Kota</h4>${renderList(d.cities, 'city', 'country_name')}</div>
+      <div class="analytics-block"><h4>📡 ISP</h4>${renderList(d.isps, 'isp')}</div>
     </div>
-
-
   `;
 }
-
-document.getElementById('btn-view-logs-header').addEventListener('click', () => {
-  openLogsModal();
-});
-
-document.getElementById('btn-export-logs-header').addEventListener('click', () => {
-  exportLogsCsv();
-});
 
 async function openLogsModal() {
   document.getElementById('modal-logs').classList.add('open');
@@ -1781,7 +1559,6 @@ async function openLogsModal() {
 async function loadLogsModal() {
   const wrap = document.getElementById('logs-content');
   wrap.innerHTML = '<div class="analytics-loading">⏳ Memuat log...</div>';
-
   try {
     const data = await api('/analytics/logs?limit=200');
     window.__logsCache = data.logs || [];
@@ -1797,28 +1574,9 @@ async function loadLogsModal() {
         },
         body: JSON.stringify({ ids: unseenIds }),
       }).then(() => {
-        window.__logsCache.forEach(l => {
-          if (unseenIds.includes(l.id)) l.viewed = 1;
-        });
-        // Refresh badge angka di tombol Analitik
+        window.__logsCache.forEach(l => { if (unseenIds.includes(l.id)) l.viewed = 1; });
         updateAnalyticsBadge();
       }).catch(err => console.error('Mark viewed failed:', err));
-    }
-
-    const searchInput = document.getElementById('log-search');
-    if (searchInput && !searchInput.dataset.bound) {
-      searchInput.addEventListener('input', (e) => {
-        const q = e.target.value.toLowerCase().trim();
-        const filtered = window.__logsCache.filter(l =>
-          (l.ip || '').toLowerCase().includes(q) ||
-          (l.city || '').toLowerCase().includes(q) ||
-          (l.browser || '').toLowerCase().includes(q) ||
-          (l.os || '').toLowerCase().includes(q) ||
-          (l.isp || '').toLowerCase().includes(q)
-        );
-        document.getElementById('logs-content').innerHTML = renderLogsTable(filtered);
-      });
-      searchInput.dataset.bound = 'true';
     }
   } catch (err) {
     wrap.innerHTML = `<div class="analytics-loading" style="color:#e74c3c;">❌ Gagal memuat: ${escapeHtml(err.message)}</div>`;
@@ -1826,48 +1584,34 @@ async function loadLogsModal() {
 }
 
 function renderLogsTable(logs) {
-  if (!logs.length) {
-    return '<div class="analytics-empty">Belum ada log</div>';
-  }
+  if (!logs.length) return '<div class="analytics-empty">Belum ada log</div>';
 
   const fmtDT = (s) => {
     if (!s) return '—';
-    
-    // Pastikan waktu dianggap UTC (kalau dari server belum ada timezone)
     let iso = s;
     if (!s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
       iso = s.replace(' ', 'T') + 'Z';
     }
-    
     const d = new Date(iso);
     if (isNaN(d.getTime())) return s;
-    
-    // Format waktu di timezone Asia/Jakarta (WIB, GMT+7)
     return d.toLocaleString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Asia/Jakarta',
-      hour12: false
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'Asia/Jakarta', hour12: false
     }).replace(/\./g, ':').replace(',', '');
   };
 
   const rows = logs.map(l => {
     const isNew = !l.viewed;
     const rowClass = isNew ? 'log-new' : 'log-seen';
-
     return `
       <tr class="${rowClass}">
-
         <td style="min-width:70px;">
           <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
             <code style="font-size:0.68rem;">${escapeHtml(String(l.id || '—'))}</code>
             ${isNew ? '<span class="log-badge-new">BARU</span>' : ''}
           </div>
         </td>
-        
         <td><small style="white-space:nowrap;">${fmtDT(l.visited_at)}</small></td>
         <td><code style="font-size:0.72rem;">${escapeHtml(l.ip || '—')}</code></td>
         <td>${escapeHtml(l.country || '—')}</td>
@@ -1914,9 +1658,7 @@ function renderLogsTable(logs) {
             <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">User Agent</th>
           </tr>
         </thead>
-        <tbody>
-          ${rows}
-        </tbody>
+        <tbody>${rows}</tbody>
       </table>
     </div>
     <div style="margin-top:12px;font-size:0.78rem;color:#5a7373;text-align:center;">
@@ -1927,54 +1669,22 @@ function renderLogsTable(logs) {
   `;
 }
 
-document.querySelectorAll('[data-close-logs]').forEach(b =>
-  b.addEventListener('click', () => {
-    document.getElementById('modal-logs').classList.remove('open');
-    updateAnalyticsBadge();
-  }));
-
-document.getElementById('modal-logs').addEventListener('click', (e) => {
-  if (e.target.id === 'modal-logs') {
-    document.getElementById('modal-logs').classList.remove('open');
-    updateAnalyticsBadge();
-  }
-});
-
 async function exportLogsCsv() {
   try {
     const data = await api('/analytics/logs?limit=500');
     const logs = data.logs || [];
-
-    if (!logs.length) {
-      alert('Belum ada log untuk di-export');
-      return;
-    }
+    if (!logs.length) { alert('Belum ada log untuk di-export'); return; }
 
     const headers = ['ID', 'Waktu', 'IP', 'Kode Negara', 'Negara', 'Kota', 'Provinsi',
                      'Timezone', 'Latitude', 'Longitude', 'ISP', 'Browser', 'Versi',
                      'OS', 'Device', 'Referer', 'Path', 'User Agent', 'Viewed', 'Viewed At'];
 
     const rows = logs.map(l => [
-      l.id || '',
-      l.visited_at || '',
-      l.ip || '',
-      l.country || '',
-      l.country_name || '',
-      l.city || '',
-      l.region || '',
-      l.timezone || '',
-      l.latitude || '',
-      l.longitude || '',
-      l.isp || '',
-      l.browser || '',
-      l.browser_version || '',
-      l.os || '',
-      l.device_type || '',
-      l.referer || '',
-      l.path || '',
-      l.user_agent || '',
-      l.viewed ? 'Ya' : 'Belum',
-      l.viewed_at || ''
+      l.id || '', l.visited_at || '', l.ip || '', l.country || '', l.country_name || '',
+      l.city || '', l.region || '', l.timezone || '', l.latitude || '', l.longitude || '',
+      l.isp || '', l.browser || '', l.browser_version || '', l.os || '', l.device_type || '',
+      l.referer || '', l.path || '', l.user_agent || '',
+      l.viewed ? 'Ya' : 'Belum', l.viewed_at || ''
     ]);
 
     const csv = [headers, ...rows]
@@ -1993,17 +1703,13 @@ async function exportLogsCsv() {
   }
 }
 
-// ─── Users Modal ───────────────────────────────────────────
-const modalUsers = document.getElementById('modal-users');
-document.getElementById('btn-users').addEventListener('click', async () => {
-  modalUsers.classList.add('open');
+// ═══════════════════════════════════════════════════════════
+// USERS
+// ═══════════════════════════════════════════════════════════
+async function openUsersModal() {
+  document.getElementById('modal-users').classList.add('open');
   await renderUsersList();
-});
-modalUsers.querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => modalUsers.classList.remove('open')));
-modalUsers.addEventListener('click', e => {
-  if (e.target === modalUsers) modalUsers.classList.remove('open');
-});
+}
 
 async function renderUsersList() {
   const wrap = document.getElementById('users-list');
@@ -2024,66 +1730,33 @@ async function renderUsersList() {
           : '<small style="color:#5a7373;">(Anda)</small>'}
       </div>
     `).join('');
-
-    wrap.querySelectorAll('[data-deluser]').forEach(b =>
-      b.addEventListener('click', async () => {
-        if (!confirm('Hapus user ini?')) return;
-        try {
-          await api(`/users/${b.dataset.deluser}`, { method: 'DELETE' });
-          renderUsersList();
-        } catch (err) { alert(err.message); }
-      }));
   } catch (err) {
     wrap.innerHTML = `<p style="color:#e74c3c;">${escapeHtml(err.message)}</p>`;
   }
 }
 
-document.getElementById('form-user').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  try {
-    await api('/users', {
-      method: 'POST',
-      body: JSON.stringify({
-        username: document.getElementById('u-username').value.trim(),
-        password: document.getElementById('u-pass').value,
-        nama_lengkap: document.getElementById('u-nama').value.trim(),
-        role: document.getElementById('u-role').value,
-      }),
-    });
-    e.target.reset();
-    renderUsersList();
-  } catch (err) { alert(err.message); }
-});
-
-// ─── Start ─────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════
-// GLOBAL CLOSE HANDLER — Tutup Modal via Event Delegation
+// EVENT DELEGATION GLOBAL
 // ═══════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════
-// GLOBAL EVENT DELEGATION — Tutup Modal, Print, Upload
-// ═══════════════════════════════════════════════════════════
-
 document.addEventListener('click', (e) => {
-  // ─── Tombol Aksi Tabel (PRIORITAS TERTINGGI) ───
+  // ─── Tombol Aksi Tabel ───
   const btnInvoice = e.target.closest('[data-invoice]');
-  if (btnInvoice) { openInvoice(Number(btnInvoice.dataset.invoice)); return; }
+  if (btnInvoice) { e.preventDefault(); openInvoice(Number(btnInvoice.dataset.invoice)); return; }
 
   const btnKuitansi = e.target.closest('[data-kuitansi]');
-  if (btnKuitansi) { openKuitansi(Number(btnKuitansi.dataset.kuitansi)); return; }
+  if (btnKuitansi) { e.preventDefault(); openKuitansi(Number(btnKuitansi.dataset.kuitansi)); return; }
 
   const btnPerjanjian = e.target.closest('[data-perjanjian]');
-  if (btnPerjanjian) { openPerjanjian(Number(btnPerjanjian.dataset.perjanjian)); return; }
+  if (btnPerjanjian) { e.preventDefault(); openPerjanjian(Number(btnPerjanjian.dataset.perjanjian)); return; }
 
   const btnEdit = e.target.closest('[data-edit]');
-  if (btnEdit) { openModal(Number(btnEdit.dataset.edit)); return; }
+  if (btnEdit) { e.preventDefault(); openModal(Number(btnEdit.dataset.edit)); return; }
 
   const btnDel = e.target.closest('[data-del]');
-  if (btnDel) { deleteOcc(Number(btnDel.dataset.del)); return; }
+  if (btnDel) { e.preventDefault(); deleteOcc(Number(btnDel.dataset.del)); return; }
 
-  // ─── Tombol Tutup Modal ───
+  // ─── Tombol Tutup Modal Invoice/Kuitansi/Perjanjian ───
   if (e.target.closest('.inv-btn-close')) {
-    
     const modal = e.target.closest('.invoice-modal');
     if (modal) {
       modal.classList.remove('open');
@@ -2091,16 +1764,15 @@ document.addEventListener('click', (e) => {
       return;
     }
   }
-  
-  
-  // ─── Tombol Print / Simpan PDF ───
+
+  // ─── Tombol Print ───
   const btnPrint = e.target.closest('.inv-btn-print');
   if (btnPrint && btnPrint.dataset.filename) {
     printDoc(btnPrint.dataset.filename);
     return;
   }
-  
-  // ─── Tombol Upload File (trigger file picker) ───
+
+  // ─── Trigger File Picker ───
   const btnUpload = e.target.closest('[data-upload-trigger]');
   if (btnUpload) {
     const targetId = btnUpload.dataset.uploadTrigger;
@@ -2109,7 +1781,7 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-    // ─── Tombol Hapus File ───
+  // ─── Hapus File ───
   const btnDelete = e.target.closest('[data-delete-file]');
   if (btnDelete) {
     const key = btnDelete.dataset.deleteFile;
@@ -2118,97 +1790,118 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-
-    // ─── Tombol Aksi Tabel ───
-  const btnInvoice = e.target.closest('[data-invoice]');
-  if (btnInvoice) { openInvoice(Number(btnInvoice.dataset.invoice)); return; }
-
-  const btnKuitansi = e.target.closest('[data-kuitansi]');
-  if (btnKuitansi) { openKuitansi(Number(btnKuitansi.dataset.kuitansi)); return; }
-
-  const btnPerjanjian = e.target.closest('[data-perjanjian]');
-  if (btnPerjanjian) { openPerjanjian(Number(btnPerjanjian.dataset.perjanjian)); return; }
-
-  const btnEdit = e.target.closest('[data-edit]');
-  if (btnEdit) { openModal(Number(btnEdit.dataset.edit)); return; }
-
-  const btnDel = e.target.closest('[data-del]');
-  if (btnDel) { deleteOcc(Number(btnDel.dataset.del)); return; }
-  
-  // ─── Klik Backdrop Modal → TIDAK menutup ───
-  // Semua modal (invoice, kuitansi, perjanjian, users, analytics, logs,
-  // import-result, occ) hanya bisa ditutup via tombol close eksplisit.
-  // Tidak ada auto-close via backdrop.
-}, true);   // ⬅️ CAPTURE: true
-
-// ─── Event Delegation untuk Input File (change) ───
-document.addEventListener('change', async (e) => {
-  const input = e.target;
-  if (!input.id) return;
-  
-  // Cek apakah input adalah salah satu dari UPLOAD_CONFIGS
-  const cfg = UPLOAD_CONFIGS.find(c => c.key === input.id);
-  if (!cfg) return;
-  
-  const file = input.files[0];
-  if (!file) return;
-  
-  await uploadDokumen(file, cfg);
-});
-
-
-// ═══════════════════════════════════════════════════════════
-// DISABLE ESC KEY untuk Tutup Modal
-// ═══════════════════════════════════════════════════════════
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-
-  // Cek apakah ada modal yang terbuka
-  const openModals = document.querySelectorAll('.modal.open, .invoice-modal.open');
-  if (openModals.length === 0) return;
-
-  // Cegah default behavior
-  e.preventDefault();
-  e.stopPropagation();
-
-  // Opsional: kasih feedback ke user
-  // (biarkan silent, biar tidak mengganggu)
-  return false;
-}, true);
-
-
-// ═══════════════════════════════════════════════════════════
-// DEBUG: Cari elemen yang menutupi tombol
-// ═══════════════════════════════════════════════════════════
-window.__debugOverlay = function() {
-  const btn = document.querySelector('[data-invoice]');
-  if (!btn) { console.log('Tombol invoice tidak ditemukan'); return; }
-
-  const r = btn.getBoundingClientRect();
-  console.log('Posisi tombol:', r);
-
-  const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-  console.log('Elemen di posisi tombol:', el);
-  console.log('Tag:', el?.tagName, '| Class:', el?.className, '| ID:', el?.id);
-
-  if (el !== btn && !btn.contains(el)) {
-    console.log('⚠️ TOMBOL TERTUTUP oleh elemen di atas');
-    console.log('Elemen penutup:', el);
-  } else {
-    console.log('✅ Tombol TIDAK tertutup');
+  // ─── Tombol Header ───
+  if (e.target.closest('#btn-logout')) {
+    api('/auth/logout', { method: 'POST' }).catch(() => {});
+    localStorage.removeItem('ga_token');
+    localStorage.removeItem('ga_user');
+    window.location.href = 'ibun.html';
+    return;
   }
 
-  // Cek semua modal
-  document.querySelectorAll('.modal, .invoice-modal').forEach(m => {
-    const cs = getComputedStyle(m);
-    console.log(`Modal #${m.id}: display=${cs.display}, z-index=${cs.zIndex}, pointer-events=${cs.pointerEvents}, opacity=${cs.opacity}`);
-  });
-};
+  if (e.target.closest('#btn-analytics')) { openAnalytics(); return; }
+  if (e.target.closest('#btn-users')) { openUsersModal(); return; }
+  if (e.target.closest('#btn-export')) { exportCSV(); return; }
+  if (e.target.closest('#btn-import')) { document.getElementById('import-file').click(); return; }
+  if (e.target.closest('#btn-add')) { openModal(null); return; }
+  if (e.target.closest('#btn-view-logs-header')) { openLogsModal(); return; }
+  if (e.target.closest('#btn-export-logs-header')) { exportLogsCsv(); return; }
 
-// Panggil otomatis setelah 2 detik
-setTimeout(() => window.__debugOverlay(), 2000);
+  // ─── Tombol Tutup Modal Lainnya (data-close, data-close-analytics, data-close-logs) ───
+  const closeBtn = e.target.closest('[data-close], [data-close-analytics], [data-close-logs]');
+  if (closeBtn) {
+    const modal = closeBtn.closest('.modal');
+    if (modal) {
+      // Khusus modal-occ: pakai cancelModal (dengan konfirmasi)
+      if (modal.id === 'modal-occ') {
+        cancelModal();
+      } else {
+        modal.classList.remove('open');
+        if (modal.id === 'modal-logs') updateAnalyticsBadge();
+      }
+      return;
+    }
+  }
 
+  // ─── Hapus User ───
+  const btnDelUser = e.target.closest('[data-deluser]');
+  if (btnDelUser) {
+    if (!confirm('Hapus user ini?')) return;
+    api(`/users/${btnDelUser.dataset.deluser}`, { method: 'DELETE' })
+      .then(() => renderUsersList())
+      .catch(err => alert(err.message));
+    return;
+  }
+}, true);
 
+// ─── Submit Form User ───
+document.addEventListener('submit', (e) => {
+  if (e.target.id === 'form-user') {
+    e.preventDefault();
+    api('/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: document.getElementById('u-username').value.trim(),
+        password: document.getElementById('u-pass').value,
+        nama_lengkap: document.getElementById('u-nama').value.trim(),
+        role: document.getElementById('u-role').value,
+      }),
+    }).then(() => {
+      e.target.reset();
+      renderUsersList();
+    }).catch(err => alert(err.message));
+  }
+});
+
+// ─── Filter & Search ───
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'search') renderTable();
+  if (e.target.id === 'log-search') {
+    const q = e.target.value.toLowerCase().trim();
+    const filtered = (window.__logsCache || []).filter(l =>
+      (l.ip || '').toLowerCase().includes(q) ||
+      (l.city || '').toLowerCase().includes(q) ||
+      (l.browser || '').toLowerCase().includes(q) ||
+      (l.os || '').toLowerCase().includes(q) ||
+      (l.isp || '').toLowerCase().includes(q)
+    );
+    document.getElementById('logs-content').innerHTML = renderLogsTable(filtered);
+  }
+});
+
+document.addEventListener('change', async (e) => {
+  if (e.target.id === 'filter-tahun' || e.target.id === 'filter-status') {
+    renderTable();
+    return;
+  }
+  if (e.target.id === 'analytics-period') {
+    loadAnalytics();
+    return;
+  }
+  if (e.target.id === 'import-file') {
+    await handleImportFile(e);
+    return;
+  }
+
+  // Upload file dokumen
+  const cfg = UPLOAD_CONFIGS.find(c => c.key === e.target.id);
+  if (cfg) {
+    const file = e.target.files[0];
+    if (!file) return;
+    await uploadDokumen(file, cfg);
+  }
+});
+
+// ─── Disable Esc ───
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const openModals = document.querySelectorAll('.modal.open, .invoice-modal.open');
+  if (openModals.length === 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+}, true);
+
+// ─── Start ───
 init().catch(err => {
   console.error(err);
   alert('Gagal memuat data: ' + err.message);
