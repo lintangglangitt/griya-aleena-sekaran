@@ -2161,6 +2161,39 @@ document.addEventListener('keydown', (e) => {
   return false;
 }, true);
 
+
+// ═══════════════════════════════════════════════════════════
+// DEBUG: Cari elemen yang menutupi tombol
+// ═══════════════════════════════════════════════════════════
+window.__debugOverlay = function() {
+  const btn = document.querySelector('[data-invoice]');
+  if (!btn) { console.log('Tombol invoice tidak ditemukan'); return; }
+
+  const r = btn.getBoundingClientRect();
+  console.log('Posisi tombol:', r);
+
+  const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  console.log('Elemen di posisi tombol:', el);
+  console.log('Tag:', el?.tagName, '| Class:', el?.className, '| ID:', el?.id);
+
+  if (el !== btn && !btn.contains(el)) {
+    console.log('⚠️ TOMBOL TERTUTUP oleh elemen di atas');
+    console.log('Elemen penutup:', el);
+  } else {
+    console.log('✅ Tombol TIDAK tertutup');
+  }
+
+  // Cek semua modal
+  document.querySelectorAll('.modal, .invoice-modal').forEach(m => {
+    const cs = getComputedStyle(m);
+    console.log(`Modal #${m.id}: display=${cs.display}, z-index=${cs.zIndex}, pointer-events=${cs.pointerEvents}, opacity=${cs.opacity}`);
+  });
+};
+
+// Panggil otomatis setelah 2 detik
+setTimeout(() => window.__debugOverlay(), 2000);
+
+
 init().catch(err => {
   console.error(err);
   alert('Gagal memuat data: ' + err.message);
