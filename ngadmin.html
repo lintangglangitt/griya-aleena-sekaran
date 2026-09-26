@@ -108,7 +108,11 @@
      ═══════════════════════════════════════════════════════════ -->
 <div class="modal" id="modal-occ" data-modal>
   <div class="modal-card modal-card-wide">
-    <h3 id="modal-title">Tambah Okupansi</h3>
+    <div class="modal-top-bar">
+  <h3 id="modal-title">Tambah Okupansi</h3>
+  <button type="button" class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
+   </div>
+    
     <form id="form-occ">
       <input type="hidden" id="f-id">
 
@@ -249,7 +253,12 @@
 <!-- MODAL: Import Result -->
 <div class="modal" id="modal-import-result" data-modal>
   <div class="modal-card">
-    <h3>Hasil Import CSV</h3>
+    
+    <div class="modal-top-bar">
+  <h3>Hasil Import CSV</h3>
+  <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
+</div>
+    
     <div id="import-result"></div>
     <div class="modal-actions">
       <button type="button" class="btn-primary" data-close-modal>Tutup</button>
@@ -260,7 +269,12 @@
 <!-- MODAL: USERS -->
 <div class="modal" id="modal-users" data-modal>
   <div class="modal-card">
-    <h3>Kelola User</h3>
+    
+   <div class="modal-top-bar">
+  <h3>Kelola User</h3>
+  <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
+  </div>
+    
     <div id="users-list"></div>
     <hr style="margin:20px 0;border:none;border-top:1px solid #eee">
     <h4>Tambah User</h4>
@@ -287,9 +301,11 @@
 <!-- MODAL: ANALITIK -->
 <div class="modal modal-analytics" id="modal-analytics" data-modal>
   <div class="modal-card modal-card-analytics">
-    <div class="analytics-header">
+
+    <!-- ⬇️ BARIS ATAS: Judul + Tombol -->
+    <div class="modal-top-bar">
       <h3>📊 Analitik Pengunjung</h3>
-      <div class="analytics-filter">
+      <div class="modal-top-actions">
         <select id="analytics-period">
           <option value="7">7 Hari Terakhir</option>
           <option value="30" selected>30 Hari Terakhir</option>
@@ -301,9 +317,11 @@
           <span id="unseen-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e74c3c;color:white;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:50px;box-shadow:0 2px 6px rgba(231,76,60,0.5);">0</span>
         </button>
         <button class="btn-ghost" id="btn-export-logs-header">⬇ Export CSV</button>
-        <button class="btn-ghost" data-close-modal>✕</button>
       </div>
+      <!-- ⬇️ TOMBOL SILANG — absolute di pojok kanan atas -->
+      <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     </div>
+
     <div id="analytics-content">
       <div class="analytics-loading">⏳ Memuat data...</div>
     </div>
@@ -313,13 +331,16 @@
 <!-- MODAL: DETAIL LOG VISITOR -->
 <div class="modal modal-logs" id="modal-logs" data-modal>
   <div class="modal-card modal-card-logs">
-    <div class="analytics-header">
+
+    <div class="modal-top-bar">
       <h3>📋 Detail Log Pengunjung</h3>
-      <div class="analytics-filter">
-        <input type="search" id="log-search" placeholder="🔍 Cari IP / kota / browser…" style="padding:8px 12px;border:1.5px solid #e3ebeb;border-radius:8px;font-family:inherit;font-size:0.85rem;">
-        <button class="btn-ghost" data-close-modal>✕</button>
+      <div class="modal-top-actions">
+        <input type="search" id="log-search" placeholder="🔍 Cari IP / kota / browser…"
+               style="padding:8px 12px;border:1.5px solid #e3ebeb;border-radius:8px;font-family:inherit;font-size:0.85rem;">
       </div>
+      <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     </div>
+
     <div id="logs-content">
       <div class="analytics-loading">⏳ Memuat log...</div>
     </div>
