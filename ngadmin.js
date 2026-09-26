@@ -909,39 +909,48 @@ function openModal(id) {
   fillRoomSelect(id);
   setupAutoHarga();
 
+  // Helper: safe set value (kalau element ada, kalau tidak skip)
+  const safeSet = (elId, val) => {
+    const el = document.getElementById(elId);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+    else console.warn('Element tidak ditemukan:', elId);
+  };
+
   // Reset semua upload UI
-  UPLOAD_CONFIGS.forEach(cfg => {
-    const status = document.getElementById(cfg.statusId);
-    const preview = document.getElementById(cfg.previewId);
-    const link = document.getElementById(cfg.linkId);
-    if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
-    if (preview) preview.innerHTML = '';
-    if (link) link.value = '';
-  });
+  if (typeof UPLOAD_CONFIGS !== 'undefined') {
+    UPLOAD_CONFIGS.forEach(cfg => {
+      const status = document.getElementById(cfg.statusId);
+      const preview = document.getElementById(cfg.previewId);
+      const link = document.getElementById(cfg.linkId);
+      if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
+      if (preview) preview.innerHTML = '';
+      if (link) link.value = '';
+    });
+  }
 
   if (id) {
     const o = OCCS.find(x => x.id === id);
     if (!o) return;
     document.getElementById('modal-title').textContent = 'Edit Okupansi';
-    document.getElementById('f-id').value = o.id;
-    document.getElementById('f-room').value = o.room_id;
-    document.getElementById('f-tipe').value = o.tipe_sewa;
-    document.getElementById('f-mulai').value = o.tanggal_mulai;
-    document.getElementById('f-selesai').value = o.tanggal_selesai;
-    document.getElementById('f-harga').value = o.harga_total;
-    document.getElementById('f-link').value = o.link_kontrak || '';
-    document.getElementById('f-status').value = o.status_bayar;
-    document.getElementById('f-nama').value = o.nama_penyewa;
-    document.getElementById('f-ktp').value = o.no_ktp || '';
-    document.getElementById('f-alamat').value = o.alamat_penyewa || '';
-    document.getElementById('f-hp').value = o.no_hp || '';
-    document.getElementById('f-kampus').value = o.asal_kampus || '';
-    document.getElementById('f-nama-ortu').value = o.nama_ortu || '';
-    document.getElementById('f-ktp-ortu').value = o.no_ktp_ortu || '';
-    document.getElementById('f-alamat-ortu').value = o.alamat_ortu || '';
-    document.getElementById('f-hp-ortu').value = o.no_hp_ortu || '';
-    document.getElementById('f-hubungan').value = o.hubungan_keluarga || '';
-    document.getElementById('f-catatan').value = o.catatan || '';
+    safeSet('f-id', o.id);
+    safeSet('f-room', o.room_id);
+    safeSet('f-tipe', o.tipe_sewa);
+    safeSet('f-mulai', o.tanggal_mulai);
+    safeSet('f-selesai', o.tanggal_selesai);
+    safeSet('f-harga', o.harga_total);
+    safeSet('f-link', o.link_kontrak || '');
+    safeSet('f-status', o.status_bayar);
+    safeSet('f-nama', o.nama_penyewa);
+    safeSet('f-ktp', o.no_ktp || '');
+    safeSet('f-alamat', o.alamat_penyewa || '');
+    safeSet('f-hp', o.no_hp || '');
+    safeSet('f-kampus', o.asal_kampus || '');
+    safeSet('f-nama-ortu', o.nama_ortu || '');
+    safeSet('f-ktp-ortu', o.no_ktp_ortu || '');
+    safeSet('f-alamat-ortu', o.alamat_ortu || '');
+    safeSet('f-hp-ortu', o.no_hp_ortu || '');
+    safeSet('f-hubungan', o.hubungan_keluarga || '');
+    safeSet('f-catatan', o.catatan || '');
 
     // Isi link & preview untuk 4 file
     const fileMap = {
@@ -961,7 +970,7 @@ function openModal(id) {
 
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Okupansi';
-    document.getElementById('f-mulai').value = todayISO();
+    safeSet('f-mulai', todayISO());
     updateHargaOtomatis();
   }
   modalOcc.classList.add('open');
