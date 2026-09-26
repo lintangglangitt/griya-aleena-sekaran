@@ -744,7 +744,7 @@ function openPerjanjian(id) {
     <ol>
       <li>Biaya sewa yang disepakati Para Pihak adalah sebagai berikut:
         <div class="pj-info-block" style="margin-top:8px;">
-          <p><strong>Kamar ${escapeHtml(kamarLabel)}</strong></p>
+          <p><strong> ${escapeHtml(kamarLabel)}</strong></p>
           ${field('Durasi', tipeUpper)}
           ${field('Biaya', totalBiaya)}
           ${field('Periode', fmtDateLong(o.tanggal_mulai) + ' — ' + fmtDateLong(o.tanggal_selesai))}
