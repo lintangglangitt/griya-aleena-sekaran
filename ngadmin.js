@@ -715,7 +715,8 @@ function openPerjanjian(id) {
     </p>
 
     <h2>1. Pemilik Kos</h2>
-    <div class="pj-field-group">
+    <div class="pj-info-block" style="margin-top:14px;">
+      <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Pemilik:</p>
       ${field('Nama', PEMILIK.nama)}
       ${field('Nomor KTP/SIM', PEMILIK.no_ktp)}
       ${field('Alamat', PEMILIK.alamat)}
@@ -725,14 +726,15 @@ function openPerjanjian(id) {
     <p>Selanjutnya disebut <strong>Pemilik</strong>.</p>
 
     <h2>2. Penyewa Kos</h2>
-    <div class="pj-field-group">
+    <div class="pj-info-block" style="margin-top:14px;">
+      <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Penyewa:</p>
       ${field('Nama', o.nama_penyewa)}
       ${field('Nomor KTP/SIM', o.no_ktp)}
       ${field('Alamat', o.alamat_penyewa)}
       ${field('Nomor HP/WA', o.no_hp)}
     </div>
 
-    <div class="pj-field-group" style="margin-top:14px;">
+    <div class="pj-info-block" style="margin-top:14px;">
       <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Orang Tua/Wali/Kontak Darurat:</p>
       ${field('Nama', o.nama_ortu || '')}
       ${field('Nomor KTP/SIM', o.no_ktp_ortu || '')}
