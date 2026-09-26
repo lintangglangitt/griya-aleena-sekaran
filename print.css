@@ -242,17 +242,27 @@
   padding-bottom: 12px;
   border-bottom: 2px solid #1a5c5c;
 }
-
-/* Cegah judul terpotong, tapi jangan paksa page break */
 .perjanjian-wrapper h2 {
-  page-break-after: avoid !important;
-  break-after: avoid !important;
+  font-family: 'Sora', sans-serif;
+  font-size: 1rem;
+  color: #1a5c5c;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e3ebeb;
 }
 .perjanjian-wrapper h3 {
-  page-break-after: avoid !important;
-  break-after: avoid !important;
+  font-size: 0.95rem;
+  color: #1a5c5c;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 700;
 }
-/* Hapus page-break-inside untuk info-block, field, dan list — biar mengalir natural */
+.perjanjian-wrapper p { margin-bottom: 10px; text-align: justify; }
+.perjanjian-wrapper ol,
+.perjanjian-wrapper ul { margin-bottom: 10px; padding-left: 24px; }
+.perjanjian-wrapper ol li,
+.perjanjian-wrapper ul li { margin-bottom: 6px; text-align: justify; }
 
 .perjanjian-wrapper .pj-fill {
   display: inline-block;
