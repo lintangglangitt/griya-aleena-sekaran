@@ -982,23 +982,25 @@ function openModal(id) {
     safeSet('f-hubungan', o.hubungan_keluarga || '');
     safeSet('f-catatan', o.catatan || '');
 
-    // Isi link & preview untuk 4 file
+   
+        // Isi link & preview untuk 4 file
     const fileMap = {
       'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa' },
       'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu' },
       'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm' },
       'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian' },
     };
+    
     Object.values(fileMap).forEach(item => {
       if (item.link) {
         const hidden = document.getElementById(item.hidden);
         const preview = document.getElementById(item.preview);
         if (hidden) hidden.value = item.link;
-        if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
+        if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Memuat...</a>`;
       }
     });
 
-        // ⬇️ TAMBAH: Tampilkan tombol Hapus kalau ada file tersimpan
+    // Tampilkan tombol Hapus kalau ada file tersimpan
     UPLOAD_CONFIGS.forEach(cfg => {
       const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
       if (btnDelete) {
@@ -1006,6 +1008,50 @@ function openModal(id) {
         btnDelete.style.display = linkInput?.value ? 'inline-block' : 'none';
       }
     });
+
+    // ⬇️ BARU: Validasi semua link ke R2 (async, tidak blocking)
+    const linksToCheck = Object.values(fileMap).map(item => item.link).filter(Boolean);
+    if (linksToCheck.length > 0) {
+      checkFilesExist(linksToCheck).then(results => {
+        Object.values(fileMap).forEach(item => {
+          if (!item.link) return;
+          const preview = document.getElementById(item.preview);
+          const hidden = document.getElementById(item.hidden);
+          const btnDelete = document.querySelector(`[data-delete-file="${Object.keys(fileMap).find(k => fileMap[k].hidden === item.hidden)}"]`);
+          
+          // Cari key dari UPLOAD_CONFIGS untuk tombol Hapus
+          const cfg = UPLOAD_CONFIGS.find(c => c.linkId === item.hidden);
+          const deleteBtn = cfg ? document.querySelector(`[data-delete-file="${cfg.key}"]`) : null;
+
+          const exist = results[item.link];
+          if (exist === true) {
+            // ✅ File ada
+            if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
+          } else if (exist === false) {
+            // ❌ File TIDAK ada di R2
+            if (preview) {
+              preview.innerHTML = `
+                <span style="display:inline-block;background:#fdecec;color:#a81f1f;font-size:0.78rem;font-weight:600;padding:6px 12px;border-radius:8px;margin-top:4px;">
+                  ⚠️ File tidak ditemukan di server — silakan upload ulang
+                </span>
+              `;
+            }
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
+            // Bersihkan link tersembunyi biar tidak tersimpan URL mati
+            if (hidden) hidden.value = '';
+          }
+        });
+      }).catch(err => {
+        console.warn('Gagal validasi file:', err);
+        // Fallback: tampilkan link apa adanya
+        Object.values(fileMap).forEach(item => {
+          if (!item.link) return;
+          const preview = document.getElementById(item.preview);
+          if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
+        });
+      });
+    }
 
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Okupansi';
@@ -1074,7 +1120,6 @@ async function deleteOcc(id) {
 // ═══════════════════════════════════════════════════════════
 // UPLOAD DOKUMEN KE R2 (4 File)
 // ═══════════════════════════════════════════════════════════
-
 async function uploadDokumen(file, cfg) {
   const status = document.getElementById(cfg.statusId);
   const linkInput = document.getElementById(cfg.linkId);
@@ -1094,6 +1139,21 @@ async function uploadDokumen(file, cfg) {
     return;
   }
 
+  // ⬇️ AUTO-DELETE: Kalau ada file lama, hapus dulu sebelum upload baru
+  const oldUrl = linkInput.value;
+  if (oldUrl) {
+    status.innerHTML = '🗑️ Menghapus file lama...';
+    status.className = 'upload-status loading';
+    const deleted = await deleteFileFromR2(oldUrl);
+    if (deleted) {
+      console.log('File lama dihapus:', oldUrl);
+      linkInput.value = '';
+      preview.innerHTML = '';
+    } else {
+      console.warn('Gagal hapus file lama, lanjut upload file baru');
+    }
+  }
+
   status.innerHTML = '⏳ Mengunggah... 0%';
   status.className = 'upload-status loading';
 
@@ -1101,10 +1161,10 @@ async function uploadDokumen(file, cfg) {
     const formData = new FormData();
     formData.append('file', file);
 
-    // ⬇️ Kirim room_id & jenis dokumen untuk rename file otomatis
+    // Kirim room_id & jenis dokumen untuk rename file otomatis
     const roomId = document.getElementById('f-room')?.value || '';
     formData.append('room_id', roomId);
-    
+
     // file_ktp_penyewa → ktp-penyewa
     const jenisDokumen = (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-');
     formData.append('jenis', jenisDokumen);
@@ -1147,7 +1207,7 @@ async function uploadDokumen(file, cfg) {
     status.className = 'upload-status success';
     preview.innerHTML = `<a href="${escapeHtml(result.url)}" target="_blank">📄 Lihat file yang diunggah</a>`;
 
-    // ⬇️ Tampilkan tombol Hapus
+    // Tampilkan tombol Hapus
     const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
     if (btnDelete) btnDelete.style.display = 'inline-block';
 
@@ -1158,7 +1218,6 @@ async function uploadDokumen(file, cfg) {
     document.getElementById(cfg.key).value = '';
   }
 }
-
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1207,6 +1266,28 @@ async function deleteUploadedFile(cfg) {
     
   } else {
     alert('Gagal menghapus file');
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// CEK FILE MASIH ADA DI R2
+// ═══════════════════════════════════════════════════════════
+
+async function checkFilesExist(urls) {
+  // Filter URL yang valid
+  const validUrls = urls.filter(u => u && typeof u === 'string');
+  if (validUrls.length === 0) return {};
+
+  try {
+    const result = await api('/check-file', {
+      method: 'POST',
+      body: JSON.stringify({ urls: validUrls }),
+    });
+    return result.results || {};
+  } catch (err) {
+    console.error('Check files error:', err.message);
+    return {};
   }
 }
 
