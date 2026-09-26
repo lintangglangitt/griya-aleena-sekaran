@@ -487,7 +487,7 @@ function openInvoice(id) {
       <div class="inv-section-title">Ditagihkan kepada:</div>
       <dl class="inv-info-grid">
         <dt>Nama</dt><dd>${escapeHtml(o.nama_penyewa)}</dd>
-        ${o.no_hp ? `<dt>No. HP</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
+        ${o.no_hp ? `<dt>No. HP/WA</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
         <dt>Kamar</dt><dd>${escapeHtml(o.nama_kamar)} (${escapeHtml(o.tipe)})</dd>
       </dl>
     </div>
@@ -570,7 +570,7 @@ function openKuitansi(id) {
       <div class="inv-section-title">Telah diterima dari:</div>
       <dl class="inv-info-grid">
         <dt>Nama</dt><dd>${escapeHtml(o.nama_penyewa)}</dd>
-        ${o.no_hp ? `<dt>No. HP</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
+        ${o.no_hp ? `<dt>No. HP/WA</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
         <dt>Kamar</dt><dd>${escapeHtml(o.nama_kamar)} (${escapeHtml(o.tipe)})</dd>
       </dl>
     </div>
