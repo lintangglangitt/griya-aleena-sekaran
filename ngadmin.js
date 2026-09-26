@@ -198,10 +198,13 @@ async function init() {
   // Reset semua modal
   closeAllModals();
 
-  // Set user info
+  // Set user info — pakai null-check
   try {
-    document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
-    document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
+    const userNameEl = document.getElementById('user-name');
+    if (userNameEl) userNameEl.textContent = USER.nama_lengkap || USER.username || '—';
+    
+    const todayLabelEl = document.getElementById('today-label');
+    if (todayLabelEl) todayLabelEl.textContent = `(${fmtDate(todayISO())})`;
   } catch (e) { console.error('[Init] User info error:', e); }
 
   // Load data
