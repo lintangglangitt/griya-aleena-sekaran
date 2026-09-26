@@ -725,8 +725,7 @@ function openPerjanjian(id) {
     <p>Selanjutnya disebut <strong>Pemilik</strong>.</p>
 
     <h2>2. Penyewa Kos</h2>
-    <div class="pj-info-block">
-      <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Penyewa:</p>
+    <div class="pj-field-group">
       ${field('Nama', o.nama_penyewa)}
       ${field('Nomor KTP/SIM', o.no_ktp)}
       ${field('Alamat', o.alamat_penyewa)}
