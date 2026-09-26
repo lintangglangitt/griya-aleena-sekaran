@@ -715,23 +715,24 @@ function openPerjanjian(id) {
     </p>
 
     <h2>1. Pemilik Kos</h2>
-    <div class="pj-info-block">
+    <div class="pj-field-group">
       ${field('Nama', PEMILIK.nama)}
       ${field('Nomor KTP/SIM', PEMILIK.no_ktp)}
       ${field('Alamat', PEMILIK.alamat)}
       ${field('Nomor HP/WA', PEMILIK.no_hp_perjanjian)}
     </div>
+    
     <p>Selanjutnya disebut <strong>Pemilik</strong>.</p>
 
     <h2>2. Penyewa Kos</h2>
-    <div class="pj-info-block">
+    <div class="pj-field-group">
       ${field('Nama', o.nama_penyewa)}
       ${field('Nomor KTP/SIM', o.no_ktp)}
       ${field('Alamat', o.alamat_penyewa)}
       ${field('Nomor HP/WA', o.no_hp)}
     </div>
 
-    <div class="pj-info-block" style="margin-top:14px;">
+    <div class="pj-field-group" style="margin-top:14px;">
       <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Orang Tua/Wali/Kontak Darurat:</p>
       ${field('Nama', o.nama_ortu || '')}
       ${field('Nomor KTP/SIM', o.no_ktp_ortu || '')}
@@ -784,7 +785,7 @@ function openPerjanjian(id) {
     <h2>Pasal 3 – Biaya Sewa dan Pembayaran</h2>
     <ol>
       <li>Biaya sewa yang disepakati Para Pihak adalah sebagai berikut:
-        <div class="pj-info-block" style="margin-top:8px;">
+           <div class="pj-field-group" style="margin-top:8px;">
           <p><strong> ${escapeHtml(kamarLabel)}</strong></p>
           ${field('Durasi', tipeUpper)}
           ${fieldRaw('Biaya', totalBiaya)}
