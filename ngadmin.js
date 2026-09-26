@@ -198,13 +198,10 @@ async function init() {
   // Reset semua modal
   closeAllModals();
 
-  // Set user info — pakai null-check
+  // Set user info
   try {
-    const userNameEl = document.getElementById('user-name');
-    if (userNameEl) userNameEl.textContent = USER.nama_lengkap || USER.username || '—';
-    
-    const todayLabelEl = document.getElementById('today-label');
-    if (todayLabelEl) todayLabelEl.textContent = `(${fmtDate(todayISO())})`;
+    document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
+    document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
   } catch (e) { console.error('[Init] User info error:', e); }
 
   // Load data
@@ -1951,14 +1948,7 @@ document.addEventListener('click', (e) => {
     // ─── PRINT ───
     const btnPrint = target.closest('.inv-btn-print');
     if (btnPrint && btnPrint.dataset.filename) {
-      // Cek apakah ini tombol print perjanjian
-      const isPerjanjian = btnPrint.closest('#perjanjian-modal');
-      if (isPerjanjian) {
-        const content = document.getElementById('perjanjian-content');
-        printPerjanjian(content.innerHTML, btnPrint.dataset.filename);
-      } else {
-        printDoc(btnPrint.dataset.filename);
-      }
+      printDoc(btnPrint.dataset.filename);
       return;
     }
 
@@ -2040,90 +2030,6 @@ document.addEventListener('keydown', (e) => {
     }
   }
 }, true);
-
-
-
-
-// ═══════════════════════════════════════════════════════════
-// PRINT PERJANJIAN + NOMOR HALAMAN (SEMUA BROWSER)
-// ═══════════════════════════════════════════════════════════
-function printPerjanjian(html, namaFile) {
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
-  doc.open();
-  doc.write(`<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<title>${namaFile}</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; color: #1c2e2e; background: white; font-size: 0.88rem; line-height: 1.65; }
-.perjanjian-logo { text-align: center; margin-bottom: 6px; }
-.perjanjian-logo img { max-height: 90px; max-width: 90px; object-fit: contain; }
-h1 { font-family: 'Sora', sans-serif; font-size: 1.15rem; text-align: center; color: #1a5c5c; letter-spacing: 0.05em; line-height: 1.3; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 2px solid #1a5c5c; }
-h2 { font-family: 'Sora', sans-serif; font-size: 1rem; color: #1a5c5c; margin: 20px 0 10px; padding-bottom: 4px; border-bottom: 1px solid #e3ebeb; page-break-after: avoid; }
-h3 { font-size: 0.95rem; color: #1a5c5c; margin: 16px 0 8px; font-weight: 700; page-break-after: avoid; }
-p { margin-bottom: 10px; margin-top: 0; text-align: justify; }
-ol, ul { margin-bottom: 10px; padding-left: 24px; }
-ol li, ul li { margin-bottom: 6px; text-align: justify; }
-.pj-info-block { background: #f4f7f7; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
-.pj-field { display: grid; grid-template-columns: 130px 20px 1fr; gap: 6px 0; align-items: start; margin-bottom: 8px; page-break-inside: avoid; }
-.pj-field .pj-label, .pj-field .pj-colon { line-height: 1.6; }
-.pj-field .pj-value-line { font-weight: 600; line-height: 1.6; border-bottom: 1px solid #1c2e2e; padding-bottom: 2px; min-height: 1.6em; word-break: break-word; }
-.pj-field .pj-value-line.empty { min-width: 200px; }
-.pj-tanggal { text-align: right; margin-top: 16px; margin-bottom: 8px; }
-.pj-sign-row { display: flex; justify-content: space-between; gap: 40px; margin-top: 40px; page-break-inside: avoid; }
-.pj-sign-col { flex: 1; text-align: center; }
-.pj-sign-col .pj-sign-label { font-size: 0.9rem; margin-bottom: 80px; }
-.pj-sign-col .pj-sign-space { height: 50px; }
-.pj-sign-col .pj-sign-name-line { font-weight: 700; font-size: 0.95rem; text-align: center; padding-bottom: 6px; border-bottom: 1.5px solid #1c2e2e; min-height: 30px; }
-.pj-lampiran { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e3ebeb; font-size: 0.85rem; }
-.pj-lampiran h3 { font-size: 0.9rem; margin-bottom: 8px; }
-.pj-fill-inline { display: inline-block; border-bottom: 1px solid #1c2e2e; padding: 0 8px; font-weight: 600; color: #1a5c5c; }
-.inv-footer { text-align: center; font-size: 0.75rem; color: #5a7373; margin-top: 30px; padding-top: 16px; border-top: 1px solid #e3ebeb; }
-
-@page {
-  size: A4;
-  margin: 1.5cm 1.5cm 2cm 1.5cm;
-  @bottom-center {
-    content: "- " counter(page) " -";
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.75rem;
-    color: #5a7373;
-  }
-}
-</style>
-</head>
-<body>
-<div id="konten">${html}</div>
-<script src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></script>
-<script>
-  window.addEventListener('load', function() {
-    var doPrint = function() {
-      setTimeout(function() {
-        window.focus();
-        window.print();
-        setTimeout(function() {
-          try { window.parent.document.body.removeChild(window.frameElement); } catch(e) {}
-        }, 1000);
-      }, 300);
-    };
-    if (window.PagedPolyfill && window.PagedPolyfill.preview) {
-      window.PagedPolyfill.preview().then(doPrint).catch(doPrint);
-    } else {
-      doPrint();
-    }
-  });
-</script>
-</body>
-</html>`);
-  doc.close();
-}
 
 // ═══════════════════════════════════════════════════════════
 // START
