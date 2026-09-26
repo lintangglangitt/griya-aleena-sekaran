@@ -569,10 +569,9 @@ function openInvoice(id) {
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <div class="inv-signature">
-      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div>
+      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
       <div>Hormat kami,</div>
-      <div style="font-weight:700;">${escapeHtml(PEMILIK.nama)}</div>
-      <div class="inv-sign-role">Pemilik Griya Aleena</div>
+      <div class="inv-sign-role">Pemilik</div>
     </div>
 
     <div class="inv-footer">
@@ -649,10 +648,9 @@ function openKuitansi(id) {
     </p>
 
     <div class="inv-signature">
-      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div>
+      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
       <div>Hormat kami,</div>
-      <div style="font-weight:700;">${escapeHtml(PEMILIK.nama)}</div>
-      <div class="inv-sign-role">Pemilik Griya Aleena</div>
+      <div class="inv-sign-role">Pemilik</div>
     </div>
 
     <div class="inv-footer">
