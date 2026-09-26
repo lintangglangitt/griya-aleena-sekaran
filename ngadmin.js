@@ -179,8 +179,29 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
   window.location.href = 'ibun.html';
 });
 
+
+// ═══════════════════════════════════════════════════════════
+// PASTIKAN SEMUA MODAL TERTUTUP SAAT HALAMAN DIMUAT
+// ═══════════════════════════════════════════════════════════
+function forceCloseAllModals() {
+  const allModals = document.querySelectorAll(
+    '.modal, .invoice-modal'
+  );
+  allModals.forEach(m => {
+    m.classList.remove('open');
+    m.style.display = 'none';
+  });
+  // Kembalikan display ke default setelah 100ms (biar CSS class yang atur)
+  setTimeout(() => {
+    allModals.forEach(m => { m.style.display = ''; });
+  }, 100);
+}
+
 // ─── Init ──────────────────────────────────────────────────
 async function init() {
+
+  forceCloseAllModals();   // ⬅️ TAMBAH INI
+  
   document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
   document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
 
@@ -2044,14 +2065,18 @@ document.getElementById('form-user').addEventListener('submit', async (e) => {
 // ═══════════════════════════════════════════════════════════
 
 document.addEventListener('click', (e) => {
-  // ─── Tombol Tutup Modal ───
+
+
+    // ─── Tombol Tutup Modal ───
   if (e.target.closest('.inv-btn-close')) {
     const modal = e.target.closest('.invoice-modal');
     if (modal) {
       modal.classList.remove('open');
+      modal.style.display = 'none';
       return;
     }
   }
+  
   
   // ─── Tombol Print / Simpan PDF ───
   const btnPrint = e.target.closest('.inv-btn-print');
