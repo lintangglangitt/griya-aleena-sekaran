@@ -541,19 +541,6 @@
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
-  .perjanjian-wrapper .pj-info-block {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  .perjanjian-wrapper .pj-field {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  .perjanjian-wrapper ol li,
-  .perjanjian-wrapper ul li {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
 
   /* Hindari page break setelah elemen terakhir */
   .invoice-wrapper > *:last-child,
