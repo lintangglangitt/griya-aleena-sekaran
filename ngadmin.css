@@ -370,7 +370,7 @@ tbody tr.kontrak-selesai:hover { background: #e0e0e0 !important; }
 tbody tr.kontrak-selesai td,
 tbody tr.kontrak-selesai td strong { color: #8b9494 !important; font-weight: 400 !important; }
 tbody tr.kontrak-selesai .badge { filter: grayscale(0.8); opacity: 0.7; }
-tbody tr.kontrak-selesai .btn-icon { opacity: 0.5; }
+tbody tr.kontrak-selesai .btn-icon { opacity: 0.7; }/* dari 0.5 → 0.7 (lebih terlihat) */
 tbody tr.kontrak-selesai:hover .btn-icon { opacity: 1; }
 
 tbody tr.akan-habis { background: #ffebee !important; }
