@@ -805,12 +805,12 @@ function openPerjanjian(id) {
       <div class="pj-sign-col">
         <div class="pj-sign-label">Pemilik,</div>
         <div class="pj-sign-space"></div>
-        <div class="pj-sign-name-line">${escapeHtml(PEMILIK.nama)}</div>
+        <div class="pj-sign-name-line">${escapeHtml(String(PEMILIK.nama || '').toUpperCase())}</div>
       </div>
       <div class="pj-sign-col">
         <div class="pj-sign-label">Penyewa,</div>
         <div class="pj-sign-space"></div>
-        <div class="pj-sign-name-line">${escapeHtml(o.nama_penyewa)}</div>
+        <div class="pj-sign-name-line">${escapeHtml(String(o.nama_penyewa || '').toUpperCase())}</div>
       </div>
     </div>
 
