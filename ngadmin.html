@@ -147,18 +147,69 @@
           </label>
         </div>
 
-        <label style="margin-top:14px;">Kontrak Sewa
-          <div class="upload-box">
-            <input type="file" id="f-file" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
-            <button type="button" class="btn-upload" id="btn-upload-file">
-              📎 Pilih File Kontrak
-            </button>
-            <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
-            <div id="upload-status" class="upload-status"></div>
-            <input type="hidden" id="f-link">
-            <div id="link-preview" class="link-preview"></div>
+
+                <!-- ═══ UPLOAD DOKUMEN ═══ -->
+        <div style="margin-top:20px;">
+          <div style="font-weight:700;color:var(--teal);font-size:0.85rem;margin-bottom:12px;padding-bottom:6px;border-bottom:1px dashed #e3ebeb;">
+            📎 Dokumen Pendukung (PDF/JPG/PNG · max 5 MB)
           </div>
-        </label>
+
+          <!-- File 1: KTP Penyewa -->
+          <label>KTP/SIM Penyewa
+            <div class="upload-box">
+              <input type="file" id="f-file-ktp-penyewa" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktp-penyewa">
+                📎 Pilih File KTP Penyewa
+              </button>
+              <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
+              <div id="upload-status-ktp-penyewa" class="upload-status"></div>
+              <input type="hidden" id="f-link-ktp-penyewa">
+              <div id="link-preview-ktp-penyewa" class="link-preview"></div>
+            </div>
+          </label>
+
+          <!-- File 2: KTP Ortu -->
+          <label>KTP/SIM Ortu/Wali/Kontak Darurat
+            <div class="upload-box">
+              <input type="file" id="f-file-ktp-ortu" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktp-ortu">
+                📎 Pilih File KTP Ortu
+              </button>
+              <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
+              <div id="upload-status-ktp-ortu" class="upload-status"></div>
+              <input type="hidden" id="f-link-ktp-ortu">
+              <div id="link-preview-ktp-ortu" class="link-preview"></div>
+            </div>
+          </label>
+
+          <!-- File 3: KTM -->
+          <label>Kartu Tanda Mahasiswa Penyewa
+            <div class="upload-box">
+              <input type="file" id="f-file-ktm" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+              <button type="button" class="btn-upload" data-upload-trigger="f-file-ktm">
+                📎 Pilih File KTM
+              </button>
+              <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
+              <div id="upload-status-ktm" class="upload-status"></div>
+              <input type="hidden" id="f-link-ktm">
+              <div id="link-preview-ktm" class="link-preview"></div>
+            </div>
+          </label>
+
+          <!-- File 4: Perjanjian -->
+          <label>Scan File Perjanjian (yang sudah ditandatangani)
+            <div class="upload-box">
+              <input type="file" id="f-file-perjanjian" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+              <button type="button" class="btn-upload" data-upload-trigger="f-file-perjanjian">
+                📎 Pilih File Perjanjian
+              </button>
+              <span class="upload-hint">PDF/JPG/PNG · max 5 MB</span>
+              <div id="upload-status-perjanjian" class="upload-status"></div>
+              <input type="hidden" id="f-link-perjanjian">
+              <div id="link-preview-perjanjian" class="link-preview"></div>
+            </div>
+          </label>
+        </div>
       </div>
 
       <!-- ═══ DATA PENYEWA ═══ -->
@@ -178,8 +229,8 @@
         <label>Nomor HP/WA
           <input type="text" id="f-hp" placeholder="08xx…">
         </label>
-        <label>Asal Kampus (opsional)
-          <input type="text" id="f-kampus" placeholder="UNNES, dll.">
+        <label>Prodi/Jurusan dan Kampus (Opsional)
+          <input type="text" id="f-kampus" placeholder="Mis. Teknik Informatika - UNNES">
         </label>
       </div>
 
@@ -187,7 +238,7 @@
       <div class="form-section">
       
          <div class="form-section-title">
-          👨‍👩‍👧 Data Orang Tua/Wali (Opsional untuk surat perjanjian)
+          👨‍👩‍👧 Data Orang Tua/Wali/Kontak Darurat
         </div>
         
         <label>Nama Orang Tua/Wali
