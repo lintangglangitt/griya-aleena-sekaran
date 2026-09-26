@@ -998,6 +998,15 @@ function openModal(id) {
       }
     });
 
+        // ⬇️ TAMBAH: Tampilkan tombol Hapus kalau ada file tersimpan
+    UPLOAD_CONFIGS.forEach(cfg => {
+      const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
+      if (btnDelete) {
+        const linkInput = document.getElementById(cfg.linkId);
+        btnDelete.style.display = linkInput?.value ? 'inline-block' : 'none';
+      }
+    });
+
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Okupansi';
     safeSet('f-mulai', todayISO());
