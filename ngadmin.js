@@ -1101,6 +1101,14 @@ async function uploadDokumen(file, cfg) {
     const formData = new FormData();
     formData.append('file', file);
 
+    // ⬇️ Kirim room_id & jenis dokumen untuk rename file otomatis
+    const roomId = document.getElementById('f-room')?.value || '';
+    formData.append('room_id', roomId);
+    
+    // file_ktp_penyewa → ktp-penyewa
+    const jenisDokumen = (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-');
+    formData.append('jenis', jenisDokumen);
+
     const result = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${API}/upload`);
@@ -1139,7 +1147,7 @@ async function uploadDokumen(file, cfg) {
     status.className = 'upload-status success';
     preview.innerHTML = `<a href="${escapeHtml(result.url)}" target="_blank">📄 Lihat file yang diunggah</a>`;
 
-    // ⬇️ TAMBAH: Tampilkan tombol Hapus
+    // ⬇️ Tampilkan tombol Hapus
     const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
     if (btnDelete) btnDelete.style.display = 'inline-block';
 
@@ -1151,103 +1159,7 @@ async function uploadDokumen(file, cfg) {
   }
 }
 
-// ─── Export CSV ────────────────────────────────────────────
-document.getElementById('btn-export').addEventListener('click', () => {
-  const rows = [
-      ['Kamar','Penyewa','No HP','Asal Kampus','Tipe Sewa','Mulai','Selesai','Total','Status','Link Kontrak','Catatan','No KTP','Alamat','Nama Ortu','No KTP Ortu','No HP Ortu','Alamat Ortu','Hubungan Keluarga'],
-    ...OCCS.map(o => [
-      o.nama_kamar, o.nama_penyewa, o.no_hp || '', o.asal_kampus || '',
-      o.tipe_sewa, o.tanggal_mulai, o.tanggal_selesai,
-      o.harga_total, o.status_bayar, o.link_kontrak || '', o.catatan || '',
-      o.no_ktp || '', o.alamat_penyewa || '', o.nama_ortu || '',
-      o.no_ktp_ortu || '', o.no_hp_ortu || '', o.alamat_ortu || ''
-    ])
-  ];
-  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `okupansi-griya-aleena-${todayISO()}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
 
-// ─── Import CSV ────────────────────────────────────────────
-document.getElementById('btn-import').addEventListener('click', () => {
-  document.getElementById('import-file').click();
-});
-
-document.getElementById('import-file').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  if (!confirm(`Import ${file.name}?\n\nPastikan format CSV sesuai template export.`)) {
-    e.target.value = '';
-    return;
-  }
-
-  try {
-    const text = await file.text();
-    const rows = parseCSV(text);
-
-    if (rows.length === 0) {
-      alert('CSV kosong atau format tidak valid');
-      e.target.value = '';
-      return;
-    }
-
-    const payload = rows.map(r => ({
-      nama_kamar: r['Kamar'] || r['kamar'] || '',
-      nama_penyewa: r['Penyewa'] || r['penyewa'] || '',
-      no_hp: r['No HP'] || r['no_hp'] || '',
-      asal_kampus: r['Asal Kampus'] || r['asal_kampus'] || '',
-      tipe_sewa: (r['Tipe Sewa'] || r['tipe_sewa'] || 'bulanan').toLowerCase(),
-      tanggal_mulai: normalizeDate(r['Mulai'] || r['mulai'] || ''),
-      tanggal_selesai: normalizeDate(r['Selesai'] || r['selesai'] || ''),
-      harga_total: Number(String(r['Total'] || r['total'] || '0').replace(/[^0-9]/g, '')),
-      status_bayar: (r['Status'] || r['status'] || 'belum').toLowerCase(),
-      link_kontrak: r['Link Kontrak'] || r['link_kontrak'] || null,
-      catatan: r['Catatan'] || r['catatan'] || null,
-      no_ktp: r['No KTP'] || r['no_ktp'] || null,
-      alamat_penyewa: r['Alamat'] || r['alamat_penyewa'] || null,
-      nama_ortu: r['Nama Ortu'] || r['nama_ortu'] || null,
-      no_ktp_ortu: r['No KTP Ortu'] || r['no_ktp_ortu'] || null,
-      no_hp_ortu: r['No HP Ortu'] || r['no_hp_ortu'] || null,
-      alamat_ortu: r['Alamat Ortu'] || r['alamat_ortu'] || null,
-    }));
-
-    const result = await api('/occupancies/bulk', {
-      method: 'POST',
-      body: JSON.stringify({ rows: payload }),
-    });
-
-    const wrap = document.getElementById('import-result');
-    let html = `
-      <p style="margin-bottom:12px;">
-        <strong>✅ Sukses:</strong> ${result.sukses} baris<br>
-        <strong>❌ Gagal:</strong> ${result.gagal} baris
-      </p>
-    `;
-    if (result.errors && result.errors.length) {
-      html += `<div style="background:#fdecec;padding:12px;border-radius:8px;font-size:0.85rem;">
-        <strong>Detail error:</strong><br>
-        ${result.errors.map(e => escapeHtml(e)).join('<br>')}
-      </div>`;
-    }
-    wrap.innerHTML = html;
-    document.getElementById('modal-import-result').classList.add('open');
-
-    await Promise.all([loadOccs(), loadStats()]);
-    fillYearFilter();
-    renderRooms();
-    renderTable();
-  } catch (err) {
-    alert('Gagal import: ' + err.message);
-  } finally {
-    e.target.value = '';
-  }
-});
 
 // ═══════════════════════════════════════════════════════════
 // HAPUS FILE DARI R2
@@ -1297,6 +1209,134 @@ async function deleteUploadedFile(cfg) {
     alert('Gagal menghapus file');
   }
 }
+
+// ─── Export CSV ────────────────────────────────────────────
+document.getElementById('btn-export').addEventListener('click', () => {
+  const rows = [
+    [
+      'Kamar','Penyewa','No HP','Prodi/Jurusan & Kampus','Tipe Sewa','Mulai','Selesai','Total','Status',
+      'Link Kontrak','Catatan','No KTP','Alamat',
+      'Nama Ortu','No KTP Ortu','No HP Ortu','Alamat Ortu','Hubungan Keluarga',
+      'File KTP Penyewa','File KTP Ortu','File KTM','File Perjanjian'
+    ],
+    ...OCCS.map(o => [
+      o.nama_kamar || '',
+      o.nama_penyewa || '',
+      o.no_hp || '',
+      o.asal_kampus || '',
+      o.tipe_sewa || '',
+      o.tanggal_mulai || '',
+      o.tanggal_selesai || '',
+      o.harga_total || '',
+      o.status_bayar || '',
+      o.link_kontrak || '',
+      o.catatan || '',
+      o.no_ktp || '',
+      o.alamat_penyewa || '',
+      o.nama_ortu || '',
+      o.no_ktp_ortu || '',
+      o.no_hp_ortu || '',
+      o.alamat_ortu || '',
+      o.hubungan_keluarga || '',
+      o.file_ktp_penyewa || '',
+      o.file_ktp_ortu || '',
+      o.file_ktm || '',
+      o.file_perjanjian || ''
+    ])
+  ];
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `okupansi-griya-aleena-${todayISO()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ─── Import CSV ────────────────────────────────────────────
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!confirm(`Import ${file.name}?\n\nPastikan format CSV sesuai template export.`)) {
+    e.target.value = '';
+    return;
+  }
+
+  try {
+    const text = await file.text();
+    const rows = parseCSV(text);
+
+    if (rows.length === 0) {
+      alert('CSV kosong atau format tidak valid');
+      e.target.value = '';
+      return;
+    }
+
+    const payload = rows.map(r => ({
+      nama_kamar: r['Kamar'] || r['kamar'] || '',
+      nama_penyewa: r['Penyewa'] || r['penyewa'] || '',
+      no_hp: r['No HP'] || r['no_hp'] || '',
+      asal_kampus: r['Prodi/Jurusan & Kampus'] || r['Asal Kampus'] || r['asal_kampus'] || '',
+      tipe_sewa: (r['Tipe Sewa'] || r['tipe_sewa'] || 'bulanan').toLowerCase(),
+      tanggal_mulai: normalizeDate(r['Mulai'] || r['mulai'] || ''),
+      tanggal_selesai: normalizeDate(r['Selesai'] || r['selesai'] || ''),
+      harga_total: Number(String(r['Total'] || r['total'] || '0').replace(/[^0-9]/g, '')),
+      status_bayar: (r['Status'] || r['status'] || 'belum').toLowerCase(),
+      link_kontrak: r['Link Kontrak'] || r['link_kontrak'] || null,
+      catatan: r['Catatan'] || r['catatan'] || null,
+      no_ktp: r['No KTP'] || r['no_ktp'] || null,
+      alamat_penyewa: r['Alamat'] || r['alamat_penyewa'] || null,
+      nama_ortu: r['Nama Ortu'] || r['nama_ortu'] || null,
+      no_ktp_ortu: r['No KTP Ortu'] || r['no_ktp_ortu'] || null,
+      no_hp_ortu: r['No HP Ortu'] || r['no_hp_ortu'] || null,
+      alamat_ortu: r['Alamat Ortu'] || r['alamat_ortu'] || null,
+      hubungan_keluarga: r['Hubungan Keluarga'] || r['hubungan_keluarga'] || null,
+      file_ktp_penyewa: r['File KTP Penyewa'] || r['file_ktp_penyewa'] || null,
+      file_ktp_ortu: r['File KTP Ortu'] || r['file_ktp_ortu'] || null,
+      file_ktm: r['File KTM'] || r['file_ktm'] || null,
+      file_perjanjian: r['File Perjanjian'] || r['file_perjanjian'] || null,
+    }));
+
+    const result = await api('/occupancies/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ rows: payload }),
+    });
+
+    const wrap = document.getElementById('import-result');
+    let html = `
+      <p style="margin-bottom:12px;">
+        <strong>✅ Sukses:</strong> ${result.sukses} baris<br>
+        <strong>❌ Gagal:</strong> ${result.gagal} baris
+      </p>
+    `;
+    if (result.errors && result.errors.length) {
+      html += `<div style="background:#fdecec;padding:12px;border-radius:8px;font-size:0.85rem;">
+        <strong>Detail error:</strong><br>
+        ${result.errors.map(e => escapeHtml(e)).join('<br>')}
+      </div>`;
+    }
+    wrap.innerHTML = html;
+    document.getElementById('modal-import-result').classList.add('open');
+
+    await Promise.all([loadOccs(), loadStats()]);
+    fillYearFilter();
+    renderRooms();
+    renderTable();
+  } catch (err) {
+    alert('Gagal import: ' + err.message);
+  } finally {
+    e.target.value = '';
+  }
+});
+
+
+
 
 function parseCSV(text) {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
