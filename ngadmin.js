@@ -901,10 +901,15 @@ function openModal(id) {
   fillRoomSelect(id);
   setupAutoHarga();
 
-  const status = document.getElementById('upload-status');
-  const preview = document.getElementById('link-preview');
-  if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
-  if (preview) preview.innerHTML = '';
+  // Reset semua upload UI
+  UPLOAD_CONFIGS.forEach(cfg => {
+    const status = document.getElementById(cfg.statusId);
+    const preview = document.getElementById(cfg.previewId);
+    const link = document.getElementById(cfg.linkId);
+    if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
+    if (preview) preview.innerHTML = '';
+    if (link) link.value = '';
+  });
 
   if (id) {
     const o = OCCS.find(x => x.id === id);
@@ -930,9 +935,22 @@ function openModal(id) {
     document.getElementById('f-hubungan').value = o.hubungan_keluarga || '';
     document.getElementById('f-catatan').value = o.catatan || '';
 
-    if (o.link_kontrak && preview) {
-      preview.innerHTML = `<a href="${escapeHtml(o.link_kontrak)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
-    }
+    // Isi link & preview untuk 4 file
+    const fileMap = {
+      'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa' },
+      'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu' },
+      'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm' },
+      'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian' },
+    };
+    Object.values(fileMap).forEach(item => {
+      if (item.link) {
+        const hidden = document.getElementById(item.hidden);
+        const preview = document.getElementById(item.preview);
+        if (hidden) hidden.value = item.link;
+        if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
+      }
+    });
+
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Okupansi';
     document.getElementById('f-mulai').value = todayISO();
@@ -961,6 +979,10 @@ formOcc.addEventListener('submit', async (e) => {
     alamat_ortu: document.getElementById('f-alamat-ortu').value.trim() || null,
     no_hp_ortu: document.getElementById('f-hp-ortu').value.trim() || null,
     hubungan_keluarga: document.getElementById('f-hubungan').value.trim() || null,
+    file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
+    file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
+    file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
+    file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
     catatan: document.getElementById('f-catatan').value.trim() || null,
   };
 
@@ -994,30 +1016,40 @@ async function deleteOcc(id) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// UPLOAD FILE KONTRAK KE R2
+// UPLOAD DOKUMEN KE R2 (4 File)
 // ═══════════════════════════════════════════════════════════
 
-const btnUpload = document.getElementById('btn-upload-file');
-if (btnUpload) {
-  btnUpload.addEventListener('click', () => {
-    document.getElementById('f-file').click();
-  });
-}
+const UPLOAD_CONFIGS = [
+  { key: 'f-ktp-penyewa', statusId: 'upload-status-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', field: 'file_ktp_penyewa' },
+  { key: 'f-ktp-ortu',    statusId: 'upload-status-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    field: 'file_ktp_ortu' },
+  { key: 'f-ktm',         statusId: 'upload-status-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         field: 'file_ktm' },
+  { key: 'f-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
+];
 
-const fileInput = document.getElementById('f-file');
-if (fileInput) {
-  fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    await uploadKontrak(file);
+// Pasang event listener untuk semua tombol upload
+document.querySelectorAll('[data-upload-trigger]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.uploadTrigger;
+    document.getElementById(targetId).click();
   });
-}
+});
 
-async function uploadKontrak(file) {
-  const status = document.getElementById('upload-status');
-  const linkInput = document.getElementById('f-link');
-  const preview = document.getElementById('link-preview');
-  const btn = document.getElementById('btn-upload-file');
+// Pasang event listener untuk semua input file
+UPLOAD_CONFIGS.forEach(cfg => {
+  const input = document.getElementById(cfg.key);
+  if (input) {
+    input.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      await uploadDokumen(file, cfg);
+    });
+  }
+});
+
+async function uploadDokumen(file, cfg) {
+  const status = document.getElementById(cfg.statusId);
+  const linkInput = document.getElementById(cfg.linkId);
+  const preview = document.getElementById(cfg.previewId);
 
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
   if (!allowedTypes.includes(file.type)) {
@@ -1035,7 +1067,6 @@ async function uploadKontrak(file) {
 
   status.innerHTML = '⏳ Mengunggah... 0%';
   status.className = 'upload-status loading';
-  btn.disabled = true;
 
   try {
     const formData = new FormData();
@@ -1083,8 +1114,7 @@ async function uploadKontrak(file) {
     status.innerHTML = `❌ Gagal: ${escapeHtml(err.message)}`;
     status.className = 'upload-status error';
   } finally {
-    btn.disabled = false;
-    fileInput.value = '';
+    document.getElementById(cfg.key).value = '';
   }
 }
 
