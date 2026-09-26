@@ -633,11 +633,17 @@ function openPerjanjian(id) {
   const o = OCCS.find(x => x.id === id);
   if (!o) return;
 
+  // Helper: kapitalkan semua teks (kecuali angka & simbol)
+  const toUpper = (s) => {
+    if (!s) return '';
+    return String(s).toUpperCase();
+  };
+
   const field = (label, value) => `
     <div class="pj-field">
       <div class="pj-label">${escapeHtml(label)}</div>
       <div class="pj-colon">:</div>
-      <div class="pj-value-line ${value ? '' : 'empty'}">${value ? escapeHtml(value) : '&nbsp;'}</div>
+      <div class="pj-value-line ${value ? '' : 'empty'}">${value ? escapeHtml(toUpper(value)) : '&nbsp;'}</div>
     </div>
   `;
 
