@@ -1065,26 +1065,6 @@ async function deleteOcc(id) {
 // UPLOAD DOKUMEN KE R2 (4 File)
 // ═══════════════════════════════════════════════════════════
 
-// Pasang event listener untuk semua tombol upload
-document.querySelectorAll('[data-upload-trigger]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const targetId = btn.dataset.uploadTrigger;
-    document.getElementById(targetId).click();
-  });
-});
-
-// Pasang event listener untuk semua input file
-UPLOAD_CONFIGS.forEach(cfg => {
-  const input = document.getElementById(cfg.key);
-  if (input) {
-    input.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      await uploadDokumen(file, cfg);
-    });
-  }
-});
-
 async function uploadDokumen(file, cfg) {
   const status = document.getElementById(cfg.statusId);
   const linkInput = document.getElementById(cfg.linkId);
@@ -1744,8 +1724,12 @@ document.getElementById('form-user').addEventListener('submit', async (e) => {
 // GLOBAL CLOSE HANDLER — Tutup Modal via Event Delegation
 // ═══════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════
+// GLOBAL EVENT DELEGATION — Tutup Modal, Print, Upload
+// ═══════════════════════════════════════════════════════════
+
 document.addEventListener('click', (e) => {
-  // Cek apakah yang di-klik adalah tombol close invoice
+  // ─── Tombol Tutup Modal ───
   if (e.target.closest('.inv-btn-close')) {
     const modal = e.target.closest('.invoice-modal');
     if (modal) {
@@ -1754,11 +1738,44 @@ document.addEventListener('click', (e) => {
     }
   }
   
-  // Klik backdrop (area gelap) → tutup modal
+  // ─── Tombol Print / Simpan PDF ───
+  const btnPrint = e.target.closest('.inv-btn-print');
+  if (btnPrint && btnPrint.dataset.filename) {
+    printDoc(btnPrint.dataset.filename);
+    return;
+  }
+  
+  // ─── Tombol Upload File (trigger file picker) ───
+  const btnUpload = e.target.closest('[data-upload-trigger]');
+  if (btnUpload) {
+    const targetId = btnUpload.dataset.uploadTrigger;
+    const input = document.getElementById(targetId);
+    if (input) input.click();
+    return;
+  }
+  
+  // ─── Klik Backdrop Modal → Tutup ───
   if (e.target.classList.contains('invoice-modal')) {
     e.target.classList.remove('open');
   }
 });
+
+// ─── Event Delegation untuk Input File (change) ───
+document.addEventListener('change', async (e) => {
+  const input = e.target;
+  if (!input.id) return;
+  
+  // Cek apakah input adalah salah satu dari UPLOAD_CONFIGS
+  const cfg = UPLOAD_CONFIGS.find(c => c.key === input.id);
+  if (!cfg) return;
+  
+  const file = input.files[0];
+  if (!file) return;
+  
+  await uploadDokumen(file, cfg);
+});
+
+
 init().catch(err => {
   console.error(err);
   alert('Gagal memuat data: ' + err.message);
