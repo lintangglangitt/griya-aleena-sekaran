@@ -411,6 +411,61 @@
 /* ═══════════════════════════════════════════════ */
 @media print {
 
+  @media print {
+  /* ⬇️ TAMBAH INI */
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;   /* ⬅️ PENTING: cegah overflow */
+  }
+
+  body * {
+    visibility: visible;
+  }
+
+  /* Modal — paksa 0 padding & margin */
+  .invoice-modal {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .invoice-wrapper {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Konten di akhir — cegah dorong halaman baru */
+  .inv-footer {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Tombol aksi — benar-benar hilang dari layout */
+  .invoice-actions,
+  .modal-close-x {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* ⬆️ SAMPAI SINI */
+}
+
   /* Sembunyikan elemen dashboard */
   .admin-header,
   .admin-user,
