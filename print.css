@@ -399,12 +399,10 @@
 /* ─── SAAT PRINT ─── */
 /* ═══════════════════════════════════════════════ */
 @media print {
-  /* Sembunyikan semua, tampilkan hanya modal yang terbuka */
   body * { visibility: hidden; }
   .invoice-modal.open,
   .invoice-modal.open * { visibility: visible; }
 
-  /* Hapus total elemen dashboard dari layout */
   body > *:not(.invoice-modal) {
     display: none !important;
   }
@@ -418,11 +416,7 @@
     overflow: visible !important;
     background: white !important;
   }
- .modal-close-x {
-    display: none !important;
-  }
-  
-  /* Modal jadi static, bukan overlay */
+
   .invoice-modal {
     display: block !important;
     position: static !important;
@@ -463,8 +457,12 @@
   .invoice-actions,
   .admin-header { display: none !important; }
 
-  /* ─── FIX: LOGO UKURAN ─── */
-  /* Batasi ukuran semua gambar di dalam dokumen */
+  /* Tombol silang tidak ikut tercetak */
+  .modal-close-x {
+    display: none !important;
+  }
+
+  /* Logo */
   .invoice-wrapper img,
   .perjanjian-wrapper img {
     max-height: 60px !important;
@@ -473,13 +471,12 @@
     height: auto !important;
     object-fit: contain !important;
   }
-  
   .perjanjian-wrapper .perjanjian-logo img {
     max-height: 80px !important;
     max-width: 80px !important;
   }
 
-  /* ─── FIX: HEADER LAYOUT ─── */
+  /* Header */
   .inv-header {
     display: flex !important;
     flex-direction: row !important;
@@ -490,7 +487,6 @@
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
-  
   .inv-brand {
     display: flex !important;
     flex-direction: row !important;
@@ -499,7 +495,6 @@
     flex: 1 1 auto !important;
     max-width: 70% !important;
   }
-  
   .inv-brand img {
     max-height: 50px !important;
     max-width: 50px !important;
@@ -508,23 +503,15 @@
     flex-shrink: 0 !important;
     object-fit: contain !important;
   }
-  
-  .inv-brand h1 {
-    font-size: 1.2rem !important;
-  }
-  
-  .inv-brand p {
-    font-size: 0.7rem !important;
-    line-height: 1.4 !important;
-  }
-  
+  .inv-brand h1 { font-size: 1.2rem !important; }
+  .inv-brand p { font-size: 0.7rem !important; line-height: 1.4 !important; }
   .inv-title-block {
     flex: 0 0 auto !important;
     text-align: right !important;
     max-width: 30% !important;
   }
 
-  /* Paksa warna tetap tercetak */
+  /* Paksa warna */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -545,6 +532,27 @@
     break-inside: avoid !important;
   }
 
+  /* ⬇️ TAMBAHAN BARU — Cegah blok data terpotong */
+  .perjanjian-wrapper .pj-info-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .perjanjian-wrapper p {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    orphans: 3;
+    widows: 3;
+  }
+  .perjanjian-wrapper .pj-field {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .perjanjian-wrapper li {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* ⬆️ SAMPAI SINI */
+
   /* Hindari page break setelah elemen terakhir */
   .invoice-wrapper > *:last-child,
   .inv-footer {
@@ -553,6 +561,12 @@
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
   }
+
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+}
 
   /* A4 dengan margin 2cm */
   @page {
