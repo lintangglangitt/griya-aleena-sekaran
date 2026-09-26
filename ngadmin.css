@@ -1027,3 +1027,25 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.7);
   }
 }
+
+/* ═══════════════════════════════════════════ */
+/* TOMBOL HAPUS FILE */
+/* ═══════════════════════════════════════════ */
+
+.btn-delete-file {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.15s, transform 0.15s;
+}
+.btn-delete-file:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
