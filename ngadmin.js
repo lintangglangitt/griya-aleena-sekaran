@@ -1236,6 +1236,50 @@ document.getElementById('import-file').addEventListener('change', async (e) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════
+// HAPUS FILE DARI R2
+// ═══════════════════════════════════════════════════════════
+
+async function deleteFileFromR2(fileUrl) {
+  if (!fileUrl) return false;
+  
+  try {
+    const result = await api('/delete-file', {
+      method: 'POST',
+      body: JSON.stringify({ url: fileUrl }),
+    });
+    console.log('File dihapus:', result.deleted);
+    return true;
+  } catch (err) {
+    console.error('Gagal hapus file:', err.message);
+    return false;
+  }
+}
+
+// Hapus file by config (KTP, KTM, dll)
+async function deleteUploadedFile(cfg) {
+  const linkInput = document.getElementById(cfg.linkId);
+  const preview = document.getElementById(cfg.previewId);
+  const status = document.getElementById(cfg.statusId);
+
+  if (!linkInput.value) return;
+
+  const confirm = window.confirm('Hapus file ini dari server?');
+  if (!confirm) return;
+
+  const success = await deleteFileFromR2(linkInput.value);
+  if (success) {
+    linkInput.value = '';
+    if (preview) preview.innerHTML = '';
+    if (status) {
+      status.innerHTML = '🗑️ File dihapus';
+      status.className = 'upload-status success';
+    }
+  } else {
+    alert('Gagal menghapus file');
+  }
+}
+
 function parseCSV(text) {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
   if (lines.length < 2) return [];
