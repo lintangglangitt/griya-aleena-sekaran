@@ -1130,6 +1130,10 @@ async function uploadDokumen(file, cfg) {
     status.className = 'upload-status success';
     preview.innerHTML = `<a href="${escapeHtml(result.url)}" target="_blank">📄 Lihat file yang diunggah</a>`;
 
+    // ⬇️ TAMBAH: Tampilkan tombol Hapus
+    const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
+    if (btnDelete) btnDelete.style.display = 'inline-block';
+
   } catch (err) {
     status.innerHTML = `❌ Gagal: ${escapeHtml(err.message)}`;
     status.className = 'upload-status error';
@@ -1275,6 +1279,11 @@ async function deleteUploadedFile(cfg) {
       status.innerHTML = '🗑️ File dihapus';
       status.className = 'upload-status success';
     }
+
+    // ⬇️ TAMBAH: Sembunyikan tombol Hapus
+    const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
+    if (btnDelete) btnDelete.style.display = 'none'
+    
   } else {
     alert('Gagal menghapus file');
   }
@@ -1796,6 +1805,15 @@ document.addEventListener('click', (e) => {
     const targetId = btnUpload.dataset.uploadTrigger;
     const input = document.getElementById(targetId);
     if (input) input.click();
+    return;
+  }
+
+    // ─── Tombol Hapus File ───
+  const btnDelete = e.target.closest('[data-delete-file]');
+  if (btnDelete) {
+    const key = btnDelete.dataset.deleteFile;
+    const cfg = UPLOAD_CONFIGS.find(c => c.key === key);
+    if (cfg) deleteUploadedFile(cfg);
     return;
   }
   
