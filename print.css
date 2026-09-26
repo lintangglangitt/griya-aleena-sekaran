@@ -625,12 +625,5 @@
   @page {
     size: A4;
     margin: 2cm;
-
-  @bottom-center {
-      content: "- " counter(page) " -";
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.75rem;
-      color: #5a7373;
-    }
   }
 }
