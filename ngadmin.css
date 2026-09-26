@@ -1049,3 +1049,91 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   background: #c0392b;
   transform: translateY(-1px);
 }
+/* ═══════════════════════════════════════════ */
+/* MODAL TOP BAR + TOMBOL SILANG              */
+/* ═══════════════════════════════════════════ */
+
+.modal-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-right: 44px; /* ruang untuk tombol silang absolute */
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.modal-top-bar h3 {
+  font-family: 'Sora', sans-serif;
+  margin: 0;
+  color: var(--teal);
+  font-size: 1.1rem;
+  flex: 0 0 auto;
+}
+
+.modal-top-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+}
+
+.modal-top-actions select {
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  background: white;
+}
+
+/* Tombol silang di pojok kanan atas modal */
+.modal-close-x {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  line-height: 1;
+  padding: 0;
+}
+
+.modal-close-x:hover {
+  background: #fdecec;
+  color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+.modal-close-x:active {
+  transform: scale(0.95);
+}
+
+/* Responsive: di layar kecil, tombol turun ke bawah */
+@media (max-width: 700px) {
+  .modal-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding-right: 44px;
+  }
+  .modal-top-actions {
+    justify-content: stretch;
+  }
+  .modal-top-actions > * {
+    flex: 1 1 auto;
+  }
+}
