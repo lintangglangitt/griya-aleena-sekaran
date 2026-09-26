@@ -219,7 +219,7 @@ async function init() {
     fillYearFilter();
     renderRooms();
     renderTable();
-    setupIncomeCardListeners();
+    setupIncomeCardKeyboard();   // ⬅️ nama baru
     setupAutoHarga();
   } catch (e) { console.error('[Init] Render error:', e); }
 
@@ -280,9 +280,9 @@ async function updateAnalyticsBadge() {
 // ═══════════════════════════════════════════════════════════
 // INCOME CARD FILTER
 // ═══════════════════════════════════════════════════════════
-function setupIncomeCardListeners() {
+function setupIncomeCardKeyboard() {
   document.querySelectorAll('.stat-card.clickable').forEach(card => {
-    card.addEventListener('click', () => toggleIncomeFilter(card.dataset.filter));
+    // Hanya keyboard — klik sudah di-handle event delegation global
     card.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
