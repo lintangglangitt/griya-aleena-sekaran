@@ -538,19 +538,20 @@ function openInvoice(id) {
 
     <div class="invoice-actions">
       <button class="inv-btn-close" id="inv-btn-close">Tutup</button>
-      <button class="inv-btn-print" onclick="printDoc('Invoice - ${escapeHtml(o.nama_penyewa).replace(/'/g, "\\'")}')">🖨️ Print / Simpan PDF</button>
+      <button class="inv-btn-print" id="inv-btn-print" data-filename="Invoice - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
   document.getElementById('invoice-content').innerHTML = html;
   document.getElementById('invoice-modal').classList.add('open');
 
-  // Attach event listener tombol Tutup
+  // Attach event listener tombol Print
   setTimeout(() => {
-    const btn = document.getElementById('inv-btn-close');
-    if (btn) btn.onclick = () => closeInvoice();
+    const btnPrint = document.getElementById('inv-btn-print');
+    if (btnPrint) {
+      btnPrint.onclick = () => printDoc(btnPrint.dataset.filename);
+    }
   }, 0);
-}
 
 // ═══════════════════════════════════════════════════════════
 // KUITANSI
@@ -623,7 +624,7 @@ function openKuitansi(id) {
 
     <div class="invoice-actions">
       <button class="inv-btn-close" id="kui-btn-close">Tutup</button>
-      <button class="inv-btn-print" onclick="printDoc('Kuitansi - ${escapeHtml(o.nama_penyewa).replace(/'/g, "\\'")}')">🖨️ Print / Simpan PDF</button>
+      <button class="inv-btn-print" id="kui-btn-print" data-filename="Kuitansi - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
@@ -631,12 +632,14 @@ function openKuitansi(id) {
   document.getElementById('kuitansi-modal').classList.add('open');
 
   // Attach event listener tombol Tutup
-  setTimeout(() => {
-    const btn = document.getElementById('kui-btn-close');
-    if (btn) btn.onclick = () => closeKuitansi();
-  }, 0);
-}
 
+    setTimeout(() => {
+    const btnPrint = document.getElementById('kui-btn-print');
+    if (btnPrint) {
+      btnPrint.onclick = () => printDoc(btnPrint.dataset.filename);
+    }
+  }, 0);
+  
 // ═══════════════════════════════════════════════════════════
 // PERJANJIAN
 // ═══════════════════════════════════════════════════════════
@@ -854,7 +857,7 @@ function openPerjanjian(id) {
 
     <div class="invoice-actions">
       <button class="inv-btn-close" onclick="closePerjanjian()">Tutup</button>
-      <button class="inv-btn-print" onclick="printDoc('Perjanjian - ${escapeHtml(o.nama_penyewa).replace(/'/g, "\\'")}')">🖨️ Print / Simpan PDF</button>
+      <button class="inv-btn-print" id="perj-btn-print" data-filename="Perjanjian - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
