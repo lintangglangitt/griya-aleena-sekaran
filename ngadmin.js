@@ -640,7 +640,7 @@ function openKuitansi(id) {
       btnPrint.onclick = () => printDoc(btnPrint.dataset.filename);
     }
   }, 0);
-  
+}
 // ═══════════════════════════════════════════════════════════
 // PERJANJIAN
 // ═══════════════════════════════════════════════════════════
@@ -865,15 +865,15 @@ function openPerjanjian(id) {
   document.getElementById('perjanjian-content').innerHTML = html;
   document.getElementById('perjanjian-modal').classList.add('open');
 
-    // Attach event listener tombol Print
+  // Attach event listener tombol Print
   setTimeout(() => {
     const btnPrint = document.getElementById('perj-btn-print');
     if (btnPrint) {
       btnPrint.onclick = () => printDoc(btnPrint.dataset.filename);
     }
   }, 0);
-  
 }
+
 
 function closePerjanjian() {
   document.getElementById('perjanjian-modal').classList.remove('open');
