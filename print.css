@@ -418,7 +418,10 @@
     overflow: visible !important;
     background: white !important;
   }
-
+ .modal-close-x {
+    display: none !important;
+  }
+  
   /* Modal jadi static, bukan overlay */
   .invoice-modal {
     display: block !important;
@@ -569,10 +572,4 @@
   font-weight: 600;
   color: #1a5c5c;
   /* Tidak ada min-width — panjang mengikuti teks */
-}
-
-@media print {
-  .modal-close-x {
-    display: none !important;
-  }
 }
