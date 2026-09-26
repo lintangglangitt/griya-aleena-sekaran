@@ -2,7 +2,7 @@
 
 /* ─── MODAL OVERLAY ─── */
 .invoice-modal {
-  display: none !important;
+  display: none;
   position: fixed;
   inset: 0;
   background: rgba(15, 30, 46, 0.75);
@@ -10,7 +10,7 @@
   padding: 20px;
   overflow-y: auto;
 }
-.invoice-modal.open { display: flex !important; align-items: flex-start; justify-content: center; }
+.invoice-modal.open { display: flex; align-items: flex-start; justify-content: center; }
 
 .invoice-wrapper {
   background: white;
