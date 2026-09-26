@@ -1009,7 +1009,7 @@ function openModal(id) {
       }
     });
 
-        // ⬇️ BARU: Validasi semua link ke R2 (async, tidak blocking)
+          // ⬇️ Validasi semua link ke R2 (async, tidak blocking)
     const linksToCheck = Object.values(fileMap).map(item => item.link).filter(Boolean);
     if (linksToCheck.length > 0) {
       checkFilesExist(linksToCheck).then(results => {
@@ -1021,23 +1021,18 @@ function openModal(id) {
           // Cari key dari UPLOAD_CONFIGS untuk tombol Hapus
           const cfg = UPLOAD_CONFIGS.find(c => c.linkId === item.hidden);
           const deleteBtn = cfg ? document.querySelector(`[data-delete-file="${cfg.key}"]`) : null;
+          const status = cfg ? document.getElementById(cfg.statusId) : null;
 
           const exist = results[item.link];
           if (exist === true) {
-            // ✅ File ada
+            // ✅ File ada → tampilkan link normal + tombol Hapus
             if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
             if (deleteBtn) deleteBtn.style.display = 'inline-block';
           } else if (exist === false) {
-            // ❌ File TIDAK ada di R2
-            if (preview) {
-              preview.innerHTML = `
-                <span style="display:inline-block;background:#fdecec;color:#a81f1f;font-size:0.78rem;font-weight:600;padding:6px 12px;border-radius:8px;margin-top:4px;">
-                  ⚠️ File tidak ditemukan di server — silakan upload ulang
-                </span>
-              `;
-            }
-            // ⬇️ UBAH: Sembunyikan tombol Hapus (bukan tampilkan)
+            // ❌ File TIDAK ada → tampilkan POLOS (seperti belum upload)
+            if (preview) preview.innerHTML = '';
             if (deleteBtn) deleteBtn.style.display = 'none';
+            if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
             
             // Bersihkan link tersembunyi biar tidak tersimpan URL mati
             if (hidden) hidden.value = '';
@@ -1045,11 +1040,13 @@ function openModal(id) {
         });
       }).catch(err => {
         console.warn('Gagal validasi file:', err);
-        // Fallback: tampilkan link apa adanya
+        // Fallback: sembunyikan preview (biar tidak tampil link mati)
         Object.values(fileMap).forEach(item => {
           if (!item.link) return;
           const preview = document.getElementById(item.preview);
-          if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
+          const hidden = document.getElementById(item.hidden);
+          if (preview) preview.innerHTML = '';
+          if (hidden) hidden.value = '';
         });
       });
     }
