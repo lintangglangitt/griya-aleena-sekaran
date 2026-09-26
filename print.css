@@ -593,12 +593,6 @@
     break-inside: avoid !important;
   }
 
-  /* Cegah <li> terpotong di tengah */
-  .perjanjian-wrapper li {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
   /* Cegah tabel invoice terpotong di tengah baris */
   .inv-table tr {
     page-break-inside: avoid !important;
