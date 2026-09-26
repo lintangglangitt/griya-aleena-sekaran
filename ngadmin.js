@@ -533,7 +533,7 @@ function openInvoice(id) {
     </div>
 
     <div class="inv-footer">
-      Terima kasih atas kepercayaan Anda. Semoga betah tinggal di Griya Aleena. 🏠
+      Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
     <div class="invoice-actions">
@@ -618,7 +618,7 @@ function openKuitansi(id) {
     </div>
 
     <div class="inv-footer">
-      Terima kasih atas kepercayaan Anda. Semoga betah tinggal di Griya Aleena. 🏠
+      Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
     <div class="invoice-actions">
@@ -1726,6 +1726,25 @@ document.getElementById('form-user').addEventListener('submit', async (e) => {
 });
 
 // ─── Start ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// GLOBAL CLOSE HANDLER — Tutup Modal via Event Delegation
+// ═══════════════════════════════════════════════════════════
+
+document.addEventListener('click', (e) => {
+  // Cek apakah yang di-klik adalah tombol close invoice
+  if (e.target.closest('.inv-btn-close')) {
+    const modal = e.target.closest('.invoice-modal');
+    if (modal) {
+      modal.classList.remove('open');
+      return;
+    }
+  }
+  
+  // Klik backdrop (area gelap) → tutup modal
+  if (e.target.classList.contains('invoice-modal')) {
+    e.target.classList.remove('open');
+  }
+});
 init().catch(err => {
   console.error(err);
   alert('Gagal memuat data: ' + err.message);
