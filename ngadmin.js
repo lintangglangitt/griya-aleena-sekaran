@@ -1009,7 +1009,7 @@ function openModal(id) {
       }
     });
 
-    // ⬇️ BARU: Validasi semua link ke R2 (async, tidak blocking)
+        // ⬇️ BARU: Validasi semua link ke R2 (async, tidak blocking)
     const linksToCheck = Object.values(fileMap).map(item => item.link).filter(Boolean);
     if (linksToCheck.length > 0) {
       checkFilesExist(linksToCheck).then(results => {
@@ -1017,7 +1017,6 @@ function openModal(id) {
           if (!item.link) return;
           const preview = document.getElementById(item.preview);
           const hidden = document.getElementById(item.hidden);
-          const btnDelete = document.querySelector(`[data-delete-file="${Object.keys(fileMap).find(k => fileMap[k].hidden === item.hidden)}"]`);
           
           // Cari key dari UPLOAD_CONFIGS untuk tombol Hapus
           const cfg = UPLOAD_CONFIGS.find(c => c.linkId === item.hidden);
@@ -1037,7 +1036,9 @@ function openModal(id) {
                 </span>
               `;
             }
-            if (deleteBtn) deleteBtn.style.display = 'inline-block';
+            // ⬇️ UBAH: Sembunyikan tombol Hapus (bukan tampilkan)
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            
             // Bersihkan link tersembunyi biar tidak tersimpan URL mati
             if (hidden) hidden.value = '';
           }
