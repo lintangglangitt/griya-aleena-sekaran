@@ -647,6 +647,15 @@ function openPerjanjian(id) {
     return String(s).toUpperCase();
   };
 
+  // Field yang tidak di-uppercase (untuk angka/rupiah)
+  const fieldRaw = (label, value) => `
+    <div class="pj-field">
+      <div class="pj-label">${escapeHtml(label)}</div>
+      <div class="pj-colon">:</div>
+      <div class="pj-value-line ${value ? '' : 'empty'}">${value ? escapeHtml(value) : '&nbsp;'}</div>
+    </div>
+  `;
+
   const field = (label, value) => `
     <div class="pj-field">
       <div class="pj-label">${escapeHtml(label)}</div>
@@ -746,7 +755,7 @@ function openPerjanjian(id) {
         <div class="pj-info-block" style="margin-top:8px;">
           <p><strong> ${escapeHtml(kamarLabel)}</strong></p>
           ${field('Durasi', tipeUpper)}
-          ${field('Biaya', totalBiaya)}
+          ${fieldRaw('Biaya', totalBiaya)}
           ${field('Periode', fmtDateLong(o.tanggal_mulai) + ' — ' + fmtDateLong(o.tanggal_selesai))}
         </div>
       </li>
