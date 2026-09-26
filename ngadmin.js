@@ -676,11 +676,12 @@ function openPerjanjian(id) {
     </div>
 
     <div class="pj-info-block" style="margin-top:14px;">
-      <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Orang Tua/Wali:</p>
+      <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Orang Tua/Wali/Kontak Darurat:</p>
       ${field('Nama', o.nama_ortu || '')}
       ${field('Nomor KTP/SIM', o.no_ktp_ortu || '')}
       ${field('Alamat', o.alamat_ortu || '')}
       ${field('Nomor HP/WA', o.no_hp_ortu || '')}
+      ${field('Hubungan Keluarga', o.hubungan_keluarga || '')}
     </div>
 
     <p>Selanjutnya disebut <strong>Penyewa</strong>.</p>
@@ -797,11 +798,13 @@ function openPerjanjian(id) {
     <div class="pj-sign-row">
       <div class="pj-sign-col">
         <div class="pj-sign-label">Pemilik,</div>
-        <div class="pj-sign-name">&nbsp;</div>
+        <div class="pj-sign-space"></div>
+        <div class="pj-sign-name-line">${escapeHtml(PEMILIK.nama)}</div>
       </div>
       <div class="pj-sign-col">
         <div class="pj-sign-label">Penyewa,</div>
-        <div class="pj-sign-name">&nbsp;</div>
+        <div class="pj-sign-space"></div>
+        <div class="pj-sign-name-line">${escapeHtml(o.nama_penyewa)}</div>
       </div>
     </div>
 
@@ -809,7 +812,8 @@ function openPerjanjian(id) {
       <h3>Lampiran:</h3>
       <ol type="a">
         <li>Fotokopi KTP/SIM Pemilik.</li>
-        <li>Fotokopi KTP/SIM Penyewa dan fotokopi KTP/SIM orang tua Penyewa.</li>
+        <li>Fotokopi KTP/SIM Penyewa.</li>
+        <li>Fotokopi KTP/SIM Orang Tua/Wali/Kontak Darurat.</li>
         <li>Fotokopi Kartu Tanda Mahasiswa Penyewa.</li>
       </ol>
     </div>
@@ -917,6 +921,7 @@ function openModal(id) {
     document.getElementById('f-ktp-ortu').value = o.no_ktp_ortu || '';
     document.getElementById('f-alamat-ortu').value = o.alamat_ortu || '';
     document.getElementById('f-hp-ortu').value = o.no_hp_ortu || '';
+    document.getElementById('f-hubungan').value = o.hubungan_keluarga || '';
     document.getElementById('f-catatan').value = o.catatan || '';
 
     if (o.link_kontrak && preview) {
@@ -949,6 +954,7 @@ formOcc.addEventListener('submit', async (e) => {
     no_ktp_ortu: document.getElementById('f-ktp-ortu').value.trim() || null,
     alamat_ortu: document.getElementById('f-alamat-ortu').value.trim() || null,
     no_hp_ortu: document.getElementById('f-hp-ortu').value.trim() || null,
+    hubungan_keluarga: document.getElementById('f-hubungan').value.trim() || null,
     catatan: document.getElementById('f-catatan').value.trim() || null,
   };
 
@@ -1079,7 +1085,7 @@ async function uploadKontrak(file) {
 // ─── Export CSV ────────────────────────────────────────────
 document.getElementById('btn-export').addEventListener('click', () => {
   const rows = [
-    ['Kamar','Penyewa','No HP','Asal Kampus','Tipe Sewa','Mulai','Selesai','Total','Status','Link Kontrak','Catatan','No KTP','Alamat','Nama Ortu','No KTP Ortu','No HP Ortu','Alamat Ortu'],
+      ['Kamar','Penyewa','No HP','Asal Kampus','Tipe Sewa','Mulai','Selesai','Total','Status','Link Kontrak','Catatan','No KTP','Alamat','Nama Ortu','No KTP Ortu','No HP Ortu','Alamat Ortu','Hubungan Keluarga'],
     ...OCCS.map(o => [
       o.nama_kamar, o.nama_penyewa, o.no_hp || '', o.asal_kampus || '',
       o.tipe_sewa, o.tanggal_mulai, o.tanggal_selesai,
