@@ -472,7 +472,6 @@ function buildDocHeader(title, no) {
 // ═══════════════════════════════════════════════════════════
 // INVOICE
 // ═══════════════════════════════════════════════════════════
-
 function openInvoice(id) {
   const o = OCCS.find(x => x.id === id);
   if (!o) return;
@@ -521,7 +520,7 @@ function openInvoice(id) {
     </div>
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Silakan dibayarkan sebelum menempati kamar kos.
+      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Mohon dibayarkan sebelum menempati kamar kos.
     </p>
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
@@ -529,7 +528,7 @@ function openInvoice(id) {
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div>
       <div>Hormat kami,</div>
-      <div style="margin-top:40px;font-weight:700;">${escapeHtml(PEMILIK.nama)}</div>
+      <div style="font-weight:700;">${escapeHtml(PEMILIK.nama)}</div>
       <div class="inv-sign-role">Pemilik Griya Aleena</div>
     </div>
 
@@ -538,19 +537,24 @@ function openInvoice(id) {
     </div>
 
     <div class="invoice-actions">
-      <button class="inv-btn-close" onclick="closeInvoice()">Tutup</button>
+      <button class="inv-btn-close" id="inv-btn-close">Tutup</button>
       <button class="inv-btn-print" onclick="printDoc('Invoice - ${escapeHtml(o.nama_penyewa).replace(/'/g, "\\'")}')">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
   document.getElementById('invoice-content').innerHTML = html;
   document.getElementById('invoice-modal').classList.add('open');
+
+  // Attach event listener tombol Tutup
+  setTimeout(() => {
+    const btn = document.getElementById('inv-btn-close');
+    if (btn) btn.onclick = () => closeInvoice();
+  }, 0);
 }
 
 // ═══════════════════════════════════════════════════════════
 // KUITANSI
 // ═══════════════════════════════════════════════════════════
-
 function openKuitansi(id) {
   const o = OCCS.find(x => x.id === id);
   if (!o) return;
@@ -603,13 +607,13 @@ function openKuitansi(id) {
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
-      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti sah pembayaran sewa kamar kos di Griya Aleena. Mohon disimpan dengan baik.
+      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. Mohon disimpan dengan baik.
     </p>
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div>
       <div>Hormat kami,</div>
-      <div style="margin-top:40px;font-weight:700;">${escapeHtml(PEMILIK.nama)}</div>
+      <div style="font-weight:700;">${escapeHtml(PEMILIK.nama)}</div>
       <div class="inv-sign-role">Pemilik Griya Aleena</div>
     </div>
 
@@ -618,13 +622,19 @@ function openKuitansi(id) {
     </div>
 
     <div class="invoice-actions">
-      <button class="inv-btn-close" onclick="closeKuitansi()">Tutup</button>
+      <button class="inv-btn-close" id="kui-btn-close">Tutup</button>
       <button class="inv-btn-print" onclick="printDoc('Kuitansi - ${escapeHtml(o.nama_penyewa).replace(/'/g, "\\'")}')">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
   document.getElementById('kuitansi-content').innerHTML = html;
   document.getElementById('kuitansi-modal').classList.add('open');
+
+  // Attach event listener tombol Tutup
+  setTimeout(() => {
+    const btn = document.getElementById('kui-btn-close');
+    if (btn) btn.onclick = () => closeKuitansi();
+  }, 0);
 }
 
 // ═══════════════════════════════════════════════════════════
