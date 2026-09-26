@@ -538,22 +538,26 @@
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
-  .perjanjian-wrapper h3 {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
 
   /* ═══════════════════════════════════════════ */
   /* CEGAH BLOK DATA PENYEWA/ORTU TERPOTONG      */
   /* ═══════════════════════════════════════════ */
 
-  /* Cegah .pj-info-block terpotong antar halaman */
-  .perjanjian-wrapper .pj-info-block {
+  /* Cegah hanya heading + paragraf pembuka yang terpisah,
+     TAPI biarkan .pj-info-block boleh terpotong kalau perlu */
+  .perjanjian-wrapper h1,
+  .perjanjian-wrapper h2 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Cegah tiap baris .pj-field terpotong di tengah baris */
+  .perjanjian-wrapper .pj-field {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
+
+  /* JANGAN pakai page-break-inside: avoid di .pj-info-block */
 
   /* Cegah paragraf terpisah dari blok di atasnya */
   .perjanjian-wrapper p {
