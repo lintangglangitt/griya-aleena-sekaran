@@ -566,6 +566,12 @@
     break-after: avoid !important;
   }
 
+    .perjanjian-wrapper .pj-info-block {
+    background: #f4f7f7 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
   /* A4 dengan margin 1.5cm */
   @page {
     size: A4;
