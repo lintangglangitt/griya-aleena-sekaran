@@ -938,7 +938,7 @@ function openModal(id) {
     safeSet('f-mulai', o.tanggal_mulai);
     safeSet('f-selesai', o.tanggal_selesai);
     safeSet('f-harga', o.harga_total);
-    safeSet('f-link', o.link_kontrak || '');
+    // safeSet('f-link', o.link_kontrak || '');
     safeSet('f-status', o.status_bayar);
     safeSet('f-nama', o.nama_penyewa);
     safeSet('f-ktp', o.no_ktp || '');
@@ -984,7 +984,7 @@ formOcc.addEventListener('submit', async (e) => {
     tanggal_mulai: document.getElementById('f-mulai').value,
     tanggal_selesai: document.getElementById('f-selesai').value,
     harga_total: Number(document.getElementById('f-harga').value),
-    link_kontrak: document.getElementById('f-link').value.trim() || null,
+    link_kontrak: null,
     status_bayar: document.getElementById('f-status').value,
     nama_penyewa: document.getElementById('f-nama').value.trim(),
     no_ktp: document.getElementById('f-ktp').value.trim() || null,
