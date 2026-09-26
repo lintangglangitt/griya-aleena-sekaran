@@ -284,6 +284,15 @@
   margin-bottom: 16px;
 }
 
+/* Versi pecahan — tidak ada background solid, supaya browser bisa
+   memotong natural kalau perlu pindah halaman */
+.perjanjian-wrapper .pj-field-group {
+  background: #f4f7f7;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+
 /* Form isian dengan titik dua rata */
 .perjanjian-wrapper .pj-field {
   display: grid;
@@ -525,7 +534,7 @@
   /* ─── PAGE BREAK RULES (MINIMAL & AMAN) ─── */
 
   /* Cegah heading "nyangkut" sendirian di bawah halaman */
-  .perjanjian-wrapper h1,
+ 
   .perjanjian-wrapper h2,
   .perjanjian-wrapper h3 {
     page-break-after: avoid !important;
@@ -580,6 +589,17 @@
     margin-top: 0 !important;
   }
 
+    /* Izinkan .pj-field-group dipotong natural di antara .pj-field */
+  .perjanjian-wrapper .pj-field-group {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* Setiap .pj-field jangan terpotong di tengah baris */
+  .perjanjian-wrapper .pj-field {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
   /* A4 dengan margin 1.5cm */
   @page {
     size: A4;
