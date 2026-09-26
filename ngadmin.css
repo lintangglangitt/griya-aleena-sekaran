@@ -1096,7 +1096,8 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
 
 /* Tombol silang di pojok kanan atas modal */
 .modal-close-x {
-  position: absolute;
+  position: static;        /* ⬅️ UBAH dari absolute ke static */
+  flex: 0 0 auto;          /* ⬅️ TAMBAH: jangan melebar */
   top: 0;
   right: 0;
   width: 32px;
@@ -1228,7 +1229,7 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   .modal-top-bar {
     flex-direction: column;
     align-items: stretch;
-    padding-right: 44px;
+   /* padding-right: 44px;  ⬅️ HAPUS BARIS INI */
   }
   .modal-top-actions {
     justify-content: stretch;
