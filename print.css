@@ -570,3 +570,9 @@
   color: #1a5c5c;
   /* Tidak ada min-width — panjang mengikuti teks */
 }
+
+@media print {
+  .modal-close-x {
+    display: none !important;
+  }
+}
