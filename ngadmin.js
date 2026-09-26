@@ -656,8 +656,10 @@ function openPerjanjian(id) {
   `;
 
   const totalBiaya = rupiahFull(o.harga_total);
-  const tipeUpper = o.tipe_sewa.charAt(0).toUpperCase() + o.tipe_sewa.slice(1);
+  const tipeUpper = o.tipe_sewa.toUpperCase();
   const kamarTipe = o.tipe === 'AC' ? 'AC' : 'NON AC';
+  const namaKamar = (o.nama_kamar || 'Kamar').toUpperCase();  // ⬅️ TAMBAH
+  const kamarLabel = `${namaKamar} (${kamarTipe})`;            // ⬅️ TAMBAH
 
   const html = `
     <div class="perjanjian-logo">
@@ -707,11 +709,11 @@ function openPerjanjian(id) {
     <h2>Pasal 1 – Objek Sewa</h2>
     <ol>
       <li>Pemilik menyewakan kamar kos yang beralamat di ${escapeHtml(PEMILIK.alamat)} kepada Penyewa.</li>
-      <li>Kamar kos yang disewakan hanya diperuntukkan bagi satu orang Penyewa dan tidak diperbolehkan dialihgunakan atau disewakan kembali kepada pihak lain tanpa persetujuan tertulis dari Pemilik.</li>
+      <li>Kamar kos yang disewakan adalah <strong>${escapeHtml(kamarLabel)}</strong> dan hanya diperuntukkan bagi satu orang Penyewa dan tidak diperbolehkan dialihgunakan atau disewakan kembali kepada pihak lain tanpa persetujuan tertulis dari Pemilik.</li>
       <li>Fasilitas dasar yang disiapkan oleh Pemilik meliputi:
         <p style="margin-top:6px;"><strong>a. Fasilitas Pribadi Penyewa</strong></p>
         <ul>
-          <li>Satu unit kamar kos</li>
+          <li>Satu unit ${escapeHtml(kamarLabel)}</li>
           <li>Kamar mandi dalam</li>
           <li>Lemari pakaian besi sliding</li>
           <li>Kasur busa, bantal, dan guling</li>
@@ -742,7 +744,7 @@ function openPerjanjian(id) {
     <ol>
       <li>Biaya sewa yang disepakati Para Pihak adalah sebagai berikut:
         <div class="pj-info-block" style="margin-top:8px;">
-          <p><strong>Kamar ${escapeHtml(kamarTipe)}</strong></p>
+          <p><strong>Kamar ${escapeHtml(kamarLabel)}</strong></p>
           ${field('Durasi', tipeUpper)}
           ${field('Biaya', totalBiaya)}
           ${field('Periode', fmtDateLong(o.tanggal_mulai) + ' — ' + fmtDateLong(o.tanggal_selesai))}
