@@ -189,6 +189,106 @@ function closeAllModals() {
   });
 }
 
+// ─── Riwayat Okupansi Per Kamar (dihitung otomatis dari OCCS) ──
+let ACTIVE_RK_ROOM = null;
+const RK_START_DATE = '2025-01-01'; // data mulai dihitung dari tanggal ini
+
+function addDaysISO(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+// Rangkai timeline lengkap 1 kamar: isi celah antar sewa dengan status "Kosong"
+function buildRiwayatKamar(roomId) {
+  const today = todayISO();
+  const occs = OCCS
+    .filter(o => o.room_id === roomId)
+    .slice()
+    .sort((a, b) => a.tanggal_mulai.localeCompare(b.tanggal_mulai));
+
+  const rows = [];
+  let cursor = RK_START_DATE;
+
+  occs.forEach(o => {
+    // celah kosong sebelum sewa ini dimulai
+    if (o.tanggal_mulai > cursor) {
+      rows.push({
+        mulai: cursor,
+        selesai: addDaysISO(o.tanggal_mulai, -1),
+        status: 'kosong', penyewa: '-', total: 0, ket: '-'
+      });
+    }
+    rows.push({
+      mulai: o.tanggal_mulai,
+      selesai: o.tanggal_selesai,
+      status: 'disewa',
+      penyewa: o.nama_penyewa,
+      total: o.harga_total,
+      ket: o.catatan || '-'
+    });
+    const next = addDaysISO(o.tanggal_selesai, 1);
+    if (next > cursor) cursor = next;
+  });
+
+  // celah kosong dari sewa terakhir sampai hari ini
+  if (cursor <= today) {
+    rows.push({ mulai: cursor, selesai: today, status: 'kosong', penyewa: '-', total: 0, ket: '-' });
+  }
+
+  return rows;
+}
+
+function renderRiwayatKamarTabs() {
+  const wrap = document.getElementById('riwayat-kamar-tabs');
+  if (!wrap) return;
+
+  const sorted = [...ROOMS].sort((a, b) => a.id - b.id);
+  if (ACTIVE_RK_ROOM === null && sorted.length) ACTIVE_RK_ROOM = sorted[0].id;
+
+  wrap.innerHTML = sorted.map(r => `
+    <button class="rk-tab ${r.id === ACTIVE_RK_ROOM ? 'active' : ''}" data-rk-room="${r.id}">
+      ${escapeHtml(r.nama_kamar)}
+    </button>
+  `).join('');
+
+  wrap.querySelectorAll('.rk-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ACTIVE_RK_ROOM = Number(btn.dataset.rkRoom);
+      wrap.querySelectorAll('.rk-tab').forEach(b => b.classList.toggle('active', b === btn));
+      renderRiwayatKamar();
+    });
+  });
+}
+
+function renderRiwayatKamar() {
+  const tbody = document.getElementById('riwayat-kamar-body');
+  if (!tbody || ACTIVE_RK_ROOM === null) return;
+
+  const rows = buildRiwayatKamar(ACTIVE_RK_ROOM);
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:#5a7373;">Belum ada data</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const isDisewa = r.status === 'disewa';
+    const badgeClass = isDisewa ? 'lunas' : 'belum';
+    const statusLabel = isDisewa ? 'Disewa' : 'Kosong';
+    return `
+      <tr>
+        <td>${fmtDateLong(r.mulai)}</td>
+        <td>${fmtDateLong(r.selesai)}</td>
+        <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+        <td>${escapeHtml(r.penyewa)}</td>
+        <td><strong>${rupiahFull(r.total)}</strong></td>
+        <td>${escapeHtml(r.ket)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
@@ -221,6 +321,8 @@ async function init() {
     renderTable();
     setupIncomeCardKeyboard();   // ⬅️ nama baru
     setupAutoHarga();
+    renderRiwayatKamarTabs();   // ⬅️ TAMBAH
+    renderRiwayatKamar();        // ⬅️ TAMBAH
   } catch (e) { console.error('[Init] Render error:', e); }
 
   // Hide users button kalau bukan owner
@@ -305,6 +407,7 @@ function toggleIncomeFilter(filter) {
   updateIncomeCardUI();
   renderRooms();
   renderTable();
+  renderRiwayatKamar();   // ⬅️ TAMBAH
 }
 
 function updateIncomeCardUI() {
@@ -398,6 +501,7 @@ function renderRooms() {
       updateIncomeCardUI();
       renderRooms();
       renderTable();
+      renderRiwayatKamar();   // ⬅️ TAMBAH
     });
   });
 }
@@ -1157,6 +1261,7 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
     fillYearFilter();
     renderRooms();
     renderTable();
+    renderRiwayatKamar();   // ⬅️ TAMBAH
   } catch (err) {
     alert('Gagal simpan: ' + err.message);
   }
@@ -1338,6 +1443,7 @@ async function deleteOcc(id) {
     fillYearFilter();
     renderRooms();
     renderTable();
+    renderRiwayatKamar();   // ⬅️ TAMBAH
   } catch (err) {
     alert('Gagal hapus: ' + err.message);
   }
@@ -1488,6 +1594,7 @@ async function handleImportFile(file) {
     fillYearFilter();
     renderRooms();
     renderTable();
+    renderRiwayatKamar();   // ⬅️ TAMBAH
   } catch (err) {
     alert('Gagal import: ' + err.message);
   }
