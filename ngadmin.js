@@ -199,8 +199,8 @@ function addDaysISO(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 
-// Rangkai timeline lengkap 1 kamar:
-// isi celah antar sewa dengan status "Kosong".
+// Rangkai timeline lengkap satu kamar.
+// Celah antar kontrak ditampilkan sebagai periode "Kosong".
 function buildRiwayatKamar(roomId) {
   const today = todayISO();
 
@@ -215,60 +215,54 @@ function buildRiwayatKamar(roomId) {
   let cursor = RK_START_DATE;
   let akumulasi = 0;
 
-  occs.forEach(o => {
-    const mulai = o.tanggal_mulai;
-    const selesai = o.tanggal_selesai;
+  for (const o of occs) {
+    const mulai = String(o.tanggal_mulai || '');
+    const selesai = String(o.tanggal_selesai || '');
 
-    // Tambahkan periode kosong sebelum kontrak berikutnya.
+    if (!mulai || !selesai) continue;
+
+    // Jangan membuat celah kosong jika kontrak bertumpang tindih
+    // atau mulai sebelum tanggal awal timeline.
     if (mulai > cursor) {
       rows.push({
         mulai: cursor,
         selesai: addDaysISO(mulai, -1),
         status: 'kosong',
         penyewa: '-',
-        total: '-',
+        total: null,
         ket: '-'
       });
     }
 
-
-
     const rawHarga = o.harga_total;
-const harga = rawHarga === null || rawHarga === undefined || rawHarga === ''
-  ? NaN
-  : Number(rawHarga);
+    const harga = rawHarga === null || rawHarga === undefined || rawHarga === ''
+      ? NaN
+      : Number(rawHarga);
 
-if (Number.isFinite(harga)) {
+    if (Number.isFinite(harga)) {
       akumulasi += harga;
     }
 
-
-    // Baris periode sewa.
     rows.push({
       mulai,
       selesai,
       status: 'disewa',
       penyewa: o.nama_penyewa || '-',
-      total: Number.isFinite(harga) ? harga : '-',
+      total: Number.isFinite(harga) ? harga : null,
       ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
     });
 
-    // Geser cursor ke hari setelah tanggal selesai,
-    // tanpa memundurkan cursor jika data kontrak bertumpang tindih.
     const next = addDaysISO(selesai, 1);
-    if (next > cursor) {
-      cursor = next;
-    }
-  });
+    if (next > cursor) cursor = next;
+  }
 
-  // Tambahkan periode kosong sampai hari ini.
   if (cursor <= today) {
     rows.push({
       mulai: cursor,
       selesai: today,
       status: 'kosong',
       penyewa: '-',
-      total: '-',
+      total: null,
       ket: '-'
     });
   }
@@ -277,79 +271,112 @@ if (Number.isFinite(harga)) {
 }
 
 
-
 function renderRiwayatKamarTabs() {
   const wrap = document.getElementById('riwayat-kamar-tabs');
   if (!wrap) return;
 
-  const sorted = [...ROOMS].sort((a, b) => Number(a.id) - Number(b.id));
+  const rooms = [...ROOMS].sort((a, b) =>
+    Number(a.id) - Number(b.id)
+  );
 
-  if (ACTIVE_RK_ROOM === null && sorted.length) {
-    ACTIVE_RK_ROOM = sorted[0].id;
+  if (!rooms.length) {
+    wrap.innerHTML = '';
+    return;
   }
 
-  // Ganti OCCUPANCIES dengan nama array data okupansi di ngadmin.js.
-  const tabsHtml = sorted.map(room => {
-    const totalSewa = OCCUPANCIES
-      .filter(item => Number(item.room_id) === Number(room.id))
-      .reduce((total, item) => total + Number(item.harga_total || 0), 0);
+  // Pastikan kamar aktif masih tersedia.
+  if (!rooms.some(room => String(room.id) === String(ACTIVE_RK_ROOM))) {
+    ACTIVE_RK_ROOM = rooms[0].id;
+  }
+
+  wrap.innerHTML = rooms.map(room => {
+    // Gunakan OCCS, bukan OCCUPANCIES.
+    const totalSewa = OCCS
+      .filter(o => String(o.room_id) === String(room.id))
+      .reduce((sum, o) => {
+        const value = o.harga_total;
+        if (value === null || value === undefined || value === '') return sum;
+
+        const amount = Number(value);
+        return Number.isFinite(amount) ? sum + amount : sum;
+      }, 0);
+
+    const active = String(room.id) === String(ACTIVE_RK_ROOM);
+    const roomName = room.nama_kamar || room.nomor || room.id;
 
     return `
       <button
         type="button"
-        class="rk-tab ${Number(room.id) === Number(ACTIVE_RK_ROOM) ? 'active' : ''}"
+        class="rk-tab${active ? ' active' : ''}"
         data-rk-room="${escapeHtml(String(room.id))}"
+        aria-pressed="${active}"
       >
-        <span class="rk-tab-room">Kamar Nomor ${escapeHtml(String(room.nama_kamar))}</span>
+        <span class="rk-tab-room">Kamar Nomor ${escapeHtml(String(roomName))}</span>
         <span class="rk-tab-label">Total Akumulasi Sewa</span>
-        <strong class="rk-tab-total">${formatRupiah(totalSewa)}</strong>
+        <strong class="rk-tab-total">${rupiahFull(totalSewa)}</strong>
       </button>
     `;
   }).join('');
 
-  wrap.innerHTML = tabsHtml;
-
-  wrap.querySelectorAll('.rk-tab').forEach(button => {
+  wrap.querySelectorAll('[data-rk-room]').forEach(button => {
     button.addEventListener('click', () => {
-      ACTIVE_RK_ROOM = Number(button.dataset.rkRoom);
-
-      wrap.querySelectorAll('.rk-tab').forEach(tab => {
-        tab.classList.toggle('active', tab === button);
-      });
-
+      ACTIVE_RK_ROOM = button.dataset.rkRoom;
+      renderRiwayatKamarTabs();
       renderRiwayatKamar();
     });
   });
 }
+
+
 function renderRiwayatKamar() {
   const tbody = document.getElementById('riwayat-kamar-body');
-  if (!tbody || ACTIVE_RK_ROOM === null) return;
+  if (!tbody) return;
+
+  if (ACTIVE_RK_ROOM === null || ACTIVE_RK_ROOM === undefined) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;padding:24px;color:#5a7373;">
+          Pilih kamar untuk melihat riwayat.
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
   const rows = buildRiwayatKamar(ACTIVE_RK_ROOM);
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:#5a7373;">Belum ada data</td></tr>`;
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;padding:24px;color:#5a7373;">
+          Belum ada data
+        </td>
+      </tr>
+    `;
     return;
   }
 
-  tbody.innerHTML = rows.map(r => {
-    const isDisewa = r.status === 'disewa';
-    const badgeClass = isDisewa ? 'lunas' : 'belum';
-    const statusLabel = isDisewa ? 'Disewa' : 'Kosong';
+  tbody.innerHTML = rows.map(row => {
+    const isDisewa = row.status === 'disewa';
+
     return `
       <tr>
-        <td>${fmtDateLong(r.mulai)}</td>
-        <td>${fmtDateLong(r.selesai)}</td>
-        <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
-        <td>${escapeHtml(r.penyewa)}</td>
-
-<td><strong>${
-  r.status !== 'disewa' || !Number.isFinite(Number(r.total))
-    ? '—'
-    : rupiahFull(Number(r.total))
-}</strong></td>
-        
-        <td>${escapeHtml(r.ket)}</td>
+        <td>${escapeHtml(fmtDateLong(row.mulai))}</td>
+        <td>${escapeHtml(fmtDateLong(row.selesai))}</td>
+        <td>
+          <span class="badge ${isDisewa ? 'lunas' : 'belum'}">
+            ${isDisewa ? 'Disewa' : 'Kosong'}
+          </span>
+        </td>
+        <td>${escapeHtml(String(row.penyewa || '-'))}</td>
+        <td>
+          <strong>
+            ${isDisewa && Number.isFinite(row.total)
+              ? rupiahFull(row.total)
+              : '—'}
+          </strong>
+        </td>
+        <td>${escapeHtml(String(row.ket || '-'))}</td>
       </tr>
     `;
   }).join('');
