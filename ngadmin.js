@@ -203,37 +203,50 @@ function addDaysISO(dateStr, n) {
 function buildRiwayatKamar(roomId) {
   const today = todayISO();
   const occs = OCCS
-    .filter(o => o.room_id === roomId)
+    .filter(o => String(o.room_id) === String(roomId))
     .slice()
     .sort((a, b) => a.tanggal_mulai.localeCompare(b.tanggal_mulai));
 
   const rows = [];
   let cursor = RK_START_DATE;
+  let akumulasi = 0;
 
   occs.forEach(o => {
-    // celah kosong sebelum sewa ini dimulai
     if (o.tanggal_mulai > cursor) {
       rows.push({
         mulai: cursor,
         selesai: addDaysISO(o.tanggal_mulai, -1),
-        status: 'kosong', penyewa: '-', total: 0, ket: '-'
+        status: 'kosong',
+        penyewa: '-',
+        total: 0,
+        ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
       });
     }
+
+    akumulasi += Number(o.harga_total) || 0;
+
     rows.push({
       mulai: o.tanggal_mulai,
       selesai: o.tanggal_selesai,
       status: 'disewa',
       penyewa: o.nama_penyewa,
       total: o.harga_total,
-      ket: o.catatan || '-'
+      ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
     });
+
     const next = addDaysISO(o.tanggal_selesai, 1);
     if (next > cursor) cursor = next;
   });
 
-  // celah kosong dari sewa terakhir sampai hari ini
   if (cursor <= today) {
-    rows.push({ mulai: cursor, selesai: today, status: 'kosong', penyewa: '-', total: 0, ket: '-' });
+    rows.push({
+      mulai: cursor,
+      selesai: today,
+      status: 'kosong',
+      penyewa: '-',
+      total: 0,
+      ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
+    });
   }
 
   return rows;
