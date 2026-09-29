@@ -1295,3 +1295,56 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
 .riwayat-kamar-tabs {
   justify-content: center;
 }
+
+/* Kartu riwayat kamar: satu baris tanpa scroll */
+#riwayat-kamar-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  width: 100%;
+  overflow: hidden;
+  margin: 18px 0 24px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+#riwayat-kamar-tabs .rk-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 170px;
+  padding: 14px 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+#riwayat-kamar-tabs .rk-tab-room {
+  font-size: clamp(0.65rem, 1vw, 0.95rem);
+  line-height: 1.2;
+}
+
+#riwayat-kamar-tabs .rk-tab-label {
+  font-size: clamp(0.55rem, 0.75vw, 0.72rem);
+  line-height: 1.2;
+}
+
+#riwayat-kamar-tabs .rk-tab-total {
+  font-size: clamp(0.65rem, 0.9vw, 0.85rem);
+  line-height: 1.2;
+}
+
+@media (max-width: 600px) {
+  #riwayat-kamar-tabs {
+    gap: 4px;
+  }
+
+  #riwayat-kamar-tabs .rk-tab {
+    min-height: 130px;
+    padding: 8px 3px;
+  }
+}
