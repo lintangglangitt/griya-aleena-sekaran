@@ -311,8 +311,8 @@ function renderRiwayatKamarTabs() {
         data-rk-room="${escapeHtml(String(room.id))}"
         aria-pressed="${active}"
       >
-        <span class="rk-tab-room">Kamar Nomor ${escapeHtml(String(roomName))}</span>
-        <span class="rk-tab-label">Total Akumulasi Sewa</span>
+        <span class="rk-tab-room">${escapeHtml(String(roomName))}</span><br>
+        <span class="rk-tab-label">Total Akumulasi Sewa:</span><br>
         <strong class="rk-tab-total">${rupiahFull(totalSewa)}</strong>
       </button>
     `;
