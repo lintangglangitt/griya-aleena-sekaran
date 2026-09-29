@@ -199,58 +199,84 @@ function addDaysISO(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 
-// Rangkai timeline lengkap 1 kamar: isi celah antar sewa dengan status "Kosong"
+// Rangkai timeline lengkap 1 kamar:
+// isi celah antar sewa dengan status "Kosong".
 function buildRiwayatKamar(roomId) {
   const today = todayISO();
+
   const occs = OCCS
     .filter(o => String(o.room_id) === String(roomId))
     .slice()
-    .sort((a, b) => a.tanggal_mulai.localeCompare(b.tanggal_mulai));
+    .sort((a, b) =>
+      String(a.tanggal_mulai).localeCompare(String(b.tanggal_mulai))
+    );
 
   const rows = [];
   let cursor = RK_START_DATE;
   let akumulasi = 0;
 
   occs.forEach(o => {
-    if (o.tanggal_mulai > cursor) {
+    const mulai = o.tanggal_mulai;
+    const selesai = o.tanggal_selesai;
+
+    // Tambahkan periode kosong sebelum kontrak berikutnya.
+    if (mulai > cursor) {
       rows.push({
         mulai: cursor,
-        selesai: addDaysISO(o.tanggal_mulai, -1),
+        selesai: addDaysISO(mulai, -1),
         status: 'kosong',
         penyewa: '-',
-        total: 0,
-        ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
+        total: '-',
+        ket: '-'
       });
     }
 
-    akumulasi += Number(o.harga_total) || 0;
 
+
+    const rawHarga = o.harga_total;
+const harga = rawHarga === null || rawHarga === undefined || rawHarga === ''
+  ? NaN
+  : Number(rawHarga);
+
+if (Number.isFinite(harga)) {
+      akumulasi += harga;
+    }
+
+
+    // Baris periode sewa.
     rows.push({
-      mulai: o.tanggal_mulai,
-      selesai: o.tanggal_selesai,
+      mulai,
+      selesai,
       status: 'disewa',
-      penyewa: o.nama_penyewa,
-      total: o.harga_total,
+      penyewa: o.nama_penyewa || '-',
+      total: Number.isFinite(harga) ? harga : '-',
       ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
     });
 
-    const next = addDaysISO(o.tanggal_selesai, 1);
-    if (next > cursor) cursor = next;
+    // Geser cursor ke hari setelah tanggal selesai,
+    // tanpa memundurkan cursor jika data kontrak bertumpang tindih.
+    const next = addDaysISO(selesai, 1);
+    if (next > cursor) {
+      cursor = next;
+    }
   });
 
+  // Tambahkan periode kosong sampai hari ini.
   if (cursor <= today) {
     rows.push({
       mulai: cursor,
       selesai: today,
       status: 'kosong',
       penyewa: '-',
-      total: 0,
-      ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
+      total: '-',
+      ket: '-'
     });
   }
 
   return rows;
 }
+
+
 
 function renderRiwayatKamarTabs() {
 
@@ -301,7 +327,13 @@ function renderRiwayatKamar() {
         <td>${fmtDateLong(r.selesai)}</td>
         <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
         <td>${escapeHtml(r.penyewa)}</td>
-        <td><strong>${rupiahFull(r.total)}</strong></td>
+
+<td><strong>${
+  r.status !== 'disewa' || !Number.isFinite(Number(r.total))
+    ? '—'
+    : rupiahFull(Number(r.total))
+}</strong></td>
+        
         <td>${escapeHtml(r.ket)}</td>
       </tr>
     `;
