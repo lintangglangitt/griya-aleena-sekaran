@@ -1295,3 +1295,72 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
 .riwayat-kamar-tabs {
   justify-content: center;
 }
+#riwayat-kamar-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 18px 0 24px;
+}
+
+#riwayat-kamar-tabs .rk-tab {
+  min-height: 190px;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  color: #183b37;
+  background: #fff8e8;
+  border: 2px solid #f3a000;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+#riwayat-kamar-tabs .rk-tab:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgb(24 59 55 / 14%);
+}
+
+#riwayat-kamar-tabs .rk-tab.active {
+  outline: 4px solid rgb(243 160 0 / 35%);
+  outline-offset: 2px;
+}
+
+#riwayat-kamar-tabs .rk-tab-room {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+#riwayat-kamar-tabs .rk-tab-label {
+  color: #71817e;
+  font-size: .85rem;
+}
+
+#riwayat-kamar-tabs .rk-tab-total {
+  color: #087f70;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  #riwayat-kamar-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  #riwayat-kamar-tabs .rk-tab {
+    min-height: 160px;
+    padding: 16px 10px;
+  }
+
+  #riwayat-kamar-tabs .rk-tab-room {
+    font-size: 1rem;
+  }
+
+  #riwayat-kamar-tabs .rk-tab-total {
+    font-size: 1rem;
+  }
+}
