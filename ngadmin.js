@@ -249,7 +249,7 @@ function buildRiwayatKamar(roomId) {
       status: 'disewa',
       penyewa: o.nama_penyewa || '-',
       total: Number.isFinite(harga) ? harga : null,
-      ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
+      ket: `Akumulasi sewa: ${rupiahFull(akumulasi)}`
     });
 
     const next = addDaysISO(selesai, 1);
@@ -312,7 +312,7 @@ function renderRiwayatKamarTabs() {
         aria-pressed="${active}"
       >
         <span class="rk-tab-room">${escapeHtml(String(roomName))}</span><br>
-        <span class="rk-tab-label">Total Akumulasi Sewa:</span><br>
+        <span class="rk-tab-label">Akumulasi Sewa:</span><br>
         <strong class="rk-tab-total">${rupiahFull(totalSewa)}</strong>
       </button>
     `;
