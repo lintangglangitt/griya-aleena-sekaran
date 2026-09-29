@@ -269,6 +269,8 @@ function buildRiwayatKamar(roomId) {
   return rows;
 }
 
+
+
 function renderRiwayatKamarTabs() {
 
   console.log('RK tabs:', {
@@ -318,7 +320,11 @@ function renderRiwayatKamar() {
         <td>${fmtDateLong(r.selesai)}</td>
         <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
         <td>${escapeHtml(r.penyewa)}</td>
-        <td><strong>${rupiahFull(r.total)}</strong></td>
+
+<td><strong>${r.total == null || r.total === '' || !Number.isFinite(Number(r.total))
+  ? '—'
+  : rupiahFull(Number(r.total))}</strong></td>
+        
         <td>${escapeHtml(r.ket)}</td>
       </tr>
     `;
