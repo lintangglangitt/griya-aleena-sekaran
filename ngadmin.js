@@ -240,6 +240,12 @@ function buildRiwayatKamar(roomId) {
 }
 
 function renderRiwayatKamarTabs() {
+
+  console.log('RK tabs:', {
+  wrap: document.getElementById('riwayat-kamar-tabs'),
+  rooms: ROOMS
+});
+  
   const wrap = document.getElementById('riwayat-kamar-tabs');
   if (!wrap) return;
 
