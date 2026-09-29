@@ -279,33 +279,48 @@ if (Number.isFinite(harga)) {
 
 
 function renderRiwayatKamarTabs() {
-
-  console.log('RK tabs:', {
-  wrap: document.getElementById('riwayat-kamar-tabs'),
-  rooms: ROOMS
-});
-  
   const wrap = document.getElementById('riwayat-kamar-tabs');
   if (!wrap) return;
 
-  const sorted = [...ROOMS].sort((a, b) => a.id - b.id);
-  if (ACTIVE_RK_ROOM === null && sorted.length) ACTIVE_RK_ROOM = sorted[0].id;
+  const sorted = [...ROOMS].sort((a, b) => Number(a.id) - Number(b.id));
 
-  wrap.innerHTML = sorted.map(r => `
-    <button class="rk-tab ${r.id === ACTIVE_RK_ROOM ? 'active' : ''}" data-rk-room="${r.id}">
-      ${escapeHtml(r.nama_kamar)}
-    </button>
-  `).join('');
+  if (ACTIVE_RK_ROOM === null && sorted.length) {
+    ACTIVE_RK_ROOM = sorted[0].id;
+  }
 
-  wrap.querySelectorAll('.rk-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      ACTIVE_RK_ROOM = Number(btn.dataset.rkRoom);
-      wrap.querySelectorAll('.rk-tab').forEach(b => b.classList.toggle('active', b === btn));
+  // Ganti OCCUPANCIES dengan nama array data okupansi di ngadmin.js.
+  const tabsHtml = sorted.map(room => {
+    const totalSewa = OCCUPANCIES
+      .filter(item => Number(item.room_id) === Number(room.id))
+      .reduce((total, item) => total + Number(item.harga_total || 0), 0);
+
+    return `
+      <button
+        type="button"
+        class="rk-tab ${Number(room.id) === Number(ACTIVE_RK_ROOM) ? 'active' : ''}"
+        data-rk-room="${escapeHtml(String(room.id))}"
+      >
+        <span class="rk-tab-room">Kamar Nomor ${escapeHtml(String(room.nama_kamar))}</span>
+        <span class="rk-tab-label">Total Akumulasi Sewa</span>
+        <strong class="rk-tab-total">${formatRupiah(totalSewa)}</strong>
+      </button>
+    `;
+  }).join('');
+
+  wrap.innerHTML = tabsHtml;
+
+  wrap.querySelectorAll('.rk-tab').forEach(button => {
+    button.addEventListener('click', () => {
+      ACTIVE_RK_ROOM = Number(button.dataset.rkRoom);
+
+      wrap.querySelectorAll('.rk-tab').forEach(tab => {
+        tab.classList.toggle('active', tab === button);
+      });
+
       renderRiwayatKamar();
     });
   });
 }
-
 function renderRiwayatKamar() {
   const tbody = document.getElementById('riwayat-kamar-body');
   if (!tbody || ACTIVE_RK_ROOM === null) return;
