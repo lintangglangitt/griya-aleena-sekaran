@@ -1258,3 +1258,40 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   right: 16px;
   z-index: 10;
 }
+
+
+/* ═══════════════════════════════════════════ */
+/* RIWAYAT OKUPANSI PER KAMAR — TABS           */
+/* ═══════════════════════════════════════════ */
+.riwayat-kamar-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.rk-tab {
+  background: white;
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  padding: 9px 18px;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+.rk-tab:hover { background: var(--gray); transform: translateY(-1px); }
+.rk-tab.active {
+  background: var(--teal);
+  color: white;
+  border-color: var(--teal);
+}
+
+@media (max-width: 640px) {
+  .riwayat-kamar-tabs { gap: 6px; }
+  .rk-tab { padding: 7px 12px; font-size: 0.78rem; }
+}
+.riwayat-kamar-tabs {
+  justify-content: center;
+}
