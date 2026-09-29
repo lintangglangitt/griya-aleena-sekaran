@@ -1292,3 +1292,6 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   .riwayat-kamar-tabs { gap: 6px; }
   .rk-tab { padding: 7px 12px; font-size: 0.78rem; }
 }
+.riwayat-kamar-tabs {
+  justify-content: center;
+}
