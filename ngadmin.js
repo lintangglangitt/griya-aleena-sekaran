@@ -231,10 +231,17 @@ function buildRiwayatKamar(roomId) {
       });
     }
 
-    const harga = Number(o.harga_total);
-    if (Number.isFinite(harga)) {
+
+
+    const rawHarga = o.harga_total;
+const harga = rawHarga === null || rawHarga === undefined || rawHarga === ''
+  ? NaN
+  : Number(rawHarga);
+
+if (Number.isFinite(harga)) {
       akumulasi += harga;
     }
+
 
     // Baris periode sewa.
     rows.push({
@@ -321,9 +328,11 @@ function renderRiwayatKamar() {
         <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
         <td>${escapeHtml(r.penyewa)}</td>
 
-<td><strong>${r.total == null || r.total === '' || !Number.isFinite(Number(r.total))
-  ? '—'
-  : rupiahFull(Number(r.total))}</strong></td>
+<td><strong>${
+  r.status !== 'disewa' || !Number.isFinite(Number(r.total))
+    ? '—'
+    : rupiahFull(Number(r.total))
+}</strong></td>
         
         <td>${escapeHtml(r.ket)}</td>
       </tr>
