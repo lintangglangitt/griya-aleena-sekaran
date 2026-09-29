@@ -218,8 +218,8 @@ function buildRiwayatKamar(roomId) {
         selesai: addDaysISO(o.tanggal_mulai, -1),
         status: 'kosong',
         penyewa: '-',
-        total: 0,
-        ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
+        total: '-',
+        ket: '-'
       });
     }
 
@@ -229,8 +229,8 @@ function buildRiwayatKamar(roomId) {
       mulai: o.tanggal_mulai,
       selesai: o.tanggal_selesai,
       status: 'disewa',
-      penyewa: o.nama_penyewa,
-      total: o.harga_total,
+      penyewa: o.nama_penyewa || '-',
+      total: o.harga_total ?? '-',
       ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
     });
 
@@ -244,8 +244,8 @@ function buildRiwayatKamar(roomId) {
       selesai: today,
       status: 'kosong',
       penyewa: '-',
-      total: 0,
-      ket: `Akumulasi total sewa: ${rupiahFull(akumulasi)}`
+      total: '-',
+      ket: '-'
     });
   }
 
