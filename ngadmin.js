@@ -1,5 +1,11 @@
 // ============================================================
-// admin.js - Dashboard Okupansi Griya Aleena
+// ngadmin.js - Dashboard Okupansi Griya Aleena (REFACTORED)
+// ============================================================
+// Arsitektur:
+// - 1 event delegation global (capture phase) untuk SEMUA klik
+// - Semua handler di-try/catch supaya error 1 tombol tidak
+//   mematikan tombol lain
+// - Modal dibuka via classList.add('open') saja (tanpa inline style)
 // ============================================================
 
 const API = 'https://griya-api.lintangglangitt.workers.dev';
@@ -11,7 +17,15 @@ let EDITING_ID = null;
 let ACTIVE_ROOM_FILTER = 'all';
 let ACTIVE_INCOME_FILTER = null;
 
-// ─── Konfigurasi Pemilik ──────────────────────────────────
+// ─── State Modal Okupansi ──────────────────────────────────
+const MODAL_STATE = {
+  editingId: null,
+  pendingUploads: {},
+  pendingDeletes: [],
+  originalUrls: {},
+};
+
+// ─── Konfigurasi Pemilik ───────────────────────────────────
 const PEMILIK = {
   nama: 'Nawang Wulan',
   no_ktp: '3304025911900001',
@@ -21,9 +35,28 @@ const PEMILIK = {
   no_hp_perjanjian: '0899-5677-419',
 };
 
+// ─── Harga Default ─────────────────────────────────────────
+const HARGA_DEFAULT = {
+  harian: 100000,
+  mingguan: 500000,
+  bulanan: 800000,
+  semesteran: 4600000,
+  tahunan: 9100000,
+};
+
+// ─── Konfigurasi Upload Dokumen ────────────────────────────
+const UPLOAD_CONFIGS = [
+  { key: 'f-file-ktp-penyewa', statusId: 'upload-status-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', field: 'file_ktp_penyewa' },
+  { key: 'f-file-ktp-ortu',    statusId: 'upload-status-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    field: 'file_ktp_ortu' },
+  { key: 'f-file-ktm',         statusId: 'upload-status-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         field: 'file_ktm' },
+  { key: 'f-file-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
+];
+
 if (!TOKEN) window.location.href = 'ibun.html';
 
-// ─── API helper ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// API HELPER
+// ═══════════════════════════════════════════════════════════
 async function api(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
     ...options,
@@ -44,13 +77,11 @@ async function api(path, options = {}) {
   return data;
 }
 
-// ─── Utility ───────────────────────────────────────────────
-function rupiah(n) {
-  return 'Rp' + new Intl.NumberFormat('id-ID').format(n || 0);
-}
-function rupiahFull(n) {
-  return 'Rp' + new Intl.NumberFormat('id-ID').format(n || 0) + ',00';
-}
+// ═══════════════════════════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════════════════════════
+function rupiah(n) { return 'Rp' + new Intl.NumberFormat('id-ID').format(n || 0); }
+function rupiahFull(n) { return 'Rp' + new Intl.NumberFormat('id-ID').format(n || 0) + ',00'; }
 function fmtDate(s) {
   if (!s) return '—';
   const d = new Date(s);
@@ -62,9 +93,7 @@ function fmtDateLong(s) {
   return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 function todayISO() { return new Date().toISOString().slice(0, 10); }
-function daysBetween(a, b) {
-  return Math.ceil((new Date(b) - new Date(a)) / 86400000);
-}
+function daysBetween(a, b) { return Math.ceil((new Date(b) - new Date(a)) / 86400000); }
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -121,35 +150,95 @@ function printDoc(namaFile) {
   const originalTitle = document.title;
   document.title = namaFile;
   window.print();
-  setTimeout(() => {
-    document.title = originalTitle;
-  }, 1500);
+  setTimeout(() => { document.title = originalTitle; }, 1500);
 }
 
-// ─── Logout ────────────────────────────────────────────────
-document.getElementById('btn-logout').addEventListener('click', async () => {
-  try { await api('/auth/logout', { method: 'POST' }); } catch {}
-  localStorage.removeItem('ga_token');
-  localStorage.removeItem('ga_user');
-  window.location.href = 'ibun.html';
-});
+// ═══════════════════════════════════════════════════════════
+// MODAL HELPERS — SIMPLE & ROBUST
+// ═══════════════════════════════════════════════════════════
 
-// ─── Init ──────────────────────────────────────────────────
-async function init() {
-  document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
-  document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
-
-  await Promise.all([loadRooms(), loadOccs(), loadStats()]);
-  fillYearFilter();
-  renderRooms();
-  renderTable();
-  setupIncomeCardListeners();
-
-  if (USER.role !== 'owner') {
-    document.getElementById('btn-users').style.display = 'none';
+/**
+ * Buka satu modal. Tutup semua modal lain.
+ * Hanya pakai classList — tidak ada inline style.
+ */
+function openModalExclusive(modalEl) {
+  if (!modalEl) {
+    console.error('[openModalExclusive] modalEl null');
+    return;
   }
+  // Tutup semua modal lain
+  document.querySelectorAll('.modal.open, .invoice-modal.open').forEach(m => {
+    if (m !== modalEl) m.classList.remove('open');
+  });
+  // Buka modal ini
+  modalEl.classList.add('open');
+  console.log('[Modal] Opened:', modalEl.id);
 }
 
+/** Tutup satu modal */
+function closeModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.classList.remove('open');
+  console.log('[Modal] Closed:', modalEl.id);
+}
+
+/** Tutup semua modal */
+function closeAllModals() {
+  document.querySelectorAll('.modal.open, .invoice-modal.open').forEach(m => {
+    m.classList.remove('open');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  console.log('[Init] Starting...');
+
+  // Reset semua modal
+  closeAllModals();
+
+  // Set user info
+  try {
+    document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
+    document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
+  } catch (e) { console.error('[Init] User info error:', e); }
+
+  // Load data
+  try {
+    await Promise.all([loadRooms(), loadOccs(), loadStats()]);
+    console.log('[Init] Data loaded. Rooms:', ROOMS.length, 'Occs:', OCCS.length);
+  } catch (e) {
+    console.error('[Init] Load data error:', e);
+    alert('Gagal memuat data: ' + e.message);
+    return;
+  }
+
+  // Render
+  try {
+    fillYearFilter();
+    renderRooms();
+    renderTable();
+    setupIncomeCardKeyboard();   // ⬅️ nama baru
+    setupAutoHarga();
+  } catch (e) { console.error('[Init] Render error:', e); }
+
+  // Hide users button kalau bukan owner
+  if (USER.role !== 'owner') {
+    const btnUsers = document.getElementById('btn-users');
+    if (btnUsers) btnUsers.style.display = 'none';
+  }
+
+  // Badge analytics
+  updateAnalyticsBadge();
+  setInterval(updateAnalyticsBadge, 5 * 60 * 1000);
+
+  console.log('[Init] Done.');
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════════════════════════
 async function loadRooms() {
   const data = await api('/rooms');
   ROOMS = data.rooms || [];
@@ -169,10 +258,31 @@ async function loadStats() {
   document.getElementById('st-income-month').textContent = rupiahFull(s.penghasilan_bulan_ini);
 }
 
-// ─── Kartu Pembayaran jadi Filter ──────────────────────────
-function setupIncomeCardListeners() {
+// ═══════════════════════════════════════════════════════════
+// BADGE ANALYTICS
+// ═══════════════════════════════════════════════════════════
+async function updateAnalyticsBadge() {
+  try {
+    const data = await api('/analytics/logs/unseen-count');
+    const badge = document.getElementById('analytics-badge');
+    if (!badge) return;
+    if (data.count > 0) {
+      badge.textContent = data.count > 99 ? '99+' : data.count;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (err) {
+    console.log('Analytics badge error:', err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INCOME CARD FILTER
+// ═══════════════════════════════════════════════════════════
+function setupIncomeCardKeyboard() {
   document.querySelectorAll('.stat-card.clickable').forEach(card => {
-    card.addEventListener('click', () => toggleIncomeFilter(card.dataset.filter));
+    // Hanya keyboard — klik sudah di-handle event delegation global
     card.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -203,7 +313,9 @@ function updateIncomeCardUI() {
   });
 }
 
-// ─── Filter Tahun ──────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// FILTER TAHUN
+// ═══════════════════════════════════════════════════════════
 function fillYearFilter() {
   const sel = document.getElementById('filter-tahun');
   const currentVal = sel.value;
@@ -225,7 +337,9 @@ function fillYearFilter() {
   }
 }
 
-// ─── Render Room Cards ─────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// RENDER ROOM CARDS
+// ═══════════════════════════════════════════════════════════
 function renderRooms() {
   const grid = document.getElementById('rooms-grid');
   const today = todayISO();
@@ -255,7 +369,7 @@ function renderRooms() {
       const sisa = daysBetween(today, active.tanggal_selesai);
       if (active.status_bayar === 'lunas') {
         statusClass = sisa <= 14 ? 'status-habis' : 'status-terisi';
-        statusLabel = sisa <= 14 ? `Habis dalam ${sisa} hari` : 'Terisi';
+        statusLabel = sisa <= 14 ? `⚠️ Habis dalam<br>${sisa} hari` : 'Terisi';
       } else {
         statusClass = 'status-dp';
         statusLabel = active.status_bayar === 'dp' ? 'DP' : 'Belum Bayar';
@@ -270,7 +384,7 @@ function renderRooms() {
         <div class="room-tipe">${escapeHtml(room.tipe)}</div>
         <div class="room-penyewa">${escapeHtml(penyewa)}</div>
         <div class="room-tanggal">${escapeHtml(tanggal)}</div>
-        <span class="room-status">${escapeHtml(statusLabel)}</span>
+        <span class="room-status">${statusLabel}</span>
       </div>
     `;
   }).join('');
@@ -288,7 +402,9 @@ function renderRooms() {
   });
 }
 
-// ─── Helper filter income ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// FILTER INCOME
+// ═══════════════════════════════════════════════════════════
 function passesIncomeFilter(o) {
   if (!ACTIVE_INCOME_FILTER) return true;
   if (o.status_bayar !== 'lunas') return false;
@@ -305,7 +421,9 @@ function passesIncomeFilter(o) {
   return true;
 }
 
-// ─── Render Table ──────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// RENDER TABLE
+// ═══════════════════════════════════════════════════════════
 function renderTable() {
   const q = document.getElementById('search').value.toLowerCase().trim();
   const fTahun = document.getElementById('filter-tahun').value;
@@ -314,7 +432,6 @@ function renderTable() {
 
   const filtered = OCCS.filter(o => {
     if (!passesIncomeFilter(o)) return false;
-
     if (!ACTIVE_INCOME_FILTER) {
       if (fTahun) {
         const y1 = Number(o.tanggal_mulai.slice(0, 4));
@@ -325,9 +442,7 @@ function renderTable() {
       if (fs && o.status_bayar !== fs) return false;
       if (q && !(o.nama_penyewa.toLowerCase().includes(q) || (o.no_hp || '').includes(q))) return false;
     }
-
     if (ACTIVE_ROOM_FILTER !== 'all' && String(o.room_id) !== String(ACTIVE_ROOM_FILTER)) return false;
-
     return true;
   });
 
@@ -346,7 +461,7 @@ function renderTable() {
 
     const badgeClass = { lunas: 'lunas', dp: 'dp', belum: 'belum' }[o.status_bayar] || 'belum';
     const link = o.link_kontrak
-      ? `<a href="${escapeHtml(o.link_kontrak)}" target="_blank" rel="noopener" class="btn-icon" title="Buka kontrak">📄</a>`
+      ? `<a href="${escapeHtml(o.link_kontrak)}" target="_blank" class="btn-icon" title="Buka kontrak">📄</a>`
       : '—';
 
     const rowClass = sudahSelesai ? 'kontrak-selesai' : (akanHabis ? 'akan-habis' : 'baris-aktif');
@@ -374,23 +489,11 @@ function renderTable() {
       </tr>
     `;
   }).join('');
-
-  tbody.querySelectorAll('[data-invoice]').forEach(b =>
-    b.addEventListener('click', () => openInvoice(Number(b.dataset.invoice))));
-  tbody.querySelectorAll('[data-kuitansi]').forEach(b =>
-    b.addEventListener('click', () => openKuitansi(Number(b.dataset.kuitansi))));
-  tbody.querySelectorAll('[data-perjanjian]').forEach(b =>
-    b.addEventListener('click', () => openPerjanjian(Number(b.dataset.perjanjian))));
-  tbody.querySelectorAll('[data-edit]').forEach(b =>
-    b.addEventListener('click', () => openModal(Number(b.dataset.edit))));
-  tbody.querySelectorAll('[data-del]').forEach(b =>
-    b.addEventListener('click', () => deleteOcc(Number(b.dataset.del))));
 }
 
 // ═══════════════════════════════════════════════════════════
-// HEADER BERSAMA
+// DOC HEADER (untuk Invoice / Kuitansi)
 // ═══════════════════════════════════════════════════════════
-
 function buildDocHeader(title, no) {
   return `
     <div class="inv-header">
@@ -413,24 +516,23 @@ function buildDocHeader(title, no) {
 // ═══════════════════════════════════════════════════════════
 // INVOICE
 // ═══════════════════════════════════════════════════════════
-
 function openInvoice(id) {
   const o = OCCS.find(x => x.id === id);
-  if (!o) return;
+  if (!o) { console.error('openInvoice: occ not found', id); return; }
 
   const invoiceNo = generateInvoiceNo(o.id, o.tanggal_mulai);
   const today = fmtDateLong(todayISO());
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
   const html = `
+    <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     ${buildDocHeader('INVOICE', invoiceNo)}
 
     <div class="inv-section">
       <div class="inv-section-title">Ditagihkan kepada:</div>
       <dl class="inv-info-grid">
         <dt>Nama</dt><dd>${escapeHtml(o.nama_penyewa)}</dd>
-        ${o.no_hp ? `<dt>No. HP</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
-        ${o.asal_kampus ? `<dt>Kampus</dt><dd>${escapeHtml(o.asal_kampus)}</dd>` : ''}
+        ${o.no_hp ? `<dt>No. HP/WA</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
         <dt>Kamar</dt><dd>${escapeHtml(o.nama_kamar)} (${escapeHtml(o.tipe)})</dd>
       </dl>
     </div>
@@ -456,59 +558,56 @@ function openInvoice(id) {
     </table>
 
     <div class="inv-total">
-      <div>
-        <div class="inv-total-label">Total Pembayaran</div>
-      </div>
+      <div><div class="inv-total-label">Total Tagihan</div></div>
       <div class="inv-total-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
     </div>
+
+    <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
+      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Mohon dibayarkan sebelum menempati kamar kos.
+    </p>
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <div class="inv-signature">
-      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div>
+      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
       <div>Hormat kami,</div>
-      <div class="inv-sign-line">&nbsp;</div>
-      <div class="inv-sign-role">Pemilik Griya Aleena</div>
+      <div class="inv-sign-role">Pemilik</div>
     </div>
 
     <div class="inv-footer">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Simpan sebagai bukti pembayaran yang sah.
+      Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
     <div class="invoice-actions">
-      <button class="inv-btn-close" onclick="closeInvoice()">Tutup</button>
-      <button class="inv-btn-print" onclick="printDoc('Invoice - ${escapeHtml(o.nama_penyewa).replace(/'/g, "\\'")}')">Print / Simpan PDF</button>
+      <button class="inv-btn-close" data-close-modal>Tutup</button>
+      <button class="inv-btn-print" data-filename="Invoice - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
   document.getElementById('invoice-content').innerHTML = html;
-  document.getElementById('invoice-modal').classList.add('open');
-}
-
-function closeInvoice() {
-  document.getElementById('invoice-modal').classList.remove('open');
+  openModalExclusive(document.getElementById('invoice-modal'));
 }
 
 // ═══════════════════════════════════════════════════════════
 // KUITANSI
 // ═══════════════════════════════════════════════════════════
-
 function openKuitansi(id) {
   const o = OCCS.find(x => x.id === id);
-  if (!o) return;
+  if (!o) { console.error('openKuitansi: occ not found', id); return; }
 
   const noKuitansi = generateKuitansiNo(o.id, o.tanggal_mulai);
   const today = fmtDateLong(todayISO());
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
   const html = `
+    <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     ${buildDocHeader('KUITANSI', noKuitansi)}
 
     <div class="inv-section">
       <div class="inv-section-title">Telah diterima dari:</div>
       <dl class="inv-info-grid">
         <dt>Nama</dt><dd>${escapeHtml(o.nama_penyewa)}</dd>
-        ${o.no_hp ? `<dt>No. HP</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
+        ${o.no_hp ? `<dt>No. HP/WA</dt><dd>${escapeHtml(o.no_hp)}</dd>` : ''}
         <dt>Kamar</dt><dd>${escapeHtml(o.nama_kamar)} (${escapeHtml(o.tipe)})</dd>
       </dl>
     </div>
@@ -538,51 +637,46 @@ function openKuitansi(id) {
       <div class="kuitansi-amount-label">Jumlah Dibayar</div>
       <div class="kuitansi-amount-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
       <div class="kuitansi-amount-text">(${escapeHtml(terbilangRupiah(o.harga_total))})</div>
-      ${o.status_bayar === 'lunas' ? '<div class="kuitansi-check">LUNAS</div>' : ''}
+      ${o.status_bayar === 'lunas' ? '<div class="kuitansi-check">✓ LUNAS</div>' : ''}
       ${o.status_bayar === 'dp' ? '<div class="kuitansi-check" style="background:#F5A623">DP</div>' : ''}
     </div>
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
-    <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;">
-      Kuitansi ini merupakan bukti sah pembayaran sewa kamar kos di Griya Aleena.
-      Mohon disimpan dengan baik.
+    <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
+      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. <br>Mohon disimpan dengan baik.
     </p>
 
     <div class="inv-signature">
-      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div>
-      <div>Penerima,</div>
-      <div class="inv-sign-line">&nbsp;</div>
-      <div class="inv-sign-role">Pemilik Griya Aleena</div>
+      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
+      <div>Hormat kami,</div>
+      <div class="inv-sign-role">Pemilik</div>
     </div>
 
     <div class="inv-footer">
-      Terima kasih atas kepercayaan Anda. Semoga betah tinggal di Griya Aleena.
+      Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
     <div class="invoice-actions">
-      <button class="inv-btn-close" onclick="closeKuitansi()">Tutup</button>
-      <button class="inv-btn-print" onclick="printDoc('Kuitansi - ${escapeHtml(o.nama_penyewa).replace(/'/g, "\\'")}')">Print / Simpan PDF</button>
+      <button class="inv-btn-close" data-close-modal>Tutup</button>
+      <button class="inv-btn-print" data-filename="Kuitansi - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
   document.getElementById('kuitansi-content').innerHTML = html;
-  document.getElementById('kuitansi-modal').classList.add('open');
-}
-
-function closeKuitansi() {
-  document.getElementById('kuitansi-modal').classList.remove('open');
+  openModalExclusive(document.getElementById('kuitansi-modal'));
 }
 
 // ═══════════════════════════════════════════════════════════
 // PERJANJIAN
 // ═══════════════════════════════════════════════════════════
-
 function openPerjanjian(id) {
   const o = OCCS.find(x => x.id === id);
-  if (!o) return;
+  if (!o) { console.error('openPerjanjian: occ not found', id); return; }
 
-  const field = (label, value) => `
+  const toUpper = (s) => s ? String(s).toUpperCase() : '';
+
+  const fieldRaw = (label, value) => `
     <div class="pj-field">
       <div class="pj-label">${escapeHtml(label)}</div>
       <div class="pj-colon">:</div>
@@ -590,11 +684,22 @@ function openPerjanjian(id) {
     </div>
   `;
 
+  const field = (label, value) => `
+    <div class="pj-field">
+      <div class="pj-label">${escapeHtml(label)}</div>
+      <div class="pj-colon">:</div>
+      <div class="pj-value-line ${value ? '' : 'empty'}">${value ? escapeHtml(toUpper(value)) : '&nbsp;'}</div>
+    </div>
+  `;
+
   const totalBiaya = rupiahFull(o.harga_total);
-  const tipeUpper = o.tipe_sewa.charAt(0).toUpperCase() + o.tipe_sewa.slice(1);
+  const tipeUpper = o.tipe_sewa.toUpperCase();
   const kamarTipe = o.tipe === 'AC' ? 'AC' : 'NON AC';
+  const namaKamar = (o.nama_kamar || 'Kamar').toUpperCase();
+  const kamarLabel = `${namaKamar} (${kamarTipe})`;
 
   const html = `
+    <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     <div class="perjanjian-logo">
       <img src="foto/logo.png" alt="Griya Aleena" onerror="this.style.display='none'">
     </div>
@@ -602,51 +707,54 @@ function openPerjanjian(id) {
     <h1>PERJANJIAN DAN TATA TERTIB BERSAMA<br>GRIYA ALEENA</h1>
 
     <p>
-      Pada hari ini <span class="pj-fill pj-fill-sm">${escapeHtml(getHariIndonesia())}</span>
-      tanggal <span class="pj-fill pj-fill-sm">${escapeHtml(fmtDateLong(todayISO()))}</span>
+      Pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia())}</span>
+      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(todayISO()))}</span>
       telah disepakati Perjanjian dan Tata Tertib Bersama terkait sewa-menyewa kamar kos antara:
     </p>
 
     <h2>1. Pemilik Kos</h2>
-    <div class="pj-info-block">
+    <div class="pj-info-block" style="margin-top:14px;">
+      <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Pemilik:</p>
       ${field('Nama', PEMILIK.nama)}
       ${field('Nomor KTP/SIM', PEMILIK.no_ktp)}
       ${field('Alamat', PEMILIK.alamat)}
       ${field('Nomor HP/WA', PEMILIK.no_hp_perjanjian)}
     </div>
-
+    
     <p>Selanjutnya disebut <strong>Pemilik</strong>.</p>
 
     <h2>2. Penyewa Kos</h2>
-    <div class="pj-info-block">
+    <div class="pj-info-block" style="margin-top:14px;">
+      <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Penyewa:</p>
       ${field('Nama', o.nama_penyewa)}
       ${field('Nomor KTP/SIM', o.no_ktp)}
       ${field('Alamat', o.alamat_penyewa)}
       ${field('Nomor HP/WA', o.no_hp)}
     </div>
-    <p>Selanjutnya disebut <strong>Penyewa</strong>.</p>
 
-    <h2>3. Data Orang Tua/Wali</h2>
-    <div class="pj-info-block">
+    <div class="pj-info-block" style="margin-top:14px;">
+      <p style="font-weight:700;color:#1a5c5c;margin-bottom:10px;">Data Orang Tua/Wali/Kontak Darurat:</p>
       ${field('Nama', o.nama_ortu || '')}
       ${field('Nomor KTP/SIM', o.no_ktp_ortu || '')}
       ${field('Alamat', o.alamat_ortu || '')}
       ${field('Nomor HP/WA', o.no_hp_ortu || '')}
+      ${field('Hubungan Keluarga', o.hubungan_keluarga || '')}
     </div>
-    <p>Data orang tua/wali di atas dicatat sebagai penanggung jawab.</p>
+
+    <p>Selanjutnya disebut <strong>Penyewa</strong>.</p>
 
     <p style="margin-top:16px;">
       Pemilik dan Penyewa sepakat mengikat diri dalam Perjanjian dan Tata Tertib Bersama dengan ketentuan sebagai berikut:
     </p>
 
-    <h2>Pasal 1 - Objek Sewa</h2>
+    <h2>Pasal 1 – Objek Sewa</h2>
     <ol>
       <li>Pemilik menyewakan kamar kos yang beralamat di ${escapeHtml(PEMILIK.alamat)} kepada Penyewa.</li>
-      <li>Kamar kos yang disewakan hanya diperuntukkan bagi satu orang Penyewa dan tidak diperbolehkan dialihgunakan atau disewakan kembali kepada pihak lain tanpa persetujuan tertulis dari Pemilik.</li>
+      <li>Kamar kos yang disewakan adalah <strong>${escapeHtml(kamarLabel)}</strong> dan hanya diperuntukkan bagi satu orang Penyewa dan tidak diperbolehkan dialihgunakan atau disewakan kembali kepada pihak lain tanpa persetujuan tertulis dari Pemilik.</li>
       <li>Fasilitas dasar yang disiapkan oleh Pemilik meliputi:
         <p style="margin-top:6px;"><strong>a. Fasilitas Pribadi Penyewa</strong></p>
         <ul>
-          <li>Satu unit kamar kos</li>
+          <li>Satu unit ${escapeHtml(kamarLabel)}</li>
           <li>Kamar mandi dalam</li>
           <li>Lemari pakaian besi sliding</li>
           <li>Kasur busa, bantal, dan guling</li>
@@ -656,6 +764,7 @@ function openPerjanjian(id) {
         </ul>
         <p><strong>b. Fasilitas Umum</strong> (dipakai bersama dengan penghuni kos lainnya)</p>
         <ul>
+          <li>Jaringan Internet (WiFi)</li>
           <li>Dapur bersama</li>
           <li>Kulkas bersama</li>
           <li>Mesin cuci bersama dan tempat jemuran</li>
@@ -667,20 +776,19 @@ function openPerjanjian(id) {
       </li>
     </ol>
 
-    <h2>Pasal 2 - Masa Sewa</h2>
+    <h2>Pasal 2 – Masa Sewa</h2>
     <ol>
       <li>Masa sewa kamar kos dimulai pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong> dan akan berakhir pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_selesai))}</strong>.</li>
-      <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 30 (tiga puluh) hari sebelum masa sewa berakhir.</li>
-      <li>Keterlambatan menginformasikan perpanjangan/pengakhiran sewa kepada Pemilik dapat berakibat denda bagi Penyewa.</li>
+      <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 10 (sepuluh) hari sebelum masa sewa berakhir.</li>
     </ol>
 
-    <h2>Pasal 3 - Biaya Sewa dan Pembayaran</h2>
+    <h2>Pasal 3 – Biaya Sewa dan Pembayaran</h2>
     <ol>
       <li>Biaya sewa yang disepakati Para Pihak adalah sebagai berikut:
-        <div class="pj-info-block" style="margin-top:8px;">
-          <p><strong>Kamar ${escapeHtml(kamarTipe)}</strong></p>
+           <div class="pj-field-group" style="margin-top:8px;">
+          <p><strong> ${escapeHtml(kamarLabel)}</strong></p>
           ${field('Durasi', tipeUpper)}
-          ${field('Biaya', totalBiaya)}
+          ${fieldRaw('Biaya', totalBiaya)}
           ${field('Periode', fmtDateLong(o.tanggal_mulai) + ' — ' + fmtDateLong(o.tanggal_selesai))}
         </div>
       </li>
@@ -689,7 +797,7 @@ function openPerjanjian(id) {
       <li>Penyewa bebas biaya air bulanan dan bebas iuran sampah bulanan.</li>
     </ol>
 
-    <h2>Pasal 4 - Tata Tertib</h2>
+    <h2>Pasal 4 – Tata Tertib</h2>
     <ol>
       <li>Penyewa wajib menjaga ketertiban dan tidak mengganggu kenyamanan penghuni lain.</li>
       <li>Penyewa bertanggung jawab atas kebersihan kamar masing-masing dan kebersihan fasilitas umum (dapur bersama, kulkas bersama, mesin cuci bersama, garasi, dan lain-lain).</li>
@@ -700,7 +808,7 @@ function openPerjanjian(id) {
       <li>Sampah harus dibuang secara teratur pada tempat yang telah disediakan.</li>
     </ol>
 
-    <h2>Pasal 5 - Larangan</h2>
+    <h2>Pasal 5 – Larangan</h2>
     <ol>
       <li>Dilarang membawa tamu lawan jenis ke dalam kamar kos.</li>
       <li>Dilarang menutup pintu kamar apabila sedang menerima tamu di area kos.</li>
@@ -709,20 +817,20 @@ function openPerjanjian(id) {
       <li>Dilarang membawa barang berbahaya seperti senjata tajam, senjata api, bahan peledak, zat kimia berbahaya, zat mudah terbakar serta barang-barang lain yang dapat membahayakan keselamatan, keamanan, atau kenyamanan penghuni lainnya.</li>
     </ol>
 
-    <h2>Pasal 6 - Keamanan dan Keselamatan</h2>
+    <h2>Pasal 6 – Keamanan dan Keselamatan</h2>
     <ol>
       <li>Penyewa wajib menjaga kunci kamar dan/atau kunci gerbang, serta segera melaporkan kepada pemilik kos apabila terjadi kehilangan.</li>
       <li>Penyewa bertanggung jawab menjaga keamanan barang pribadinya masing-masing. Pemilik Kos tidak bertanggung jawab atas kehilangan akibat kelalaian Penyewa.</li>
       <li>Penyewa dilarang meminjamkan kunci kamar dan/atau gerbang kepada orang lain tanpa seizin Pemilik Kos.</li>
     </ol>
 
-    <h2>Pasal 7 - Kerusakan dan Perbaikan</h2>
+    <h2>Pasal 7 – Kerusakan dan Perbaikan</h2>
     <ol>
       <li>Penyewa bertanggung jawab atas kerusakan yang diakibatkan oleh kelalaian Penyewa.</li>
       <li>Jika ditemukan kerusakan pada properti, Penyewa wajib melaporkannya kepada pemilik kos secepatnya untuk dapat diperbaiki.</li>
     </ol>
 
-    <h2>Pasal 8 - Pengakhiran Sewa</h2>
+    <h2>Pasal 8 – Pengakhiran Sewa</h2>
     <ol>
       <li>Jika Penyewa ingin mengakhiri sewa sebelum waktu yang disepakati, maka uang sewa yang sudah dibayarkan tidak dapat dikembalikan.</li>
       <li>Jika Penyewa mengakhiri sewa sebelum waktu yang disepakati, Penyewa diperbolehkan mencari pengganti hak sewa/mengoper sewa ke orang lain hanya jika mendapatkan persetujuan tertulis dari Pemilik.</li>
@@ -730,7 +838,7 @@ function openPerjanjian(id) {
       <li>Pemilik berhak memutus perjanjian jika Penyewa melanggar perjanjian dan tata tertib yang telah disepakati tanpa mengembalikan uang sewa yang telah dibayarkan.</li>
     </ol>
 
-    <h2>Pasal 9 - Lain-lain</h2>
+    <h2>Pasal 9 – Lain-lain</h2>
     <ol>
       <li>Segala hal yang belum diatur dalam Perjanjian ini akan dibahas bersama antara kedua pihak.</li>
       <li>Setiap sengketa yang timbul dari Perjanjian ini akan diselesaikan terlebih dahulu secara kekeluargaan melalui musyawarah untuk mencapai mufakat, sebelum menempuh jalur hukum.</li>
@@ -742,17 +850,19 @@ function openPerjanjian(id) {
     </p>
 
     <div class="pj-tanggal">
-      Semarang, <span class="pj-tanggal-fill">${escapeHtml(fmtDateLong(todayISO()))}</span>
+      Semarang, <span class="pj-fill-inline">${escapeHtml(fmtDateLong(todayISO()))}</span>
     </div>
 
     <div class="pj-sign-row">
       <div class="pj-sign-col">
         <div class="pj-sign-label">Pemilik,</div>
-        <div class="pj-sign-name">&nbsp;</div>
+        <div class="pj-sign-space"></div>
+        <div class="pj-sign-name-line">${escapeHtml(String(PEMILIK.nama || '').toUpperCase())}</div>
       </div>
       <div class="pj-sign-col">
         <div class="pj-sign-label">Penyewa,</div>
-        <div class="pj-sign-name">&nbsp;</div>
+        <div class="pj-sign-space"></div>
+        <div class="pj-sign-name-line">${escapeHtml(String(o.nama_penyewa || '').toUpperCase())}</div>
       </div>
     </div>
 
@@ -760,7 +870,8 @@ function openPerjanjian(id) {
       <h3>Lampiran:</h3>
       <ol type="a">
         <li>Fotokopi KTP/SIM Pemilik.</li>
-        <li>Fotokopi KTP/SIM Penyewa dan fotokopi KTP/SIM orang tua Penyewa.</li>
+        <li>Fotokopi KTP/SIM Penyewa.</li>
+        <li>Fotokopi KTP/SIM Orang Tua/Wali/Kontak Darurat.</li>
         <li>Fotokopi Kartu Tanda Mahasiswa Penyewa.</li>
       </ol>
     </div>
@@ -770,52 +881,55 @@ function openPerjanjian(id) {
     </div>
 
     <div class="invoice-actions">
-      <button class="inv-btn-close" onclick="closePerjanjian()">Tutup</button>
-      <button class="inv-btn-print" onclick="printDoc('Perjanjian - ${escapeHtml(o.nama_penyewa).replace(/'/g, "\\'")}')">Print / Simpan PDF</button>
+      <button class="inv-btn-close" data-close-modal>Tutup</button>
+      <button class="inv-btn-print" data-filename="Perjanjian - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
   document.getElementById('perjanjian-content').innerHTML = html;
-  document.getElementById('perjanjian-modal').classList.add('open');
+  openModalExclusive(document.getElementById('perjanjian-modal'));
 }
 
-function closePerjanjian() {
-  document.getElementById('perjanjian-modal').classList.remove('open');
+// ═══════════════════════════════════════════════════════════
+// MODAL OKUPANSI — OPEN / CANCEL
+// ═══════════════════════════════════════════════════════════
+
+function resetModalState() {
+  MODAL_STATE.editingId = null;
+  MODAL_STATE.pendingUploads = {};
+  MODAL_STATE.pendingDeletes = [];
+  MODAL_STATE.originalUrls = {};
 }
 
-// Close modal saat klik backdrop
-['invoice-modal', 'kuitansi-modal', 'perjanjian-modal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', (e) => {
-    if (e.target.id === id) {
-      document.getElementById(id).classList.remove('open');
+async function cancelModal() {
+  const pendingUrls = Object.values(MODAL_STATE.pendingUploads).filter(Boolean);
+
+  if (pendingUrls.length > 0) {
+    const confirmed = window.confirm(
+      `Ada ${pendingUrls.length} file yang belum disimpan.\n\n` +
+      `Klik OK untuk batalkan dan HAPUS file tersebut.\n` +
+      `Klik Cancel untuk kembali ke form.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const result = await api('/delete-files', {
+        method: 'POST',
+        body: JSON.stringify({ urls: pendingUrls }),
+      });
+      if (result.failed && result.failed.length > 0) {
+        alert(`⚠️ Sebagian file gagal dihapus:\n\n` +
+          result.failed.map(f => `• ${f.url}\n  (${f.error})`).join('\n\n'));
+      }
+    } catch (err) {
+      alert(`⚠️ Gagal menghapus file sementara:\n${err.message}`);
     }
-  });
-});
+  }
 
-// Escape menutup modal yang sedang terbuka (R-32)
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  document.querySelectorAll('.modal.open, .invoice-modal.open').forEach(el => {
-    el.classList.remove('open');
-  });
-});
-
-// ─── Filters ───────────────────────────────────────────────
-document.getElementById('search').addEventListener('input', renderTable);
-document.getElementById('filter-tahun').addEventListener('change', renderTable);
-document.getElementById('filter-status').addEventListener('change', renderTable);
-
-// ─── Modal Okupansi ────────────────────────────────────────
-const modalOcc = document.getElementById('modal-occ');
-const formOcc = document.getElementById('form-occ');
-
-document.getElementById('btn-add').addEventListener('click', () => openModal(null));
-modalOcc.querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => modalOcc.classList.remove('open')));
-modalOcc.addEventListener('click', e => {
-  if (e.target === modalOcc) modalOcc.classList.remove('open');
-});
-
+  resetModalState();
+  document.getElementById('form-occ').reset();
+  closeModal(document.getElementById('modal-occ'));
+}
 
 function fillRoomSelect(currentEditingId = null) {
   const fr = document.getElementById('f-room');
@@ -833,55 +947,156 @@ function fillRoomSelect(currentEditingId = null) {
       o.tanggal_mulai <= today &&
       o.tanggal_selesai >= today
     );
-
     const isDisabled = activeOcc && activeOcc.room_id !== editingRoomId;
     const disabledAttr = isDisabled ? 'disabled' : '';
-
     const label = isDisabled
-      ? `${r.nama_kamar} (${r.tipe}) - TERISI`
+      ? `${r.nama_kamar} (${r.tipe}) — TERISI`
       : `${r.nama_kamar} (${r.tipe})`;
-
     return `<option value="${r.id}" ${disabledAttr}>${escapeHtml(label)}</option>`;
   }).join('');
 }
 
-
 function openModal(id) {
+  console.log('[openModal] id:', id);
   EDITING_ID = id;
-  const f = formOcc;
+  const f = document.getElementById('form-occ');
   f.reset();
   fillRoomSelect(id);
+  setupAutoHarga();
+
+  MODAL_STATE.editingId = id;
+  MODAL_STATE.pendingUploads = {};
+  MODAL_STATE.pendingDeletes = [];
+  MODAL_STATE.originalUrls = {};
+
+  const safeSet = (elId, val) => {
+    const el = document.getElementById(elId);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+  };
+
+  UPLOAD_CONFIGS.forEach(cfg => {
+    const status = document.getElementById(cfg.statusId);
+    const preview = document.getElementById(cfg.previewId);
+    const link = document.getElementById(cfg.linkId);
+    if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
+    if (preview) preview.innerHTML = '';
+    if (link) link.value = '';
+  });
 
   if (id) {
     const o = OCCS.find(x => x.id === id);
-    if (!o) return;
+    if (!o) { console.error('[openModal] occ not found', id); return; }
     document.getElementById('modal-title').textContent = 'Edit Okupansi';
-    document.getElementById('f-id').value = o.id;
-    document.getElementById('f-room').value = o.room_id;
-    document.getElementById('f-tipe').value = o.tipe_sewa;
-    document.getElementById('f-mulai').value = o.tanggal_mulai;
-    document.getElementById('f-selesai').value = o.tanggal_selesai;
-    document.getElementById('f-harga').value = o.harga_total;
-    document.getElementById('f-link').value = o.link_kontrak || '';
-    document.getElementById('f-status').value = o.status_bayar;
-    document.getElementById('f-nama').value = o.nama_penyewa;
-    document.getElementById('f-ktp').value = o.no_ktp || '';
-    document.getElementById('f-alamat').value = o.alamat_penyewa || '';
-    document.getElementById('f-hp').value = o.no_hp || '';
-    document.getElementById('f-kampus').value = o.asal_kampus || '';
-    document.getElementById('f-nama-ortu').value = o.nama_ortu || '';
-    document.getElementById('f-ktp-ortu').value = o.no_ktp_ortu || '';
-    document.getElementById('f-alamat-ortu').value = o.alamat_ortu || '';
-    document.getElementById('f-hp-ortu').value = o.no_hp_ortu || '';
-    document.getElementById('f-catatan').value = o.catatan || '';
+    safeSet('f-id', o.id);
+    safeSet('f-room', o.room_id);
+    safeSet('f-tipe', o.tipe_sewa);
+    safeSet('f-mulai', o.tanggal_mulai);
+    safeSet('f-selesai', o.tanggal_selesai);
+    safeSet('f-harga', o.harga_total);
+    safeSet('f-status', o.status_bayar);
+    safeSet('f-nama', o.nama_penyewa);
+    safeSet('f-ktp', o.no_ktp || '');
+    safeSet('f-alamat', o.alamat_penyewa || '');
+    safeSet('f-hp', o.no_hp || '');
+    safeSet('f-kampus', o.asal_kampus || '');
+    safeSet('f-nama-ortu', o.nama_ortu || '');
+    safeSet('f-ktp-ortu', o.no_ktp_ortu || '');
+    safeSet('f-alamat-ortu', o.alamat_ortu || '');
+    safeSet('f-hp-ortu', o.no_hp_ortu || '');
+    safeSet('f-hubungan', o.hubungan_keluarga || '');
+    safeSet('f-catatan', o.catatan || '');
+
+    const fileMap = {
+      'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa', field: 'file_ktp_penyewa' },
+      'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu',    field: 'file_ktp_ortu' },
+      'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm',         field: 'file_ktm' },
+      'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
+    };
+
+    Object.values(fileMap).forEach(item => {
+      if (item.link) MODAL_STATE.originalUrls[item.field] = item.link;
+    });
+
+    Object.values(fileMap).forEach(item => {
+      if (item.link) {
+        const hidden = document.getElementById(item.hidden);
+        const preview = document.getElementById(item.preview);
+        if (hidden) hidden.value = item.link;
+        if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Memuat...</a>`;
+      }
+    });
+
+    UPLOAD_CONFIGS.forEach(cfg => {
+      const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
+      if (btnDelete) {
+        const linkInput = document.getElementById(cfg.linkId);
+        btnDelete.style.display = linkInput?.value ? 'inline-block' : 'none';
+      }
+    });
+
+    const linksToCheck = Object.values(fileMap).map(item => item.link).filter(Boolean);
+    if (linksToCheck.length > 0) {
+      checkFilesExist(linksToCheck).then(results => {
+        Object.values(fileMap).forEach(item => {
+          if (!item.link) return;
+          const preview = document.getElementById(item.preview);
+          const hidden = document.getElementById(item.hidden);
+          const cfg = UPLOAD_CONFIGS.find(c => c.linkId === item.hidden);
+          const deleteBtn = cfg ? document.querySelector(`[data-delete-file="${cfg.key}"]`) : null;
+          const status = cfg ? document.getElementById(cfg.statusId) : null;
+
+          const exist = results[item.link];
+          if (exist === true) {
+            if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
+          } else if (exist === false) {
+            if (preview) preview.innerHTML = '';
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            if (status) { status.innerHTML = ''; status.className = 'upload-status'; }
+            if (hidden) hidden.value = '';
+          }
+        });
+      }).catch(err => {
+        console.warn('Gagal validasi file:', err);
+        Object.values(fileMap).forEach(item => {
+          if (!item.link) return;
+          const preview = document.getElementById(item.preview);
+          const hidden = document.getElementById(item.hidden);
+          if (preview) preview.innerHTML = '';
+          if (hidden) hidden.value = '';
+        });
+      });
+    }
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Okupansi';
-    document.getElementById('f-mulai').value = todayISO();
+    safeSet('f-mulai', todayISO());
+    updateHargaOtomatis();
   }
-  modalOcc.classList.add('open');
+  openModalExclusive(document.getElementById('modal-occ'));
 }
 
-formOcc.addEventListener('submit', async (e) => {
+// ═══════════════════════════════════════════════════════════
+// AUTO HARGA
+// ═══════════════════════════════════════════════════════════
+function updateHargaOtomatis() {
+  const tipe = document.getElementById('f-tipe').value;
+  const hargaInput = document.getElementById('f-harga');
+  if (!tipe || !hargaInput) return;
+  if (HARGA_DEFAULT[tipe]) hargaInput.value = HARGA_DEFAULT[tipe];
+}
+
+function setupAutoHarga() {
+  const tipeSelect = document.getElementById('f-tipe');
+  if (tipeSelect && !tipeSelect.dataset.listenerBound) {
+    tipeSelect.addEventListener('change', updateHargaOtomatis);
+    tipeSelect.dataset.listenerBound = 'true';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUBMIT FORM OKUPANSI
+// ═══════════════════════════════════════════════════════════
+document.getElementById('form-occ').addEventListener('submit', async (e) => {
   e.preventDefault();
   const payload = {
     room_id: Number(document.getElementById('f-room').value),
@@ -889,7 +1104,7 @@ formOcc.addEventListener('submit', async (e) => {
     tanggal_mulai: document.getElementById('f-mulai').value,
     tanggal_selesai: document.getElementById('f-selesai').value,
     harga_total: Number(document.getElementById('f-harga').value),
-    link_kontrak: document.getElementById('f-link').value.trim() || null,
+    link_kontrak: null,
     status_bayar: document.getElementById('f-status').value,
     nama_penyewa: document.getElementById('f-nama').value.trim(),
     no_ktp: document.getElementById('f-ktp').value.trim() || null,
@@ -900,6 +1115,11 @@ formOcc.addEventListener('submit', async (e) => {
     no_ktp_ortu: document.getElementById('f-ktp-ortu').value.trim() || null,
     alamat_ortu: document.getElementById('f-alamat-ortu').value.trim() || null,
     no_hp_ortu: document.getElementById('f-hp-ortu').value.trim() || null,
+    hubungan_keluarga: document.getElementById('f-hubungan').value.trim() || null,
+    file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
+    file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
+    file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
+    file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
     catatan: document.getElementById('f-catatan').value.trim() || null,
   };
 
@@ -909,7 +1129,30 @@ formOcc.addEventListener('submit', async (e) => {
     } else {
       await api('/occupancies', { method: 'POST', body: JSON.stringify(payload) });
     }
-    modalOcc.classList.remove('open');
+
+    if (EDITING_ID && MODAL_STATE.pendingDeletes.length > 0) {
+      const urlsToDelete = MODAL_STATE.pendingDeletes
+        .map(f => MODAL_STATE.originalUrls[f])
+        .filter(Boolean);
+
+      if (urlsToDelete.length > 0) {
+        try {
+          const result = await api('/delete-files', {
+            method: 'POST',
+            body: JSON.stringify({ urls: urlsToDelete }),
+          });
+          if (result.failed && result.failed.length > 0) {
+            alert(`✅ Data tersimpan.\n\n⚠️ ${result.failed.length} file LAMA gagal dihapus.`);
+          }
+        } catch (err) {
+          alert(`✅ Data tersimpan.\n\n⚠️ Gagal hapus file LAMA: ${err.message}`);
+        }
+      }
+    }
+
+    resetModalState();
+    closeModal(document.getElementById('modal-occ'));
+
     await Promise.all([loadOccs(), loadStats()]);
     fillYearFilter();
     renderRooms();
@@ -919,8 +1162,176 @@ formOcc.addEventListener('submit', async (e) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════
+// UPLOAD DOKUMEN
+// ═══════════════════════════════════════════════════════════
+async function uploadDokumen(file, cfg) {
+  const status = document.getElementById(cfg.statusId);
+  const linkInput = document.getElementById(cfg.linkId);
+  const preview = document.getElementById(cfg.previewId);
+
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    status.innerHTML = '❌ Hanya PDF, JPG, PNG';
+    status.className = 'upload-status error';
+    return;
+  }
+
+  const MAX_SIZE = 5 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    status.innerHTML = '❌ File terlalu besar (max 5 MB)';
+    status.className = 'upload-status error';
+    return;
+  }
+
+  const prevUpload = MODAL_STATE.pendingUploads[cfg.field];
+  if (prevUpload) {
+    status.innerHTML = '🗑️ Menghapus file sebelumnya...';
+    status.className = 'upload-status loading';
+    try {
+      await api('/delete-file', { method: 'POST', body: JSON.stringify({ url: prevUpload }) });
+    } catch (e) { console.warn('Gagal hapus pending upload sebelumnya:', e.message); }
+    delete MODAL_STATE.pendingUploads[cfg.field];
+  }
+
+  status.innerHTML = '⏳ Mengunggah... 0%';
+  status.className = 'upload-status loading';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const roomId = document.getElementById('f-room')?.value || '';
+    formData.append('room_id', roomId);
+    const jenisDokumen = (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-');
+    formData.append('jenis', jenisDokumen);
+
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API}/upload`);
+      xhr.setRequestHeader('Authorization', `Bearer ${TOKEN}`);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          status.innerHTML = `⏳ Mengunggah... ${percent}%`;
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { reject(new Error('Response tidak valid')); }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.error || `HTTP ${xhr.status}`));
+          } catch { reject(new Error(`HTTP ${xhr.status}`)); }
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.send(formData);
+    });
+
+    MODAL_STATE.pendingUploads[cfg.field] = result.url;
+
+    if (EDITING_ID && MODAL_STATE.originalUrls[cfg.field]) {
+      if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
+        MODAL_STATE.pendingDeletes.push(cfg.field);
+      }
+    }
+
+    linkInput.value = result.url;
+    status.innerHTML = '⏳ Akan tersimpan saat klik Simpan';
+    status.className = 'upload-status loading';
+    preview.innerHTML = `<a href="${escapeHtml(result.url)}" target="_blank">📄 Lihat file (belum disimpan)</a>`;
+
+    const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
+    if (btnDelete) btnDelete.style.display = 'inline-block';
+  } catch (err) {
+    status.innerHTML = `❌ Gagal: ${escapeHtml(err.message)}`;
+    status.className = 'upload-status error';
+  } finally {
+    document.getElementById(cfg.key).value = '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// HAPUS FILE
+// ═══════════════════════════════════════════════════════════
+async function deleteUploadedFile(cfg) {
+  const linkInput = document.getElementById(cfg.linkId);
+  const preview = document.getElementById(cfg.previewId);
+  const status = document.getElementById(cfg.statusId);
+  const btnDelete = document.querySelector(`[data-delete-file="${cfg.key}"]`);
+
+  const urlInField = linkInput.value;
+  if (!urlInField) return;
+
+  const confirmed = window.confirm('Hapus file ini?');
+  if (!confirmed) return;
+
+  const isPendingUpload = MODAL_STATE.pendingUploads[cfg.field] === urlInField;
+  const hasOriginal = !!MODAL_STATE.originalUrls[cfg.field];
+
+  if (isPendingUpload) {
+    status.innerHTML = '🗑️ Menghapus...';
+    status.className = 'upload-status loading';
+    try {
+      await api('/delete-file', { method: 'POST', body: JSON.stringify({ url: urlInField }) });
+      delete MODAL_STATE.pendingUploads[cfg.field];
+      linkInput.value = '';
+      preview.innerHTML = '';
+
+      if (EDITING_ID && hasOriginal) {
+        if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
+          MODAL_STATE.pendingDeletes.push(cfg.field);
+        }
+        status.innerHTML = '🗑️ File baru dihapus · file lama akan dihapus saat Simpan';
+        status.className = 'upload-status loading';
+      } else {
+        status.innerHTML = '🗑️ File dihapus';
+        status.className = 'upload-status success';
+      }
+      if (btnDelete) btnDelete.style.display = 'none';
+    } catch (err) {
+      status.innerHTML = `❌ Gagal hapus: ${escapeHtml(err.message)}`;
+      status.className = 'upload-status error';
+    }
+  } else {
+    if (!MODAL_STATE.pendingDeletes.includes(cfg.field)) {
+      MODAL_STATE.pendingDeletes.push(cfg.field);
+    }
+    linkInput.value = '';
+    preview.innerHTML = '';
+    status.innerHTML = '⏳ Akan dihapus saat klik Simpan';
+    status.className = 'upload-status loading';
+    if (btnDelete) btnDelete.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CEK FILE
+// ═══════════════════════════════════════════════════════════
+async function checkFilesExist(urls) {
+  const validUrls = urls.filter(u => u && typeof u === 'string');
+  if (validUrls.length === 0) return {};
+  try {
+    const result = await api('/check-file', {
+      method: 'POST',
+      body: JSON.stringify({ urls: validUrls }),
+    });
+    return result.results || {};
+  } catch (err) {
+    console.error('Check files error:', err.message);
+    return {};
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// HAPUS OKUPANSI
+// ═══════════════════════════════════════════════════════════
 async function deleteOcc(id) {
-  if (!confirm('Yakin hapus data ini?')) return;
+  const o = OCCS.find(x => x.id === id);
+  if (!o) return;
+  if (!confirm(`Hapus data okupansi "${o.nama_penyewa}" di ${o.nama_kamar}?`)) return;
   try {
     await api(`/occupancies/${id}`, { method: 'DELETE' });
     await Promise.all([loadOccs(), loadStats()]);
@@ -932,16 +1343,23 @@ async function deleteOcc(id) {
   }
 }
 
-// ─── Export CSV ────────────────────────────────────────────
-document.getElementById('btn-export').addEventListener('click', () => {
+// ═══════════════════════════════════════════════════════════
+// EXPORT CSV
+// ═══════════════════════════════════════════════════════════
+function handleExportCsv() {
   const rows = [
-    ['Kamar','Penyewa','No HP','Asal Kampus','Tipe Sewa','Mulai','Selesai','Total','Status','Link Kontrak','Catatan','No KTP','Alamat','Nama Ortu','No KTP Ortu','No HP Ortu','Alamat Ortu'],
+    ['Kamar','Penyewa','No HP','Prodi/Jurusan & Kampus','Tipe Sewa','Mulai','Selesai','Total','Status',
+     'Link Kontrak','Catatan','No KTP','Alamat',
+     'Nama Ortu','No KTP Ortu','No HP Ortu','Alamat Ortu','Hubungan Keluarga',
+     'File KTP Penyewa','File KTP Ortu','File KTM','File Perjanjian'],
     ...OCCS.map(o => [
-      o.nama_kamar, o.nama_penyewa, o.no_hp || '', o.asal_kampus || '',
-      o.tipe_sewa, o.tanggal_mulai, o.tanggal_selesai,
-      o.harga_total, o.status_bayar, o.link_kontrak || '', o.catatan || '',
-      o.no_ktp || '', o.alamat_penyewa || '', o.nama_ortu || '',
-      o.no_ktp_ortu || '', o.no_hp_ortu || '', o.alamat_ortu || ''
+      o.nama_kamar || '', o.nama_penyewa || '', o.no_hp || '', o.asal_kampus || '',
+      o.tipe_sewa || '', o.tanggal_mulai || '', o.tanggal_selesai || '',
+      o.harga_total || '', o.status_bayar || '', o.link_kontrak || '', o.catatan || '',
+      o.no_ktp || '', o.alamat_penyewa || '',
+      o.nama_ortu || '', o.no_ktp_ortu || '', o.no_hp_ortu || '', o.alamat_ortu || '',
+      o.hubungan_keluarga || '',
+      o.file_ktp_penyewa || '', o.file_ktp_ortu || '', o.file_ktm || '', o.file_perjanjian || ''
     ])
   ];
   const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -952,84 +1370,11 @@ document.getElementById('btn-export').addEventListener('click', () => {
   a.download = `okupansi-griya-aleena-${todayISO()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-});
+}
 
-// ─── Import CSV ────────────────────────────────────────────
-document.getElementById('btn-import').addEventListener('click', () => {
-  document.getElementById('import-file').click();
-});
-
-document.getElementById('import-file').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  if (!confirm(`Import ${file.name}?\n\nPastikan format CSV sesuai template export.`)) {
-    e.target.value = '';
-    return;
-  }
-
-  try {
-    const text = await file.text();
-    const rows = parseCSV(text);
-
-    if (rows.length === 0) {
-      alert('CSV kosong atau format tidak valid');
-      e.target.value = '';
-      return;
-    }
-
-    const payload = rows.map(r => ({
-      nama_kamar: r['Kamar'] || r['kamar'] || '',
-      nama_penyewa: r['Penyewa'] || r['penyewa'] || '',
-      no_hp: r['No HP'] || r['no_hp'] || '',
-      asal_kampus: r['Asal Kampus'] || r['asal_kampus'] || '',
-      tipe_sewa: (r['Tipe Sewa'] || r['tipe_sewa'] || 'bulanan').toLowerCase(),
-      tanggal_mulai: normalizeDate(r['Mulai'] || r['mulai'] || ''),
-      tanggal_selesai: normalizeDate(r['Selesai'] || r['selesai'] || ''),
-      harga_total: Number(String(r['Total'] || r['total'] || '0').replace(/[^0-9]/g, '')),
-      status_bayar: (r['Status'] || r['status'] || 'belum').toLowerCase(),
-      link_kontrak: r['Link Kontrak'] || r['link_kontrak'] || null,
-      catatan: r['Catatan'] || r['catatan'] || null,
-      no_ktp: r['No KTP'] || r['no_ktp'] || null,
-      alamat_penyewa: r['Alamat'] || r['alamat_penyewa'] || null,
-      nama_ortu: r['Nama Ortu'] || r['nama_ortu'] || null,
-      no_ktp_ortu: r['No KTP Ortu'] || r['no_ktp_ortu'] || null,
-      no_hp_ortu: r['No HP Ortu'] || r['no_hp_ortu'] || null,
-      alamat_ortu: r['Alamat Ortu'] || r['alamat_ortu'] || null,
-    }));
-
-    const result = await api('/occupancies/bulk', {
-      method: 'POST',
-      body: JSON.stringify({ rows: payload }),
-    });
-
-    const wrap = document.getElementById('import-result');
-    let html = `
-      <p style="margin-bottom:12px;">
-        <strong>Sukses:</strong> ${result.sukses} baris<br>
-        <strong>Gagal:</strong> ${result.gagal} baris
-      </p>
-    `;
-    if (result.errors && result.errors.length) {
-      html += `<div style="background:#fdecec;padding:12px;border-radius:8px;font-size:0.85rem;">
-        <strong>Detail error:</strong><br>
-        ${result.errors.map(e => escapeHtml(e)).join('<br>')}
-      </div>`;
-    }
-    wrap.innerHTML = html;
-    document.getElementById('modal-import-result').classList.add('open');
-
-    await Promise.all([loadOccs(), loadStats()]);
-    fillYearFilter();
-    renderRooms();
-    renderTable();
-  } catch (err) {
-    alert('Gagal import: ' + err.message);
-  } finally {
-    e.target.value = '';
-  }
-});
-
+// ═══════════════════════════════════════════════════════════
+// IMPORT CSV
+// ═══════════════════════════════════════════════════════════
 function parseCSV(text) {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
   if (lines.length < 2) return [];
@@ -1039,9 +1384,7 @@ function parseCSV(text) {
     if (!lines[i].trim()) continue;
     const values = parseCSVLine(lines[i]);
     const obj = {};
-    headers.forEach((h, idx) => {
-      obj[h.trim()] = (values[idx] || '').trim();
-    });
+    headers.forEach((h, idx) => { obj[h.trim()] = (values[idx] || '').trim(); });
     rows.push(obj);
   }
   return rows;
@@ -1087,26 +1430,329 @@ function normalizeDate(s) {
   return s;
 }
 
-document.getElementById('modal-import-result').querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => document.getElementById('modal-import-result').classList.remove('open')));
-document.getElementById('modal-import-result').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal-import-result')) {
-    document.getElementById('modal-import-result').classList.remove('open');
+async function handleImportFile(file) {
+  if (!confirm(`Import ${file.name}?\n\nPastikan format CSV sesuai template export.`)) return;
+
+  try {
+    const text = await file.text();
+    const rows = parseCSV(text);
+    if (rows.length === 0) { alert('CSV kosong atau format tidak valid'); return; }
+
+    const payload = rows.map(r => ({
+      nama_kamar: r['Kamar'] || r['kamar'] || '',
+      nama_penyewa: r['Penyewa'] || r['penyewa'] || '',
+      no_hp: r['No HP'] || r['no_hp'] || '',
+      asal_kampus: r['Prodi/Jurusan & Kampus'] || r['Asal Kampus'] || r['asal_kampus'] || '',
+      tipe_sewa: (r['Tipe Sewa'] || r['tipe_sewa'] || 'bulanan').toLowerCase(),
+      tanggal_mulai: normalizeDate(r['Mulai'] || r['mulai'] || ''),
+      tanggal_selesai: normalizeDate(r['Selesai'] || r['selesai'] || ''),
+      harga_total: Number(String(r['Total'] || r['total'] || '0').replace(/[^0-9]/g, '')),
+      status_bayar: (r['Status'] || r['status'] || 'belum').toLowerCase(),
+      link_kontrak: r['Link Kontrak'] || r['link_kontrak'] || null,
+      catatan: r['Catatan'] || r['catatan'] || null,
+      no_ktp: r['No KTP'] || r['no_ktp'] || null,
+      alamat_penyewa: r['Alamat'] || r['alamat_penyewa'] || null,
+      nama_ortu: r['Nama Ortu'] || r['nama_ortu'] || null,
+      no_ktp_ortu: r['No KTP Ortu'] || r['no_ktp_ortu'] || null,
+      no_hp_ortu: r['No HP Ortu'] || r['no_hp_ortu'] || null,
+      alamat_ortu: r['Alamat Ortu'] || r['alamat_ortu'] || null,
+      hubungan_keluarga: r['Hubungan Keluarga'] || r['hubungan_keluarga'] || null,
+      file_ktp_penyewa: r['File KTP Penyewa'] || r['file_ktp_penyewa'] || null,
+      file_ktp_ortu: r['File KTP Ortu'] || r['file_ktp_ortu'] || null,
+      file_ktm: r['File KTM'] || r['file_ktm'] || null,
+      file_perjanjian: r['File Perjanjian'] || r['file_perjanjian'] || null,
+    }));
+
+    const result = await api('/occupancies/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ rows: payload }),
+    });
+
+    const wrap = document.getElementById('import-result');
+    let html = `
+      <p style="margin-bottom:12px;">
+        <strong>✅ Sukses:</strong> ${result.sukses} baris<br>
+        <strong>❌ Gagal:</strong> ${result.gagal} baris
+      </p>
+    `;
+    if (result.errors && result.errors.length) {
+      html += `<div style="background:#fdecec;padding:12px;border-radius:8px;font-size:0.85rem;">
+        <strong>Detail error:</strong><br>
+        ${result.errors.map(e => escapeHtml(e)).join('<br>')}
+      </div>`;
+    }
+    wrap.innerHTML = html;
+    openModalExclusive(document.getElementById('modal-import-result'));
+
+    await Promise.all([loadOccs(), loadStats()]);
+    fillYearFilter();
+    renderRooms();
+    renderTable();
+  } catch (err) {
+    alert('Gagal import: ' + err.message);
   }
-});
+}
 
-// ─── Users Modal ───────────────────────────────────────────
-const modalUsers = document.getElementById('modal-users');
-document.getElementById('btn-users').addEventListener('click', async () => {
-  modalUsers.classList.add('open');
-  await renderUsersList();
-});
-modalUsers.querySelectorAll('[data-close]').forEach(b =>
-  b.addEventListener('click', () => modalUsers.classList.remove('open')));
-modalUsers.addEventListener('click', e => {
-  if (e.target === modalUsers) modalUsers.classList.remove('open');
-});
+// ═══════════════════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════════════════
+async function loadAnalytics() {
+  const wrap = document.getElementById('analytics-content');
+  wrap.innerHTML = '<div class="analytics-loading">⏳ Memuat data...</div>';
 
+  const days = document.getElementById('analytics-period').value;
+
+  try {
+    const data = await api(`/analytics?days=${days}`);
+    wrap.innerHTML = renderAnalytics(data, Number(days));
+
+    try {
+      const unseen = await api('/analytics/logs/unseen-count');
+      const badge = document.getElementById('unseen-badge');
+      if (badge) {
+        if (unseen.count > 0) {
+          badge.textContent = unseen.count > 99 ? '99+' : unseen.count;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    } catch (e) { console.error('Unseen count error:', e); }
+  } catch (err) {
+    wrap.innerHTML = `<div class="analytics-loading" style="color:#e74c3c;">❌ Gagal memuat: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderAnalytics(d, days) {
+  const pct = (n, total) => total > 0 ? Math.round((n / total) * 100) : 0;
+
+  const maxDaily = Math.max(...d.daily.map(x => x.n), 1);
+  const dailyBars = d.daily.map(x => {
+    const h = Math.round((x.n / maxDaily) * 100);
+    const tgl = new Date(x.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+    return `<div class="bar-item" title="${tgl}: ${x.n} visitor (${x.unique_ip} unique)">
+      <div class="bar" style="height:${h}%"></div>
+      <div class="bar-label">${tgl}</div>
+    </div>`;
+  }).join('');
+
+  const renderList = (arr, key1, key2 = null) => {
+    if (!arr.length) return '<div class="analytics-empty">—</div>';
+    const total = arr.reduce((s, x) => s + x.n, 0);
+    return arr.map(x => `
+      <div class="analytics-list-item">
+        <div class="ali-label">
+          <strong>${escapeHtml(x[key1] || 'Unknown')}</strong>
+          ${key2 && x[key2] ? `<small>${escapeHtml(x[key2])}</small>` : ''}
+        </div>
+        <div class="ali-bar-wrap">
+          <div class="ali-bar" style="width:${pct(x.n, total)}%"></div>
+        </div>
+        <div class="ali-count">${x.n} <small>(${pct(x.n, total)}%)</small></div>
+      </div>
+    `).join('');
+  };
+
+  return `
+    <div class="analytics-stats">
+      <div class="astat">
+        <div class="astat-label">Hari Ini</div>
+        <div class="astat-num">${d.today_total}</div>
+        <div class="astat-sub">${d.today_unique} unique IP</div>
+      </div>
+      <div class="astat">
+        <div class="astat-label">${days} Hari Terakhir</div>
+        <div class="astat-num">${d.total}</div>
+        <div class="astat-sub">${d.unique_ips} unique IP</div>
+      </div>
+    </div>
+
+    <div class="analytics-block">
+      <h4>📈 Visitor ${days} Hari Terakhir</h4>
+      <div class="bar-chart">${dailyBars || '<div class="analytics-empty">Belum ada data</div>'}</div>
+    </div>
+
+    <div class="analytics-grid-2">
+      <div class="analytics-block"><h4>🌐 Browser</h4>${renderList(d.browsers, 'browser')}</div>
+      <div class="analytics-block"><h4>💻 Sistem Operasi</h4>${renderList(d.os_list, 'os')}</div>
+      <div class="analytics-block"><h4>📱 Device</h4>${renderList(d.devices, 'device_type')}</div>
+      <div class="analytics-block"><h4>🔗 Sumber Traffic</h4>${renderList(d.referers, 'source')}</div>
+      <div class="analytics-block"><h4>📍 Kota</h4>${renderList(d.cities, 'city', 'country_name')}</div>
+      <div class="analytics-block"><h4>📡 ISP</h4>${renderList(d.isps, 'isp')}</div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOGS
+// ═══════════════════════════════════════════════════════════
+async function openLogsModal() {
+  openModalExclusive(document.getElementById('modal-logs'));
+  await loadLogsModal();
+}
+
+async function loadLogsModal() {
+  const wrap = document.getElementById('logs-content');
+  wrap.innerHTML = '<div class="analytics-loading">⏳ Memuat log...</div>';
+
+  try {
+    const data = await api('/analytics/logs?limit=200');
+    window.__logsCache = data.logs || [];
+    wrap.innerHTML = renderLogsTable(window.__logsCache);
+
+    const unseenIds = window.__logsCache.filter(l => !l.viewed).map(l => l.id);
+    if (unseenIds.length > 0) {
+      fetch(`${API}/analytics/logs/mark-viewed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+        body: JSON.stringify({ ids: unseenIds }),
+      }).then(() => {
+        window.__logsCache.forEach(l => { if (unseenIds.includes(l.id)) l.viewed = 1; });
+        updateAnalyticsBadge();
+      }).catch(err => console.error('Mark viewed failed:', err));
+    }
+
+    const searchInput = document.getElementById('log-search');
+    if (searchInput && !searchInput.dataset.bound) {
+      searchInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        const filtered = window.__logsCache.filter(l =>
+          (l.ip || '').toLowerCase().includes(q) ||
+          (l.city || '').toLowerCase().includes(q) ||
+          (l.browser || '').toLowerCase().includes(q) ||
+          (l.os || '').toLowerCase().includes(q) ||
+          (l.isp || '').toLowerCase().includes(q)
+        );
+        document.getElementById('logs-content').innerHTML = renderLogsTable(filtered);
+      });
+      searchInput.dataset.bound = 'true';
+    }
+  } catch (err) {
+    wrap.innerHTML = `<div class="analytics-loading" style="color:#e74c3c;">❌ Gagal memuat: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderLogsTable(logs) {
+  if (!logs.length) return '<div class="analytics-empty">Belum ada log</div>';
+
+  const fmtDT = (s) => {
+    if (!s) return '—';
+    let iso = s;
+    if (!s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
+      iso = s.replace(' ', 'T') + 'Z';
+    }
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleString('id-ID', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'Asia/Jakarta', hour12: false
+    }).replace(/\./g, ':').replace(',', '');
+  };
+
+  const rows = logs.map(l => {
+    const isNew = !l.viewed;
+    const rowClass = isNew ? 'log-new' : 'log-seen';
+    return `
+      <tr class="${rowClass}">
+        <td style="min-width:70px;">
+          <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+            <code style="font-size:0.68rem;">${escapeHtml(String(l.id || '—'))}</code>
+            ${isNew ? '<span class="log-badge-new">BARU</span>' : ''}
+          </div>
+        </td>
+        <td><small style="white-space:nowrap;">${fmtDT(l.visited_at)}</small></td>
+        <td><code style="font-size:0.72rem;">${escapeHtml(l.ip || '—')}</code></td>
+        <td>${escapeHtml(l.country || '—')}</td>
+        <td>${escapeHtml(l.country_name || '—')}</td>
+        <td>${escapeHtml(l.city || '—')}</td>
+        <td>${escapeHtml(l.region || '—')}</td>
+        <td><small>${escapeHtml(l.timezone || '—')}</small></td>
+        <td><small>${escapeHtml(l.latitude || '—')}</small></td>
+        <td><small>${escapeHtml(l.longitude || '—')}</small></td>
+        <td><small style="color:#5a7373;">${escapeHtml(l.isp || '—')}</small></td>
+        <td>${escapeHtml(l.browser || '—')}</td>
+        <td><small>${escapeHtml(l.browser_version || '—')}</small></td>
+        <td>${escapeHtml(l.os || '—')}</td>
+        <td><span style="display:inline-block;padding:2px 8px;border-radius:50px;background:#e0f0f0;color:#1a5c5c;font-size:0.7rem;font-weight:700;">${escapeHtml(l.device_type || '—')}</span></td>
+        <td><small style="color:#5a7373;">${escapeHtml((l.referer || 'Direct').substring(0, 50))}</small></td>
+        <td><code style="font-size:0.7rem;">${escapeHtml(l.path || '/')}</code></td>
+        <td><small style="color:#8b9494;font-size:0.68rem;">${escapeHtml((l.user_agent || '—').substring(0, 60))}${(l.user_agent || '').length > 60 ? '…' : ''}</small></td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div style="overflow-x:auto;max-height:65vh;overflow-y:auto;border:1px solid #e3ebeb;border-radius:8px;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.78rem;min-width:1800px;">
+        <thead style="position:sticky;top:0;background:#1a5c5c;color:white;z-index:1;">
+          <tr>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">ID</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Waktu (GMT+7)</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">IP</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Kode Negara</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Negara</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Kota</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Provinsi</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Timezone</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Lat</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Lon</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">ISP</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Browser</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Versi</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">OS</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Device</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Referer</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">Path</th>
+            <th style="padding:10px 8px;text-align:left;font-size:0.68rem;text-transform:uppercase;white-space:nowrap;">User Agent</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;font-size:0.78rem;color:#5a7373;text-align:center;">
+      Menampilkan ${logs.length} log terakhir
+      — <strong style="color:#1a5c5c;">${logs.filter(l => !l.viewed).length}</strong> log baru
+      — scroll horizontal untuk lihat semua kolom →
+    </div>
+  `;
+}
+
+async function exportLogsCsv() {
+  try {
+    const data = await api('/analytics/logs?limit=500');
+    const logs = data.logs || [];
+    if (!logs.length) { alert('Belum ada log untuk di-export'); return; }
+
+    const headers = ['ID', 'Waktu', 'IP', 'Kode Negara', 'Negara', 'Kota', 'Provinsi',
+                     'Timezone', 'Latitude', 'Longitude', 'ISP', 'Browser', 'Versi',
+                     'OS', 'Device', 'Referer', 'Path', 'User Agent', 'Viewed', 'Viewed At'];
+    const rows = logs.map(l => [
+      l.id || '', l.visited_at || '', l.ip || '', l.country || '', l.country_name || '',
+      l.city || '', l.region || '', l.timezone || '', l.latitude || '', l.longitude || '',
+      l.isp || '', l.browser || '', l.browser_version || '', l.os || '', l.device_type || '',
+      l.referer || '', l.path || '', l.user_agent || '',
+      l.viewed ? 'Ya' : 'Belum', l.viewed_at || ''
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `visitor-logs-${todayISO()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Gagal export: ' + err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// USERS
+// ═══════════════════════════════════════════════════════════
 async function renderUsersList() {
   const wrap = document.getElementById('users-list');
   if (USER.role !== 'owner') {
@@ -1140,6 +1786,19 @@ async function renderUsersList() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// LOGOUT
+// ═══════════════════════════════════════════════════════════
+async function handleLogout() {
+  try { await api('/auth/logout', { method: 'POST' }); } catch {}
+  localStorage.removeItem('ga_token');
+  localStorage.removeItem('ga_user');
+  window.location.href = 'ibun.html';
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORM USER SUBMIT
+// ═══════════════════════════════════════════════════════════
 document.getElementById('form-user').addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
@@ -1157,8 +1816,225 @@ document.getElementById('form-user').addEventListener('submit', async (e) => {
   } catch (err) { alert(err.message); }
 });
 
-// ─── Start ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// GLOBAL EVENT DELEGATION — SATU HANDLER UNTUK SEMUA KLIK
+// ═══════════════════════════════════════════════════════════
+// Pakai CAPTURE PHASE (argumen ke-3 = true) supaya handler ini
+// dijalankan SEBELUM handler lain, dan tidak bisa "ditelan".
+// Setiap aksi di-try/catch supaya error 1 tombol tidak
+// mematikan tombol lain.
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('click', (e) => {
+  const target = e.target;
+
+  try {
+    // ─── HEADER BUTTONS ───
+    if (target.closest('#btn-logout')) {
+      handleLogout();
+      return;
+    }
+
+    if (target.closest('#btn-analytics')) {
+      console.log('[Click] Analytics');
+      openModalExclusive(document.getElementById('modal-analytics'));
+      loadAnalytics();
+      return;
+    }
+
+    if (target.closest('#btn-users')) {
+      console.log('[Click] Users');
+      openModalExclusive(document.getElementById('modal-users'));
+      renderUsersList();
+      return;
+    }
+
+    // ─── TABLE ACTION BUTTONS ───
+    if (target.closest('#btn-add')) {
+      console.log('[Click] Add');
+      openModal(null);
+      return;
+    }
+
+    if (target.closest('#btn-export')) {
+      console.log('[Click] Export CSV');
+      handleExportCsv();
+      return;
+    }
+
+    if (target.closest('#btn-import')) {
+      console.log('[Click] Import CSV');
+      document.getElementById('import-file').click();
+      return;
+    }
+
+    // ─── ANALYTICS MODAL INTERNAL ───
+    if (target.closest('#btn-view-logs-header')) {
+      openLogsModal();
+      return;
+    }
+
+    if (target.closest('#btn-export-logs-header')) {
+      exportLogsCsv();
+      return;
+    }
+
+    // ─── INCOME CARDS (clickable) ───
+    const incomeCard = target.closest('.stat-card.clickable');
+    if (incomeCard && incomeCard.dataset.filter) {
+      toggleIncomeFilter(incomeCard.dataset.filter);
+      return;
+    }
+
+    // ─── DATA ACTION BUTTONS (di tabel) ───
+    const btnInvoice = target.closest('[data-invoice]');
+    if (btnInvoice) {
+      console.log('[Click] Invoice', btnInvoice.dataset.invoice);
+      e.preventDefault();
+      e.stopPropagation();
+      openInvoice(Number(btnInvoice.dataset.invoice));
+      return;
+    }
+
+    const btnKuitansi = target.closest('[data-kuitansi]');
+    if (btnKuitansi) {
+      console.log('[Click] Kuitansi', btnKuitansi.dataset.kuitansi);
+      e.preventDefault();
+      e.stopPropagation();
+      openKuitansi(Number(btnKuitansi.dataset.kuitansi));
+      return;
+    }
+
+    const btnPerjanjian = target.closest('[data-perjanjian]');
+    if (btnPerjanjian) {
+      console.log('[Click] Perjanjian', btnPerjanjian.dataset.perjanjian);
+      e.preventDefault();
+      e.stopPropagation();
+      openPerjanjian(Number(btnPerjanjian.dataset.perjanjian));
+      return;
+    }
+
+    const btnEdit = target.closest('[data-edit]');
+    if (btnEdit) {
+      console.log('[Click] Edit', btnEdit.dataset.edit);
+      e.preventDefault();
+      e.stopPropagation();
+      openModal(Number(btnEdit.dataset.edit));
+      return;
+    }
+
+    const btnDel = target.closest('[data-del]');
+    if (btnDel) {
+      console.log('[Click] Delete', btnDel.dataset.del);
+      e.preventDefault();
+      e.stopPropagation();
+      deleteOcc(Number(btnDel.dataset.del));
+      return;
+    }
+
+    // ─── MODAL CLOSE (uniform: data-close-modal, .inv-btn-close) ───
+    const btnClose = target.closest('[data-close-modal], .inv-btn-close');
+    if (btnClose) {
+      const modal = btnClose.closest('.modal, .invoice-modal');
+      if (modal) {
+        if (modal.id === 'modal-occ') {
+          cancelModal();
+        } else {
+          closeModal(modal);
+        }
+      }
+      return;
+    }
+
+    // ─── PRINT ───
+    const btnPrint = target.closest('.inv-btn-print');
+    if (btnPrint && btnPrint.dataset.filename) {
+      printDoc(btnPrint.dataset.filename);
+      return;
+    }
+
+    // ─── UPLOAD TRIGGER ───
+    const btnUpload = target.closest('[data-upload-trigger]');
+    if (btnUpload) {
+      const input = document.getElementById(btnUpload.dataset.uploadTrigger);
+      if (input) input.click();
+      return;
+    }
+
+    // ─── DELETE FILE ───
+    const btnDelete = target.closest('[data-delete-file]');
+    if (btnDelete) {
+      const cfg = UPLOAD_CONFIGS.find(c => c.key === btnDelete.dataset.deleteFile);
+      if (cfg) deleteUploadedFile(cfg);
+      return;
+    }
+
+    // ─── BACKDROP CLOSE ───
+    // Klik langsung di backdrop (bukan anaknya) = close modal
+    if (target.classList.contains('modal') || target.classList.contains('invoice-modal')) {
+      // modal-occ hanya bisa close via tombol Batal
+      if (target.id === 'modal-occ') return;
+      closeModal(target);
+      return;
+    }
+
+  } catch (err) {
+    console.error('[Click Handler Error]', err);
+    alert('Terjadi error: ' + err.message);
+  }
+}, true);  // ⬅️ CAPTURE PHASE
+
+// ═══════════════════════════════════════════════════════════
+// CHANGE EVENT DELEGATION
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('change', async (e) => {
+  const input = e.target;
+
+  // Filter
+  if (input.id === 'filter-tahun') { renderTable(); return; }
+  if (input.id === 'filter-status') { renderTable(); return; }
+  if (input.id === 'analytics-period') { loadAnalytics(); return; }
+
+  // Import file
+  if (input.id === 'import-file') {
+    const file = input.files[0];
+    if (file) await handleImportFile(file);
+    input.value = '';
+    return;
+  }
+
+  // Upload file dokumen
+  const cfg = UPLOAD_CONFIGS.find(c => c.key === input.id);
+  if (cfg) {
+    const file = input.files[0];
+    if (file) await uploadDokumen(file, cfg);
+    return;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// INPUT EVENT DELEGATION (untuk search)
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'search') renderTable();
+});
+
+// ═══════════════════════════════════════════════════════════
+// ESC — TIDAK menutup modal (user harus klik tombol)
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const openModals = document.querySelectorAll('.modal.open, .invoice-modal.open');
+    if (openModals.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+}, true);
+
+// ═══════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════
 init().catch(err => {
-  console.error(err);
+  console.error('INIT ERROR:', err);
   alert('Gagal memuat data: ' + err.message);
 });
