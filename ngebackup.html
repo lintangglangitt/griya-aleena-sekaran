@@ -317,7 +317,7 @@ async function handleBackup() {
 
     // ═══ Step 2: Polling ═══
     const maxAttempts = 60;  // 60 × 2s = 120s max
-    const intervalMs = 2000;
+    const intervalMs = 500;
     let attempt = 0;
 
     while (attempt < maxAttempts) {
