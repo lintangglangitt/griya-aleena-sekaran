@@ -317,7 +317,7 @@ async function handleBackup() {
 
     // ═══ Step 2: Polling ═══
     const maxAttempts = 60;  // 60 × 2s = 120s max
-    const intervalMs = 500;
+    const intervalMs = 1000;
     let attempt = 0;
 
     while (attempt < maxAttempts) {
@@ -334,7 +334,12 @@ async function handleBackup() {
       const statusRes = await api(`/backup/status?bookmark=${encodeURIComponent(bookmark)}`);
       log(`Status #${attempt}: ${statusRes.status}`);
 
-      if (statusRes.status === 'complete' && statusRes.signed_url) {
+      if (statusRes.status === 'complete') {
+            if (!statusRes.signed_url) {
+              log('⚠️ Status complete tapi signed_url kosong. Cek Console.', 'err');
+              console.log('Full response:', statusRes);
+              throw new Error('Status complete tapi tidak ada signed_url.');
+            }
         log('Backup selesai! Mengunduh...', 'ok');
         setProgress(95);
         showStatus('Mengunduh file...', 'info');
