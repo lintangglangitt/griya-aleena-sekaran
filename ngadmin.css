@@ -203,7 +203,7 @@ body {
 /* ═══════════════════════════════════════════ */
 .rooms-grid {
   display: grid;
-  grid-template-columns: 0.7fr repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   padding: 8px 0;
 }
@@ -1266,11 +1266,9 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
 
 #riwayat-kamar-tabs {
   display: grid;
-  grid-template-columns: 0.7fr repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   padding: 8px 0;
-  margin: 18px 0 24px;
-  width: 100%;
 }
 
 #riwayat-kamar-tabs .rk-tab {
