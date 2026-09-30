@@ -267,7 +267,9 @@ function buildRiwayatKamar(roomId) {
     });
   }
 
-  return rows;
+    // Ascending dulu (biar akumulasi benar), baru dibalik untuk tampilan
+  return rows.reverse();
+}
 }
 
 
