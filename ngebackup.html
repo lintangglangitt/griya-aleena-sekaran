@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Backup – Griya Aleena</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal: #1a5c5c;
+    --teal-mid: #2a8080;
+    --teal-lt: #3aadad;
+    --amber: #F5A623;
+    --navy: #0f1e2e;
+    --text: #1c2e2e;
+    --muted: #5a7373;
+    --border: #e3ebeb;
+    --green: #25D366;
+    --red: #e74c3c;
+    --bg: #f4f7f7;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.4rem;
+    color: var(--teal);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--teal); color: white; }
+  .btn-primary:hover:not(:disabled) { background: var(--teal-lt); transform: translateY(-1px); }
+  .btn-ghost { background: white; color: var(--text); border: 1.5px solid var(--border); }
+  .btn-ghost:hover:not(:disabled) { background: var(--bg); }
+  .btn-danger { background: white; color: var(--red); border: 1.5px solid var(--red); }
+  .btn-danger:hover:not(:disabled) { background: #fdecec; }
+
+  /* ─── STATS ─── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+  }
+  .stat-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--teal);
+  }
+
+  /* ─── SECTION ─── */
+  .section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .section-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ─── TABLE ─── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  thead {
+    background: var(--teal);
+    color: white;
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  tbody tr:hover { background: #f9fcfc; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .badge-today { background: #d4f4e2; color: #0e7a3c; }
+  .badge-old { background: #e0f0f0; color: var(--teal); }
+
+  /* ─── EMPTY / LOADING ─── */
+  .empty, .loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* ─── MODAL ─── */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 30, 46, 0.75);
+    z-index: 100;
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal.open { display: flex; }
+  .modal-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .modal-card h3 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.15rem;
+    color: var(--teal);
+    margin-bottom: 16px;
+  }
+  .modal-card p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .modal-card .warning {
+    background: #fff9e6;
+    border-left: 4px solid var(--amber);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #6b5500;
+    margin-bottom: 20px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  /* ─── LOG ─── */
+  .log-box {
+    margin-top: 16px;
+    background: #1c2e2e;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.72rem;
+    color: #a8b8b8;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+    line-height: 1.6;
+  }
+  .log-box.show { display: block; }
+  .log-box div { margin-bottom: 2px; }
+  .log-box .ok { color: #25D366; }
+  .log-box .err { color: #e74c3c; }
+  .log-box .info { color: #4FC3F7; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    padding: 14px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    font-size: 0.88rem;
+    font-weight: 600;
+    z-index: 200;
+    transform: translateX(400px);
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 380px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.success { border-left: 4px solid var(--green); }
+  .toast.error { border-left: 4px solid var(--red); }
+  .toast.info { border-left: 4px solid var(--teal); }
+
+  .back-link {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .back-link a {
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+  .back-link a:hover { text-decoration: underline; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 640px) {
+    .header { padding: 18px 20px; }
+    .section { padding: 18px 20px; }
+    .header h1 { font-size: 1.15rem; }
+    table { font-size: 0.78rem; }
+    th, td { padding: 10px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <h1>💾 Dashboard Backup</h1>
+      <p>Kelola backup database D1 Griya Aleena</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="btn-refresh">🔄 Refresh</button>
+      <button class="btn btn-primary" id="btn-trigger">🚀 Trigger Backup</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Total Backup</div>
+      <div class="stat-value" id="st-total">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Backup Terakhir</div>
+      <div class="stat-value" id="st-latest" style="font-size: 1.1rem;">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Ukuran</div>
+      <div class="stat-value" id="st-size" style="font-size: 1.1rem;">–</div>
+    </div>
+  </div>
+
+  <!-- LIST BACKUP -->
+  <div class="section">
+    <div class="section-title">📋 History Backup</div>
+    <div class="table-wrap" id="table-wrap">
+      <div class="loading">⏳ Memuat data backup...</div>
+    </div>
+    <div class="log-box" id="log-box"></div>
+  </div>
+
+  <!-- INFO -->
+  <div class="section">
+    <div class="section-title">ℹ️ Informasi</div>
+    <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.7;">
+      • Backup berjalan otomatis via <strong>cron-job.org</strong> 1 minggu sekali (Senin, 12:00 WIB)<br>
+      • File disimpan di <strong>R2 bucket</strong> <code>griya-aleena-backup</code><br>
+      • File lebih dari 30 hari otomatis terhapus (Lifecycle Rule)<br>
+      • Klik <strong>⬇ Download</strong> untuk unduh file <code>.sql</code><br>
+      • Klik <strong>🔄 Restore</strong> untuk restore database ke kondisi backup
+    </p>
+  </div>
+
+  <div class="back-link">
+    <a href="ngadmin.html">← Kembali ke Dashboard Utama</a>
+  </div>
+
+</div>
+
+<!-- MODAL RESTORE -->
+<div class="modal" id="modal-restore">
+  <div class="modal-card">
+    <h3>⚠️ Konfirmasi Restore Database</h3>
+    <p>Anda akan <strong>menimpa SELURUH database</strong> dengan isi dari backup:</p>
+    <p style="font-family: monospace; background: var(--bg); padding: 10px; border-radius: 6px; font-size: 0.78rem;" id="restore-filename">–</p>
+    <div class="warning">
+      <strong>⚠️ PERINGATAN:</strong><br>
+      Semua data saat ini akan <strong>DIGANTI</strong> dengan data dari backup.<br>
+      Pastikan Anda sudah download backup terbaru sebelum melakukan restore.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btn-cancel-restore">Batal</button>
+      <button class="btn btn-danger" id="btn-confirm-restore">Ya, Restore Sekarang</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// KONFIGURASI
+// ═══════════════════════════════════════════════════════════
+const API = 'https://griya-api.lintangglangitt.workers.dev';
+const WORKFLOW_API = 'https://griya-backup-workflow.lintangglangitt.workers.dev';
+const TOKEN = localStorage.getItem('ga_token') || '';
+
+if (!TOKEN) {
+  alert('Anda belum login. Silakan login dulu di dashboard.');
+  window.location.href = 'ibun.html';
+}
+
+// ═══════════════════════════════════════════════════════════
+// DOM ELEMENTS
+// ═══════════════════════════════════════════════════════════
+const tableWrap = document.getElementById('table-wrap');
+const logBox = document.getElementById('log-box');
+const stTotal = document.getElementById('st-total');
+const stLatest = document.getElementById('st-latest');
+const stSize = document.getElementById('st-size');
+const toast = document.getElementById('toast');
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+}
+
+function formatDateWIB(isoString) {
+  if (!isoString) return '—';
+  const d = new Date(isoString);
+  return d.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
+    hour12: false,
+  }).replace(/\./g, ':');
+}
+
+function showToast(msg, type = 'info') {
+  toast.textContent = msg;
+  toast.className = 'toast show ' + type;
+  setTimeout(() => {
+    toast.className = 'toast ' + type;
+  }, 4000);
+}
+
+function log(msg, type = '') {
+  logBox.classList.add('show');
+  const time = new Date().toLocaleTimeString('id-ID', { hour12: false, timeZone: 'Asia/Jakarta' });
+  const line = document.createElement('div');
+  line.className = type;
+  line.textContent = `[${time}] ${msg}`;
+  logBox.appendChild(line);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(`${API}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${TOKEN}`,
+      ...(options.headers || {}),
+    },
+  });
+  if (res.status === 401) {
+    alert('Sesi berakhir. Silakan login ulang.');
+    localStorage.removeItem('ga_token');
+    localStorage.removeItem('ga_user');
+    window.location.href = 'ibun.html';
+    throw new Error('Sesi berakhir');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+async function workflowApi(path, options = {}) {
+  // Workflow tidak butuh auth token untuk /list, tapi /restore butuh
+  const res = await fetch(`${WORKFLOW_API}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${TOKEN}`,
+      ...(options.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOAD BACKUP LIST
+// ═══════════════════════════════════════════════════════════
+async function loadBackups() {
+  tableWrap.innerHTML = '<div class="loading">⏳ Memuat data backup...</div>';
+  logBox.innerHTML = '';
+  logBox.classList.remove('show');
+
+  try {
+    log('Mengambil daftar backup dari R2...');
+
+    const data = await workflowApi('/list');
+
+    if (!data.ok) {
+      throw new Error(data.error || 'Gagal memuat daftar backup');
+    }
+
+    const files = (data.files || []).sort((a, b) => {
+      // Sort by uploaded descending (terbaru dulu)
+      return new Date(b.uploaded) - new Date(a.uploaded);
+    });
+
+    // Update stats
+    stTotal.textContent = files.length;
+    if (files.length > 0) {
+      stLatest.textContent = formatDateWIB(files[0].uploaded);
+      const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
+      stSize.textContent = formatBytes(totalSize);
+    } else {
+      stLatest.textContent = '—';
+      stSize.textContent = '0 B';
+    }
+
+    // Render table
+    if (files.length === 0) {
+      tableWrap.innerHTML = '<div class="empty">📭 Belum ada backup tersimpan</div>';
+      log('Belum ada backup di R2', 'info');
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = files.map(f => {
+      const uploadedDate = new Date(f.uploaded).toISOString().slice(0, 10);
+      const isToday = uploadedDate === today;
+      const badgeClass = isToday ? 'badge-today' : 'badge-old';
+      const badgeText = isToday ? 'Hari ini' : 'Arsip';
+      const shortName = f.key.split('/').pop() || f.key;
+
+      return `
+        <tr>
+          <td><strong>${shortName}</strong></td>
+          <td>${formatDateWIB(f.uploaded)}</td>
+          <td>${formatBytes(f.size)}</td>
+          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+          <td>
+            <button class="btn btn-ghost" data-download="${f.key}" style="padding: 6px 12px; font-size: 0.78rem;">⬇ Download</button>
+            <button class="btn btn-danger" data-restore="${f.key}" style="padding: 6px 12px; font-size: 0.78rem; margin-left: 4px;">🔄 Restore</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tableWrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Nama File</th>
+            <th>Tanggal</th>
+            <th>Ukuran</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+
+    log(`Berhasil memuat ${files.length} file backup`, 'ok');
+
+    // Bind download & restore buttons
+    tableWrap.querySelectorAll('[data-download]').forEach(btn => {
+      btn.addEventListener('click', () => handleDownload(btn.dataset.download));
+    });
+    tableWrap.querySelectorAll('[data-restore]').forEach(btn => {
+      btn.addEventListener('click', () => openRestoreModal(btn.dataset.restore));
+    });
+
+  } catch (err) {
+    console.error('Load backups error:', err);
+    tableWrap.innerHTML = `<div class="empty" style="color: var(--red);">❌ Gagal memuat: ${err.message}</div>`;
+    log('ERROR: ' + err.message, 'err');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DOWNLOAD BACKUP
+// ═══════════════════════════════════════════════════════════
+async function handleDownload(key) {
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳...';
+
+  try {
+    log(`Download: ${key.split('/').pop()}`);
+
+    // Get signed URL for download
+    const data = await workflowApi(`/download?key=${encodeURIComponent(key)}`);
+
+    if (!data.ok || !data.signed_url) {
+      throw new Error(data.error || 'Gagal mendapatkan URL download');
+    }
+
+    // Fetch and download
+    const res = await fetch(data.signed_url);
+    if (!res.ok) throw new Error('Gagal download file');
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const filename = key.split('/').pop() || 'backup.sql';
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    log(`✅ Downloaded: ${filename}`, 'ok');
+    showToast(`✅ Download berhasil: ${filename}`, 'success');
+
+  } catch (err) {
+    console.error('Download error:', err);
+    log('ERROR: ' + err.message, 'err');
+    showToast('❌ Gagal download: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESTORE MODAL
+// ═══════════════════════════════════════════════════════════
+let restoreTargetKey = null;
+
+function openRestoreModal(key) {
+  restoreTargetKey = key;
+  const filename = key.split('/').pop() || key;
+  document.getElementById('restore-filename').textContent = filename;
+  document.getElementById('modal-restore').classList.add('open');
+}
+
+function closeRestoreModal() {
+  restoreTargetKey = null;
+  document.getElementById('modal-restore').classList.remove('open');
+}
+
+async function confirmRestore() {
+  if (!restoreTargetKey) return;
+
+  const btn = document.getElementById('btn-confirm-restore');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Restoring...';
+
+  try {
+    const filename = restoreTargetKey.split('/').pop() || restoreTargetKey;
+    log(`Restore: ${filename}`, 'info');
+
+    const data = await workflowApi('/restore', {
+      method: 'POST',
+      body: JSON.stringify({ key: restoreTargetKey }),
+    });
+
+    if (!data.ok) {
+      throw new Error(data.error || 'Gagal restore');
+    }
+
+    log(`✅ Restore berhasil: ${data.message || 'Database sudah direstore'}`, 'ok');
+    showToast(`✅ Restore berhasil!`, 'success');
+    closeRestoreModal();
+
+  } catch (err) {
+    console.error('Restore error:', err);
+    log('ERROR: ' + err.message, 'err');
+    showToast('❌ Restore gagal: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRIGGER BACKUP
+// ═══════════════════════════════════════════════════════════
+async function triggerBackup() {
+  if (!confirm(
+    'Mulai backup database sekarang?\n\n' +
+    '⚠️ Database akan terkunci sementara (30-60 detik).\n' +
+    'File akan tersimpan di R2 (bukan download langsung).'
+  )) return;
+
+  const btn = document.getElementById('btn-trigger');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Trigger...';
+
+  logBox.innerHTML = '';
+  log('Memulai backup...');
+
+  try {
+    const res = await fetch(`${WORKFLOW_API}/trigger`, { method: 'POST' });
+    const data = await res.json();
+
+    if (data.ok) {
+      log(`✅ Backup dimulai: ${data.instance_id}`, 'ok');
+      showToast('✅ Backup dimulai! Cek history dalam 1-2 menit.', 'success');
+
+      // Auto-refresh setelah 30 detik
+      setTimeout(() => {
+        log('Auto-refresh...');
+        loadBackups();
+      }, 30000);
+    } else {
+      throw new Error(data.error || 'Gagal trigger backup');
+    }
+  } catch (err) {
+    log('ERROR: ' + err.message, 'err');
+    showToast('❌ Gagal trigger: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// BIND EVENTS
+// ═══════════════════════════════════════════════════════════
+document.getElementById('btn-refresh').addEventListener('click', loadBackups);
+document.getElementById('btn-trigger').addEventListener('click', triggerBackup);
+document.getElementById('btn-cancel-restore').addEventListener('click', closeRestoreModal);
+document.getElementById('btn-confirm-restore').addEventListener('click', confirmRestore);
+
+// Close modal on backdrop click
+document.getElementById('modal-restore').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-restore') closeRestoreModal();
+});
+
+// ═══════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════
+loadBackups();
+</script>
+</body>
+</html>
