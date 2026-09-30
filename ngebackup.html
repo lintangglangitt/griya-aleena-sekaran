@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backup Database – Griya Aleena</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal: #1a5c5c;
+    --teal-mid: #2a8080;
+    --teal-lt: #3aadad;
+    --amber: #F5A623;
+    --navy: #0f1e2e;
+    --text: #1c2e2e;
+    --muted: #5a7373;
+    --border: #e3ebeb;
+    --green: #25D366;
+    --red: #e74c3c;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: linear-gradient(135deg, var(--teal) 0%, #0d3d3d 60%, var(--navy) 100%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px 36px;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .logo {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .logo img {
+    max-height: 80px;
+    margin-bottom: 10px;
+  }
+  .logo h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.6rem;
+    color: var(--teal);
+    margin-bottom: 4px;
+  }
+  .logo p {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .info-box {
+    background: #fff9e6;
+    border-left: 4px solid var(--amber);
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #6b5500;
+    line-height: 1.5;
+    margin-bottom: 22px;
+  }
+  .info-box strong { color: #a06800; }
+
+  .btn-backup {
+    width: 100%;
+    padding: 16px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .btn-backup:hover:not(:disabled) {
+    background: var(--teal-lt);
+    transform: translateY(-2px);
+  }
+  .btn-backup:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .status {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.info { background: #e0f0f0; color: var(--teal); }
+  .status.success { background: #d4f4e2; color: #0e7a3c; }
+  .status.error { background: #fcdcdc; color: #a81f1f; }
+
+  .progress-bar {
+    margin-top: 12px;
+    height: 6px;
+    background: #e3ebeb;
+    border-radius: 50px;
+    overflow: hidden;
+    display: none;
+  }
+  .progress-bar.show { display: block; }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal) 0%, var(--teal-lt) 100%);
+    border-radius: 50px;
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .log {
+    margin-top: 16px;
+    background: #f4f7f7;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    max-height: 120px;
+    overflow-y: auto;
+    display: none;
+    line-height: 1.6;
+  }
+  .log.show { display: block; }
+  .log div { margin-bottom: 2px; }
+  .log .ok { color: var(--green); }
+  .log .err { color: var(--red); }
+
+  .back-link {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .back-link a {
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-decoration: none;
+  }
+  .back-link a:hover { text-decoration: underline; }
+
+  .meta {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <img src="foto/logo.png" alt="Griya Aleena" onerror="this.style.display='none'">
+    <h1>Backup Database</h1>
+    <p>Griya Aleena – D1 SQLite Export</p>
+  </div>
+
+  <div class="info-box">
+    <strong>⚠️ Perhatian:</strong>
+    Proses backup akan <strong>mengunci database sementara</strong> (10–60 detik).
+    Sebaiknya lakukan saat tidak ada aktivitas pengguna lain.
+  </div>
+
+  <button class="btn-backup" id="btn-backup">
+    💾 Mulai Backup
+  </button>
+
+  <div class="progress-bar" id="progress-bar">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="log" id="log"></div>
+
+  <div class="meta">
+    Backup berjalan via Worker API<br>
+    File akan otomatis ter-download sebagai <code>.sql</code>
+  </div>
+
+  <div class="back-link">
+    <a href="ngadmin.html">← Kembali ke Dashboard</a>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// KONFIGURASI
+// ═══════════════════════════════════════════════════════════
+const API = 'https://griya-api.lintangglangitt.workers.dev';
+const TOKEN = localStorage.getItem('ga_token') || '';
+
+if (!TOKEN) {
+  alert('Anda belum login. Silakan login dulu di dashboard.');
+  window.location.href = 'ibun.html';
+}
+
+// ═══════════════════════════════════════════════════════════
+// DOM ELEMENTS
+// ═══════════════════════════════════════════════════════════
+const btnBackup = document.getElementById('btn-backup');
+const statusEl = document.getElementById('status');
+const progressBar = document.getElementById('progress-bar');
+const progressFill = document.getElementById('progress-fill');
+const logEl = document.getElementById('log');
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function showStatus(msg, type = 'info') {
+  statusEl.textContent = msg;
+  statusEl.className = 'status show ' + type;
+}
+
+function hideStatus() {
+  statusEl.className = 'status';
+}
+
+function setProgress(percent) {
+  progressBar.classList.add('show');
+  progressFill.style.width = Math.min(100, Math.max(0, percent)) + '%';
+}
+
+function hideProgress() {
+  progressBar.classList.remove('show');
+  progressFill.style.width = '0%';
+}
+
+function log(msg, type = '') {
+  logEl.classList.add('show');
+  const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+  const line = document.createElement('div');
+  line.className = type;
+  line.textContent = `[${time}] ${msg}`;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(`${API}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${TOKEN}`,
+      ...(options.headers || {}),
+    },
+  });
+  if (res.status === 401) {
+    alert('Sesi berakhir. Silakan login ulang.');
+    localStorage.removeItem('ga_token');
+    localStorage.removeItem('ga_user');
+    window.location.href = 'ibun.html';
+    throw new Error('Sesi berakhir');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HANDLE BACKUP
+// ═══════════════════════════════════════════════════════════
+async function handleBackup() {
+  const originalText = btnBackup.textContent;
+
+  if (!confirm(
+    'Mulai backup database D1?\n\n' +
+    '⚠️ Database akan TERKUNCI sementara (10-60 detik).\n' +
+    'User lain tidak bisa mengakses data selama proses ini.\n\n' +
+    'Lanjutkan?'
+  )) return;
+
+  btnBackup.disabled = true;
+  btnBackup.textContent = '⏳ Menyiapkan...';
+  hideStatus();
+  logEl.innerHTML = '';
+  logEl.classList.remove('show');
+
+  try {
+    // ═══ Step 1: Start backup ═══
+    log('Memulai backup...');
+    setProgress(10);
+    showStatus('Memulai backup...', 'info');
+
+    const startRes = await api('/backup/start', { method: 'POST' });
+
+    if (!startRes.ok || !startRes.bookmark) {
+      throw new Error(startRes.error || 'Tidak dapat bookmark backup');
+    }
+
+    const bookmark = startRes.bookmark;
+    log('Bookmark: ' + bookmark.substring(0, 20) + '...', 'ok');
+    setProgress(20);
+
+    // ═══ Step 2: Polling ═══
+    const maxAttempts = 60;  // 60 × 2s = 120s max
+    const intervalMs = 2000;
+    let attempt = 0;
+
+    while (attempt < maxAttempts) {
+      attempt++;
+      const elapsed = attempt * 2;
+      btnBackup.textContent = `⏳ Menunggu... (${elapsed}s)`;
+      showStatus(`Server menyiapkan file... (${elapsed}s)`, 'info');
+
+      // Progress bar naik dari 20% → 90%
+      setProgress(20 + Math.min(70, (attempt / 30) * 70));
+
+      await new Promise(r => setTimeout(r, intervalMs));
+
+      const statusRes = await api(`/backup/status?bookmark=${encodeURIComponent(bookmark)}`);
+      log(`Status #${attempt}: ${statusRes.status}`);
+
+      if (statusRes.status === 'complete' && statusRes.signed_url) {
+        log('Backup selesai! Mengunduh...', 'ok');
+        setProgress(95);
+        showStatus('Mengunduh file...', 'info');
+        btnBackup.textContent = '⬇️ Mengunduh...';
+
+        // ═══ Step 3: Download ═══
+        const fileRes = await fetch(statusRes.signed_url);
+        if (!fileRes.ok) throw new Error('Gagal unduh file backup');
+
+        const blob = await fileRes.blob();
+        const url = URL.createObjectURL(blob);
+
+        // Nama file: griya-aleena-backup-YYYY-MM-DD-HHmm.sql
+        const now = new Date();
+        const ts =
+          now.getFullYear() +
+          String(now.getMonth() + 1).padStart(2, '0') +
+          String(now.getDate()).padStart(2, '0') + '-' +
+          String(now.getHours()).padStart(2, '0') +
+          String(now.getMinutes()).padStart(2, '0');
+
+        const filename = statusRes.filename || `griya-aleena-backup-${ts}.sql`;
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        setProgress(100);
+        log('File tersimpan: ' + filename, 'ok');
+        log('Ukuran: ' + (blob.size / 1024).toFixed(2) + ' KB', 'ok');
+        showStatus(
+          `✅ Backup berhasil! File ${filename} (${(blob.size / 1024).toFixed(1)} KB)`,
+          'success'
+        );
+
+        btnBackup.textContent = '✅ Selesai!';
+        setTimeout(() => {
+          btnBackup.disabled = false;
+          btnBackup.textContent = originalText;
+          hideProgress();
+        }, 3000);
+
+        return;
+      }
+
+      if (statusRes.status === 'error') {
+        throw new Error('Backup gagal di server Cloudflare');
+      }
+      // status 'in_progress' → lanjut polling
+    }
+
+    throw new Error('Timeout: backup tidak selesai dalam 2 menit');
+
+  } catch (err) {
+    console.error('[Backup] Error:', err);
+    log('ERROR: ' + err.message, 'err');
+    showStatus('❌ Gagal: ' + err.message, 'error');
+    hideProgress();
+    btnBackup.disabled = false;
+    btnBackup.textContent = originalText;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// BIND
+// ═══════════════════════════════════════════════════════════
+btnBackup.addEventListener('click', handleBackup);
+</script>
+</body>
+</html>
