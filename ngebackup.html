@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Backup & Database – Griya Aleena</title>
+<title>Database dan Backup – Griya Aleena</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,11 +39,6 @@
     padding: 20px 28px;
     margin-bottom: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
   }
   .page-header h1 {
     font-family: 'Sora', sans-serif;
@@ -123,6 +118,46 @@
     gap: 12px;
     flex-wrap: wrap;
   }
+
+  /* ─── INFO SECTION (tetap tampil) ─── */
+  .info-section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .info-section h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.05rem;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .info-section ul {
+    list-style: none;
+    padding: 0;
+  }
+  .info-section ul li {
+    padding: 6px 0;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .info-section ul li::before {
+    content: "• ";
+    color: var(--muted);
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  .info-section code {
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.82rem;
+    color: var(--teal);
+  }
+  .info-section strong { color: var(--text); }
 
   /* ─── TABLE LIST ─── */
   .table-list {
@@ -247,9 +282,7 @@
     color: var(--teal);
     margin-bottom: 20px;
   }
-  .form-field {
-    margin-bottom: 14px;
-  }
+  .form-field { margin-bottom: 14px; }
   .form-field label {
     display: block;
     font-size: 0.78rem;
@@ -260,8 +293,7 @@
     letter-spacing: 0.03em;
   }
   .form-field input,
-  .form-field textarea,
-  .form-field select {
+  .form-field textarea {
     display: block;
     width: 100%;
     padding: 10px 12px;
@@ -298,10 +330,7 @@
     gap: 12px;
     flex-wrap: wrap;
   }
-  .backup-item-info {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
+  .backup-item-info { flex: 1 1 auto; min-width: 0; }
   .backup-item-name {
     font-family: 'SF Mono', Monaco, monospace;
     font-size: 0.82rem;
@@ -320,7 +349,7 @@
     flex-shrink: 0;
   }
 
-  /* ─── STATUS / TOAST ─── */
+  /* ─── STATUS ─── */
   .status {
     padding: 12px 16px;
     border-radius: 10px;
@@ -359,13 +388,15 @@
     text-decoration: none;
     padding: 8px 16px;
     border-radius: 8px;
+    transition: background 0.15s;
   }
   .back-link a:hover { background: white; text-decoration: underline; }
 
   @media (max-width: 640px) {
     body { padding: 12px; }
     .page-header { padding: 16px 20px; }
-    .card { padding: 16px 20px; }
+    .card,
+    .info-section { padding: 16px 20px; }
     .tab { padding: 10px 16px; font-size: 0.82rem; }
     .table-list { grid-template-columns: 1fr 1fr; gap: 8px; }
   }
@@ -377,51 +408,20 @@
 
   <!-- HEADER -->
   <div class="page-header">
-    <div>
-      <h1>💾 Backup & Database Manager</h1>
-      <p>Griya Aleena – Kelola backup & data database</p>
-    </div>
+    <h1>🗄️ Database dan Backup</h1>
+    <p>Griya Aleena – Kelola data dan backup database</p>
   </div>
 
-  <!-- TABS -->
+  <!-- TABS — Database dulu, baru Backup -->
   <div class="tabs">
-    <button class="tab active" data-tab="backup">💾 Backup</button>
-    <button class="tab" data-tab="database">🗄️ Database</button>
+    <button class="tab active" data-tab="database">🗄️ Database</button>
+    <button class="tab" data-tab="backup">💾 Backup</button>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- TAB: BACKUP -->
+  <!-- TAB: DATABASE (default) -->
   <!-- ═══════════════════════════════════════════════════════ -->
-  <div class="tab-content active" id="tab-backup">
-
-    <div class="card">
-      <div class="card-title">
-        <span>💾 Backup Manual</span>
-        <button class="btn btn-primary" id="btn-trigger">🚀 Trigger Backup</button>
-      </div>
-      <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6;">
-        Backup akan tersimpan di R2 <code>griya-aleena-backup</code>. 
-        Backup otomatis juga berjalan via cron-job.org setiap Senin 12:00 WIB.
-      </p>
-      <div id="backup-status" class="status" style="margin-top: 16px;"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">
-        <span>📋 History Backup</span>
-        <button class="btn btn-ghost btn-sm" id="btn-refresh">🔄 Refresh</button>
-      </div>
-      <div id="backup-list" class="backup-list">
-        <div class="loading-state">⏳ Memuat data backup...</div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- TAB: DATABASE -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <div class="tab-content" id="tab-database">
+  <div class="tab-content active" id="tab-database">
 
     <div class="card">
       <div class="card-title">
@@ -447,6 +447,49 @@
       <div id="table-data-content">
         <div class="loading-state">⏳ Pilih tabel untuk melihat data</div>
       </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: BACKUP -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-backup">
+
+    <div class="card">
+      <div class="card-title">
+        <span>💾 Backup Manual</span>
+        <button class="btn btn-primary" id="btn-trigger">🚀 Trigger Backup</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6;">
+        Backup akan tersimpan di R2 <code>griya-aleena-backup</code>.
+        Backup otomatis juga berjalan via cron-job.org setiap Senin 12:00 WIB.
+      </p>
+      <div id="backup-status" class="status" style="margin-top: 16px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>📋 History Backup</span>
+        <button class="btn btn-ghost btn-sm" id="btn-refresh">🔄 Refresh</button>
+      </div>
+      <div id="backup-list" class="backup-list">
+        <div class="loading-state">⏳ Memuat data backup...</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- INFO SECTION — TETAP TAMPIL -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="info-section">
+      <h2>ℹ️ Informasi</h2>
+      <ul>
+        <li>Backup berjalan otomatis via <strong>cron-job.org</strong> 1 minggu sekali (Senin, 12:00 WIB)</li>
+        <li>File disimpan di <strong>R2 bucket</strong> <code>griya-aleena-backup</code></li>
+        <li>File lebih dari 30 hari otomatis terhapus (Lifecycle Rule)</li>
+        <li>Klik <strong>⬇ Download</strong> untuk unduh file <code>.sql</code></li>
+        <li>Klik <strong>🔄 Restore</strong> untuk restore database ke kondisi backup</li>
+      </ul>
     </div>
 
   </div>
@@ -491,7 +534,7 @@ if (!TOKEN) {
 // ═══════════════════════════════════════════════════════════
 let ACTIVE_TABLE = null;
 let TABLE_COLUMNS = [];
-let EDITING_ROW = null; // null = tambah baru, object = edit
+let EDITING_ROW = null;
 
 // ═══════════════════════════════════════════════════════════
 // HELPERS
@@ -981,6 +1024,9 @@ document.getElementById('modal-row').addEventListener('click', (e) => {
 // ═══════════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════════
+// Load tabel database (default tab)
+loadTables();
+// Preload data backup untuk tab Backup (nanti saat diklik)
 loadBackups();
 </script>
 
