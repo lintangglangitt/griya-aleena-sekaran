@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database dan Backup – Griya Aleena</title>
+<link rel="icon" type="image/png" sizes="32x32" href="foto/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal: #1a5c5c;
+    --teal-mid: #2a8080;
+    --teal-lt: #3aadad;
+    --amber: #F5A623;
+    --navy: #0f1e2e;
+    --text: #1c2e2e;
+    --muted: #5a7373;
+    --border: #e3ebeb;
+    --green: #25D366;
+    --red: #e74c3c;
+    --bg: #f4f7f7;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  /* HEADER */
+  .page-header {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .page-header-left h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.4rem;
+    color: var(--teal);
+  }
+  .page-header-left p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .page-header-right {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .stat-card-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .stat-card-value {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--teal);
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--teal); color: white; }
+  .btn-primary:hover:not(:disabled) { background: var(--teal-lt); transform: translateY(-1px); }
+  .btn-ghost { background: white; color: var(--text); border: 1.5px solid var(--border); }
+  .btn-ghost:hover:not(:disabled) { background: var(--bg); }
+  .btn-danger { background: white; color: var(--red); border: 1.5px solid var(--red); }
+  .btn-danger:hover:not(:disabled) { background: #fdecec; }
+  .btn-sm { padding: 6px 12px; font-size: 0.78rem; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+  }
+  .tab {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab:hover { color: var(--teal); }
+  .tab.active {
+    color: var(--teal);
+    border-bottom-color: var(--teal);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CARD */
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .card-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.05rem;
+    color: var(--text);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .card-title-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* BACKUP TABLE */
+  .backup-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .backup-table thead {
+    background: var(--teal);
+    color: white;
+  }
+  .backup-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .backup-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .backup-table tbody tr:hover { background: #f9fcfc; }
+  .backup-table tbody tr:last-child td { border-bottom: none; }
+
+  .backup-filename {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .badge-today { background: #d4f4e2; color: #0e7a3c; }
+  .badge-old { background: #e0f0f0; color: var(--teal); }
+
+  .backup-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* LOG BOX */
+  .log-box {
+    margin-top: 16px;
+    background: #1c2e2e;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.78rem;
+    color: #a8b8b8;
+    max-height: 180px;
+    overflow-y: auto;
+    line-height: 1.7;
+  }
+  .log-box div { margin-bottom: 2px; }
+  .log-box .ok { color: #25D366; }
+  .log-box .err { color: #e74c3c; }
+  .log-box .info { color: #4FC3F7; }
+
+  /* INFO SECTION */
+  .info-section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .info-section h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.05rem;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .info-section ul { list-style: none; padding: 0; }
+  .info-section ul li {
+    padding: 6px 0;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .info-section ul li::before {
+    content: "• ";
+    color: var(--muted);
+    font-weight: 700;
+    margin-right: 4px;
+  }
+  .info-section code {
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.82rem;
+    color: var(--teal);
+  }
+  .info-section strong { color: var(--text); }
+
+  /* TABLE LIST (DATABASE TAB) */
+  .table-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .table-item {
+    padding: 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    font-family: inherit;
+  }
+  .table-item:hover {
+    border-color: var(--teal-lt);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 92, 92, 0.1);
+  }
+  .table-item.active {
+    border-color: var(--teal);
+    background: #e0f0f0;
+  }
+  .table-item-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 4px;
+    display: block;
+  }
+  .table-item-count { font-size: 0.75rem; color: var(--muted); }
+
+  /* DATA TABLE */
+  .data-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .data-table thead {
+    position: sticky;
+    top: 0;
+    background: var(--teal);
+    color: white;
+    z-index: 1;
+  }
+  .data-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .data-table tbody tr:hover { background: #f9fcfc; }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+
+  .cell-actions { display: flex; gap: 6px; }
+  .cell-actions button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .cell-actions button:hover { background: var(--bg); }
+  .cell-actions button.danger { color: var(--red); border-color: var(--red); }
+  .cell-actions button.danger:hover { background: #fdecec; }
+
+  /* MODAL */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 30, 46, 0.75);
+    z-index: 100;
+    padding: 20px;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+  }
+  .modal.open { display: flex; }
+  .modal-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 600px;
+    width: 100%;
+    margin: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .modal-card h3 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.1rem;
+    color: var(--teal);
+    margin-bottom: 20px;
+  }
+  .form-field { margin-bottom: 14px; }
+  .form-field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .form-field input,
+  .form-field textarea {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    background: white;
+  }
+  .form-field input:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: var(--teal-lt);
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  /* EMPTY / LOADING */
+  .empty-state,
+  .loading-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* BACK LINK */
+  .back-link {
+    text-align: center;
+    margin-top: 20px;
+    padding: 20px;
+  }
+  .back-link a {
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+  .back-link a:hover { background: white; text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    body { padding: 12px; }
+    .page-header { padding: 16px 20px; }
+    .card,
+    .info-section { padding: 16px 20px; }
+    .tab { padding: 10px 16px; font-size: 0.82rem; }
+    .table-list { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .backup-table th,
+    .backup-table td { padding: 10px 8px; }
+    .backup-table { font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>🗄️ Database dan Backup</h1>
+      <p>Kelola data dan backup database D1 Griya Aleena</p>
+    </div>
+    <div class="page-header-right">
+      <button class="btn btn-ghost" id="btn-refresh-header">🔄 Refresh</button>
+      <button class="btn btn-primary" id="btn-trigger-header">🚀 Trigger Backup</button>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row" id="stats-row" style="display:none;">
+    <div class="stat-card">
+      <div class="stat-card-label">Total Backup</div>
+      <div class="stat-card-value" id="st-total-backup">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Backup Terakhir</div>
+      <div class="stat-card-value" id="st-last-backup" style="font-size: 1.15rem;">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Total Ukuran</div>
+      <div class="stat-card-value" id="st-total-size" style="font-size: 1.15rem;">–</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="database">🗄️ Database</button>
+    <button class="tab" data-tab="backup">💾 Backup</button>
+  </div>
+
+  <!-- TAB: DATABASE -->
+  <div class="tab-content active" id="tab-database">
+    <div class="card">
+      <div class="card-title">
+        <span>🗄️ Tabel Database</span>
+        <button class="btn btn-ghost btn-sm" id="btn-refresh-tables">🔄 Refresh</button>
+      </div>
+      <div id="table-list" class="table-list">
+        <div class="loading-state">⏳ Memuat daftar tabel...</div>
+      </div>
+    </div>
+
+    <div class="card" id="table-data-card" style="display:none;">
+      <div class="card-title">
+        <span id="table-data-title">📊 Data Tabel</span>
+        <div class="card-title-actions">
+          <button class="btn btn-ghost btn-sm" id="btn-add-row">➕ Tambah Baris</button>
+          <button class="btn btn-ghost btn-sm" id="btn-export-csv">⬇ Export CSV</button>
+          <button class="btn btn-ghost btn-sm" id="btn-import-csv">⬆ Import CSV</button>
+          <input type="file" id="import-file" accept=".csv" style="display:none;">
+        </div>
+      </div>
+      <div id="table-data-status" class="log-box" style="display:none;"></div>
+      <div id="table-data-content">
+        <div class="loading-state">⏳ Pilih tabel untuk melihat data</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: BACKUP -->
+  <div class="tab-content" id="tab-backup">
+    <div class="card">
+      <div class="card-title">
+        <span>📋 History Backup</span>
+        <button class="btn btn-ghost btn-sm" id="btn-refresh-backup">🔄 Refresh</button>
+      </div>
+      <div id="backup-list">
+        <div class="loading-state">⏳ Memuat data backup...</div>
+      </div>
+      <div class="log-box" id="backup-log" style="display:none;"></div>
+    </div>
+
+    <div class="info-section">
+      <h2>ℹ️ Informasi</h2>
+      <ul>
+        <li>Backup berjalan otomatis via <strong>cron-job.org</strong> 1 minggu sekali (Senin, 12:00 WIB)</li>
+        <li>File disimpan di <strong>R2 bucket</strong> <code>griya-aleena-backup</code></li>
+        <li>File lebih dari 30 hari otomatis terhapus (Lifecycle Rule)</li>
+        <li>Klik <strong>⬇ Download</strong> untuk unduh file <code>.sql</code></li>
+        <li>Klik <strong>🔄 Restore</strong> untuk restore database ke kondisi backup</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="back-link">
+    <a href="ngadmin.html">← Kembali ke Dashboard Utama</a>
+  </div>
+
+</div>
+
+<!-- MODAL: Edit / Tambah Baris -->
+<div class="modal" id="modal-row">
+  <div class="modal-card">
+    <h3 id="modal-row-title">Edit Baris</h3>
+    <form id="form-row">
+      <div id="form-fields"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btn-cancel-row">Batal</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-row">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// KONFIGURASI
+// ═══════════════════════════════════════════════════════════
+var WORKFLOW_API = 'https://griya-backup-workflow.lintangglangitt.workers.dev';
+var TOKEN = localStorage.getItem('ga_token') || '';
+
+if (!TOKEN) {
+  alert('Anda belum login. Silakan login dulu di dashboard.');
+  window.location.href = 'ibun.html';
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+var ACTIVE_TABLE = null;
+var TABLE_COLUMNS = [];
+var EDITING_ROW = null;
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function escapeHtml(s) {
+  return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+  });
+}
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  var k = 1024;
+  var sizes = ['B', 'KB', 'MB', 'GB'];
+  var i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+}
+
+function formatDateWIB(isoString) {
+  if (!isoString) return '—';
+  var d = new Date(isoString);
+  return d.toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Jakarta', hour12: false
+  }).replace(/\./g, ':');
+}
+
+function logTo(elId, msg, type) {
+  var logEl = document.getElementById(elId);
+  if (!logEl) return;
+  logEl.style.display = 'block';
+  var time = new Date().toLocaleTimeString('id-ID', { hour12: false, timeZone: 'Asia/Jakarta' });
+  var line = document.createElement('div');
+  if (type) line.className = type;
+  line.textContent = '[' + time + '] ' + msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function workflowApi(path, options) {
+  options = options || {};
+  return fetch(WORKFLOW_API + path, {
+    method: options.method || 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + TOKEN
+    },
+    body: options.body
+  }).then(function(res) {
+    return res.json().catch(function() { return {}; }).then(function(data) {
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      return data;
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+
+    // Stats row: tampil hanya di tab Backup
+    var statsRow = document.getElementById('stats-row');
+    statsRow.style.display = tab.dataset.tab === 'backup' ? 'grid' : 'none';
+
+    if (tab.dataset.tab === 'database' && !ACTIVE_TABLE) {
+      loadTables();
+    }
+    if (tab.dataset.tab === 'backup') {
+      loadBackups();
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// TAB: DATABASE
+// ═══════════════════════════════════════════════════════════
+function loadTables() {
+  var listEl = document.getElementById('table-list');
+  listEl.innerHTML = '<div class="loading-state">⏳ Memuat daftar tabel...</div>';
+
+  return workflowApi('/db/tables').then(function(data) {
+    if (!data.tables || data.tables.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">📭 Belum ada tabel</div>';
+      return;
+    }
+    listEl.innerHTML = data.tables.map(function(t) {
+      return '<button class="table-item' + (ACTIVE_TABLE === t.name ? ' active' : '') + '" data-table="' + escapeHtml(t.name) + '">' +
+        '<span class="table-item-name">' + escapeHtml(t.name) + '</span>' +
+        '<span class="table-item-count">' + t.count + ' baris</span>' +
+        '</button>';
+    }).join('');
+
+    listEl.querySelectorAll('[data-table]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        ACTIVE_TABLE = btn.dataset.table;
+        listEl.querySelectorAll('.table-item').forEach(function(t) { t.classList.remove('active'); });
+        btn.classList.add('active');
+        loadTableData(ACTIVE_TABLE);
+      });
+    });
+  }).catch(function(err) {
+    listEl.innerHTML = '<div class="empty-state" style="color:var(--red);">❌ ' + escapeHtml(err.message) + '</div>';
+  });
+}
+
+function loadTableData(tableName) {
+  var card = document.getElementById('table-data-card');
+  var title = document.getElementById('table-data-title');
+  var content = document.getElementById('table-data-content');
+  var statusEl = document.getElementById('table-data-status');
+
+  card.style.display = 'block';
+  statusEl.style.display = 'none';
+  title.textContent = '📊 Data Tabel: ' + tableName;
+  content.innerHTML = '<div class="loading-state">⏳ Memuat data...</div>';
+
+  return workflowApi('/db/table/' + tableName).then(function(data) {
+    TABLE_COLUMNS = data.columns || [];
+
+    if (!data.rows || data.rows.length === 0) {
+      content.innerHTML = '<div class="empty-state">📭 Tabel kosong. Klik "Tambah Baris" untuk menambah.</div>';
+      return;
+    }
+
+    var headers = TABLE_COLUMNS.map(function(c) { return '<th>' + escapeHtml(c) + '</th>'; }).join('');
+    var rows = data.rows.map(function(row) {
+      var cells = TABLE_COLUMNS.map(function(col) {
+        var val = row[col];
+        var display = (val === null || val === undefined) ? '<em style="color:#999;">null</em>' : escapeHtml(String(val));
+        return '<td title="' + escapeHtml(String(val === null || val === undefined ? '' : val)) + '">' + display + '</td>';
+      }).join('');
+      var id = row.id;
+      var actions = (id !== undefined) ?
+        '<td><div class="cell-actions">' +
+        '<button data-edit=\'' + escapeHtml(JSON.stringify(row)) + '\'>✏️ Edit</button>' +
+        '<button class="danger" data-delete="' + id + '">🗑️ Hapus</button>' +
+        '</div></td>' : '<td></td>';
+      return '<tr>' + cells + actions + '</tr>';
+    }).join('');
+
+    content.innerHTML =
+      '<div class="data-table-wrap">' +
+        '<table class="data-table">' +
+          '<thead><tr>' + headers + '<th>Aksi</th></tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+      '</div>' +
+      '<div style="margin-top: 12px; font-size: 0.78rem; color: var(--muted); text-align: center;">' +
+        'Menampilkan ' + data.rows.length + ' dari ' + data.total + ' baris' +
+      '</div>';
+
+    content.querySelectorAll('[data-edit]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        openEditRow(JSON.parse(btn.dataset.edit));
+      });
+    });
+    content.querySelectorAll('[data-delete]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        deleteRow(btn.dataset.delete);
+      });
+    });
+  }).catch(function(err) {
+    content.innerHTML = '<div class="empty-state" style="color:var(--red);">❌ ' + escapeHtml(err.message) + '</div>';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODAL: TAMBAH / EDIT BARIS
+// ═══════════════════════════════════════════════════════════
+function openAddRow() {
+  if (!ACTIVE_TABLE) return alert('Pilih tabel dulu');
+  EDITING_ROW = null;
+  document.getElementById('modal-row-title').textContent = '➕ Tambah Baris ke ' + ACTIVE_TABLE;
+
+  var fieldsEl = document.getElementById('form-fields');
+  fieldsEl.innerHTML = TABLE_COLUMNS.map(function(col) {
+    return '<div class="form-field">' +
+      '<label>' + escapeHtml(col) + '</label>' +
+      '<input type="text" name="' + escapeHtml(col) + '" placeholder="Kosongkan untuk NULL">' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('modal-row').classList.add('open');
+}
+
+function openEditRow(row) {
+  EDITING_ROW = row;
+  document.getElementById('modal-row-title').textContent = '✏️ Edit Baris #' + row.id;
+
+  var fieldsEl = document.getElementById('form-fields');
+  fieldsEl.innerHTML = TABLE_COLUMNS.map(function(col) {
+    var val = row[col];
+    var value = (val === null || val === undefined) ? '' : String(val);
+    var isLong = value.length > 60;
+    var input = isLong
+      ? '<textarea name="' + escapeHtml(col) + '" rows="3">' + escapeHtml(value) + '</textarea>'
+      : '<input type="text" name="' + escapeHtml(col) + '" value="' + escapeHtml(value) + '">';
+    return '<div class="form-field">' +
+      '<label>' + escapeHtml(col) + '</label>' +
+      input +
+      '</div>';
+  }).join('');
+
+  document.getElementById('modal-row').classList.add('open');
+}
+
+function saveRow(e) {
+  e.preventDefault();
+  if (!ACTIVE_TABLE) return;
+
+  var form = e.target;
+  var formData = new FormData(form);
+  var data = {};
+
+  formData.forEach(function(value, key) {
+    data[key] = value === '' ? null : value;
+  });
+
+  var btn = document.getElementById('btn-save-row');
+  btn.disabled = true;
+  btn.textContent = '⏳ Menyimpan...';
+
+  var promise;
+  if (EDITING_ROW && EDITING_ROW.id !== undefined) {
+    promise = workflowApi('/db/table/' + ACTIVE_TABLE + '/' + EDITING_ROW.id, {
+      method: 'PUT',
+      body: JSON.stringify({ data: data })
+    });
+  } else {
+    promise = workflowApi('/db/table/' + ACTIVE_TABLE, {
+      method: 'POST',
+      body: JSON.stringify({ data: data })
+    });
+  }
+
+  promise.then(function() {
+    closeRowModal();
+    loadTableData(ACTIVE_TABLE);
+    loadTables();
+  }).catch(function(err) {
+    alert('❌ Gagal simpan: ' + err.message);
+  }).finally(function() {
+    btn.disabled = false;
+    btn.textContent = 'Simpan';
+  });
+}
+
+function deleteRow(id) {
+  if (!confirm('Hapus baris dengan ID ' + id + '?')) return;
+
+  workflowApi('/db/table/' + ACTIVE_TABLE + '/' + id, { method: 'DELETE' })
+    .then(function() {
+      loadTableData(ACTIVE_TABLE);
+      loadTables();
+    })
+    .catch(function(err) {
+      alert('❌ Gagal hapus: ' + err.message);
+    });
+}
+
+function closeRowModal() {
+  document.getElementById('modal-row').classList.remove('open');
+  EDITING_ROW = null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT / IMPORT CSV
+// ═══════════════════════════════════════════════════════════
+function exportCsv() {
+  if (!ACTIVE_TABLE) return;
+
+  workflowApi('/db/table/' + ACTIVE_TABLE + '?limit=500').then(function(data) {
+    if (!data.rows || data.rows.length === 0) {
+      alert('Tabel kosong');
+      return;
+    }
+
+    var headers = data.columns;
+    var rows = data.rows.map(function(row) {
+      return headers.map(function(h) {
+        var val = row[h];
+        if (val === null || val === undefined) return '';
+        return String(val).replace(/"/g, '""');
+      });
+    });
+
+    var csv = [headers].concat(rows)
+      .map(function(r) { return r.map(function(c) { return '"' + c + '"'; }).join(','); })
+      .join('\n');
+
+    var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = ACTIVE_TABLE + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }).catch(function(err) {
+    alert('❌ Gagal export: ' + err.message);
+  });
+}
+
+function importCsv(file) {
+  if (!ACTIVE_TABLE) return;
+  if (!confirm('Import ' + file.name + ' ke tabel "' + ACTIVE_TABLE + '"?\n\nPastikan kolom CSV sesuai.')) return;
+
+  file.text().then(function(text) {
+    var rows = parseCSV(text);
+
+    if (rows.length === 0) {
+      alert('CSV kosong atau format tidak valid');
+      return;
+    }
+
+    return workflowApi('/db/import/' + ACTIVE_TABLE, {
+      method: 'POST',
+      body: JSON.stringify({ rows: rows })
+    }).then(function(data) {
+      var statusEl = document.getElementById('table-data-status');
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = '<div class="ok">✅ Berhasil: ' + data.success + ' baris</div>' +
+        '<div class="err">❌ Gagal: ' + data.failed + ' baris</div>';
+
+      if (data.errors && data.errors.length > 0) {
+        statusEl.innerHTML += data.errors.slice(0, 5).map(function(e) {
+          return '<div class="err">' + escapeHtml(e) + '</div>';
+        }).join('');
+      }
+
+      loadTableData(ACTIVE_TABLE);
+      loadTables();
+    });
+  }).catch(function(err) {
+    alert('❌ Gagal import: ' + err.message);
+  });
+}
+
+function parseCSV(text) {
+  var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
+  if (lines.length < 2) return [];
+
+  var headers = parseCSVLine(lines[0]);
+  var rows = [];
+
+  for (var i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    var values = parseCSVLine(lines[i]);
+    var obj = {};
+    headers.forEach(function(h, idx) {
+      obj[h.trim()] = (values[idx] || '').trim() || null;
+    });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function parseCSVLine(line) {
+  var result = [];
+  var cur = '';
+  var inQuote = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') {
+      if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+      else { inQuote = !inQuote; }
+    } else if (c === ',' && !inQuote) {
+      result.push(cur); cur = '';
+    } else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB: BACKUP
+// ═══════════════════════════════════════════════════════════
+function loadBackups() {
+  var listEl = document.getElementById('backup-list');
+  var logEl = document.getElementById('backup-log');
+
+  logEl.style.display = 'block';
+  logEl.innerHTML = '';
+  logTo('backup-log', 'Mengambil daftar backup dari R2...', 'info');
+
+  listEl.innerHTML = '<div class="loading-state">⏳ Memuat data backup...</div>';
+
+  return workflowApi('/list').then(function(data) {
+    var files = (data.files || []).sort(function(a, b) {
+      return new Date(b.uploaded) - new Date(a.uploaded);
+    });
+
+    document.getElementById('st-total-backup').textContent = files.length;
+    if (files.length > 0) {
+      document.getElementById('st-last-backup').textContent = formatDateWIB(files[0].uploaded);
+      var totalSize = files.reduce(function(sum, f) { return sum + (f.size || 0); }, 0);
+      document.getElementById('st-total-size').textContent = formatBytes(totalSize);
+    } else {
+      document.getElementById('st-last-backup').textContent = '—';
+      document.getElementById('st-total-size').textContent = '0 B';
+    }
+
+    if (files.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">📭 Belum ada backup tersimpan</div>';
+      logTo('backup-log', 'Belum ada backup', 'info');
+      return;
+    }
+
+    var today = new Date().toISOString().slice(0, 10);
+    var rows = files.map(function(f) {
+      var uploadedDate = new Date(f.uploaded).toISOString().slice(0, 10);
+      var isToday = uploadedDate === today;
+      var badgeClass = isToday ? 'badge-today' : 'badge-old';
+      var badgeText = isToday ? 'Hari ini' : 'Arsip';
+      var shortName = f.key.split('/').pop() || f.key;
+
+      return '<tr>' +
+        '<td><div class="backup-filename">' + escapeHtml(shortName) + '</div></td>' +
+        '<td>' + formatDateWIB(f.uploaded) + '</td>' +
+        '<td>' + formatBytes(f.size) + '</td>' +
+        '<td><span class="badge ' + badgeClass + '">' + badgeText + '</span></td>' +
+        '<td><div class="backup-actions">' +
+          '<button class="btn btn-ghost btn-sm" data-download="' + escapeHtml(f.key) + '">⬇ Download</button>' +
+          '<button class="btn btn-danger btn-sm" data-restore="' + escapeHtml(f.key) + '">🔄 Restore</button>' +
+        '</div></td>' +
+        '</tr>';
+    }).join('');
+
+    listEl.innerHTML =
+      '<table class="backup-table">' +
+        '<thead><tr>' +
+          '<th>Nama File</th><th>Tanggal</th><th>Ukuran</th><th>Status</th><th>Aksi</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+
+    logTo('backup-log', 'Berhasil memuat ' + files.length + ' file backup', 'ok');
+
+    listEl.querySelectorAll('[data-download]').forEach(function(btn) {
+      btn.addEventListener('click', function() { handleDownload(btn.dataset.download); });
+    });
+    listEl.querySelectorAll('[data-restore]').forEach(function(btn) {
+      btn.addEventListener('click', function() { handleRestore(btn.dataset.restore); });
+    });
+  }).catch(function(err) {
+    listEl.innerHTML = '<div class="empty-state" style="color:var(--red);">❌ ' + escapeHtml(err.message) + '</div>';
+    logTo('backup-log', 'ERROR: ' + err.message, 'err');
+  });
+}
+
+function handleDownload(key) {
+  var url = WORKFLOW_API + '/download?key=' + encodeURIComponent(key);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = key.split('/').pop() || 'backup.sql';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  logTo('backup-log', 'Download: ' + key.split('/').pop(), 'ok');
+}
+
+function handleRestore(key) {
+  if (!confirm('⚠️ Restore database dari:\n\n' + key + '\n\nSemua data saat ini akan DIGANTI dengan data backup.\n\nLanjutkan?')) return;
+  if (!confirm('Anda YAKIN? Ini tidak bisa dibatalkan.')) return;
+
+  workflowApi('/restore', {
+    method: 'POST',
+    body: JSON.stringify({ key: key })
+  }).then(function(data) {
+    alert('✅ ' + (data.message || 'Restore berhasil'));
+    logTo('backup-log', 'Restore berhasil: ' + (data.message || ''), 'ok');
+  }).catch(function(err) {
+    alert('❌ Gagal restore: ' + err.message);
+    logTo('backup-log', 'ERROR restore: ' + err.message, 'err');
+  });
+}
+
+function triggerBackup() {
+  if (!confirm('Mulai backup sekarang?')) return;
+
+  logTo('backup-log', 'Memulai backup...', 'info');
+
+  workflowApi('/trigger', { method: 'POST' }).then(function(data) {
+    logTo('backup-log', '✅ Backup dimulai: ' + data.instance_id, 'ok');
+    alert('✅ Backup dimulai! Cek history dalam 1-2 menit.');
+    setTimeout(loadBackups, 30000);
+  }).catch(function(err) {
+    logTo('backup-log', 'ERROR: ' + err.message, 'err');
+    alert('❌ ' + err.message);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// BIND EVENTS
+// ═══════════════════════════════════════════════════════════
+document.getElementById('btn-trigger-header').addEventListener('click', triggerBackup);
+document.getElementById('btn-refresh-header').addEventListener('click', function() {
+  loadTables();
+  loadBackups();
+});
+document.getElementById('btn-refresh-tables').addEventListener('click', loadTables);
+document.getElementById('btn-refresh-backup').addEventListener('click', loadBackups);
+document.getElementById('btn-add-row').addEventListener('click', openAddRow);
+document.getElementById('btn-export-csv').addEventListener('click', exportCsv);
+document.getElementById('btn-import-csv').addEventListener('click', function() {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (file) importCsv(file);
+  e.target.value = '';
+});
+document.getElementById('btn-cancel-row').addEventListener('click', closeRowModal);
+document.getElementById('form-row').addEventListener('submit', saveRow);
+document.getElementById('modal-row').addEventListener('click', function(e) {
+  if (e.target.id === 'modal-row') closeRowModal();
+});
+
+// ═══════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════
+loadTables();
+</script>
+
+</body>
+</html>
