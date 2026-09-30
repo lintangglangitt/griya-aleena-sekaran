@@ -1139,7 +1139,8 @@ function fillRoomSelect(currentEditingId = null) {
     if (editingOcc) editingRoomId = editingOcc.room_id;
   }
 
-  fr.innerHTML = ROOMS.map(r => {
+  // Opsi kamar yang sudah ada
+  const roomOptions = ROOMS.map(r => {
     const activeOcc = OCCS.find(o =>
       o.room_id === r.id &&
       o.tanggal_mulai <= today &&
@@ -1152,6 +1153,15 @@ function fillRoomSelect(currentEditingId = null) {
       : `${r.nama_kamar} (${r.tipe})`;
     return `<option value="${r.id}" ${disabledAttr}>${escapeHtml(label)}</option>`;
   }).join('');
+
+  // Opsi untuk tambah kamar baru
+  const addRoomOption = `
+    <option value="__add_new__" style="font-weight:700;color:#1a5c5c;background:#e0f0f0;">
+      ➕ TAMBAH KAMAR BARU...
+    </option>
+  `;
+
+  fr.innerHTML = roomOptions + addRoomOption;
 }
 
 function openModal(id) {
