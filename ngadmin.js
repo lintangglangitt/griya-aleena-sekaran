@@ -266,8 +266,9 @@ function buildRiwayatKamar(roomId) {
       ket: '-'
     });
   }
-
   return rows;
+    // Ascending dulu (biar akumulasi benar), baru dibalik untuk tampilan
+  //return rows.reverse();
 }
 
 
@@ -585,7 +586,8 @@ function renderRooms() {
     `;
   }).join('');
 
-  grid.innerHTML = allCard + roomCards;
+  // ⬇️ UBAH: roomCards dulu, baru allCard di akhir
+  grid.innerHTML = roomCards + allCard;
 
   grid.querySelectorAll('.room-card').forEach(el => {
     el.addEventListener('click', () => {
@@ -594,7 +596,6 @@ function renderRooms() {
       updateIncomeCardUI();
       renderRooms();
       renderTable();
-      renderRiwayatKamar();   // ⬅️ TAMBAH
     });
   });
 }
