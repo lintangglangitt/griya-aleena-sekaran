@@ -1171,6 +1171,7 @@ function openModal(id) {
   f.reset();
   fillRoomSelect(id);
   setupAutoHarga();
+  setupAddRoomListener();   // ⬅️ TAMBAH BARIS INI
 
   MODAL_STATE.editingId = id;
   MODAL_STATE.pendingUploads = {};
@@ -1299,6 +1300,85 @@ function setupAutoHarga() {
     tipeSelect.addEventListener('change', updateHargaOtomatis);
     tipeSelect.dataset.listenerBound = 'true';
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAMBAH KAMAR BARU
+// ═══════════════════════════════════════════════════════════
+function setupAddRoomListener() {
+  const fr = document.getElementById('f-room');
+  if (!fr || fr.dataset.addRoomBound) return;
+
+  fr.addEventListener('change', async (e) => {
+    if (e.target.value !== '__add_new__') return;
+
+    // Reset select dulu
+    e.target.value = '';
+
+    // Prompt nama kamar
+    const namaKamar = prompt(
+      'Tambah Kamar Baru\n\n' +
+      'Masukkan nama kamar (contoh: KAMAR NOMOR 8):'
+    );
+
+    if (!namaKamar || !namaKamar.trim()) return;
+
+    // Prompt tipe kamar
+    const tipe = prompt(
+      'Tipe Kamar\n\n' +
+      'Masukkan tipe (contoh: AC / NON-AC / NON AC):',
+      'NON-AC'
+    );
+
+    if (!tipe || !tipe.trim()) return;
+
+    // Konfirmasi
+    const confirmed = confirm(
+      'Tambah kamar baru?\n\n' +
+      'Nama: ' + namaKamar.trim() + '\n' +
+      'Tipe: ' + tipe.trim().toUpperCase() + '\n\n' +
+      'Kamar akan langsung ditambahkan ke database.'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const result = await api('/rooms', {
+        method: 'POST',
+        body: JSON.stringify({
+          nama_kamar: namaKamar.trim(),
+          tipe: tipe.trim().toUpperCase(),
+        }),
+      });
+
+      if (!result.ok && !result.id) {
+        throw new Error(result.error || 'Gagal tambah kamar');
+      }
+
+      // Reload ROOMS
+      await loadRooms();
+      await loadStats();
+
+      // Refresh UI
+      renderRooms();
+      renderTable();
+      fillRoomSelect(EDITING_ID);
+
+      // Pilih kamar baru di dropdown
+      setTimeout(() => {
+        const newRoomId = result.id;
+        if (newRoomId) {
+          fr.value = newRoomId;
+        }
+      }, 100);
+
+      alert('✅ Kamar "' + namaKamar.trim() + '" berhasil ditambahkan!');
+    } catch (err) {
+      alert('❌ Gagal tambah kamar:\n\n' + err.message);
+    }
+  });
+
+  fr.dataset.addRoomBound = 'true';
 }
 
 // ═══════════════════════════════════════════════════════════
