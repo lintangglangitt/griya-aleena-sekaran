@@ -203,7 +203,7 @@ body {
 /* ═══════════════════════════════════════════ */
 .rooms-grid {
   display: grid;
-  grid-template-columns: 0.7fr repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   padding: 8px 0;
 }
@@ -1259,134 +1259,101 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   z-index: 10;
 }
 
-
 /* ═══════════════════════════════════════════ */
-/* RIWAYAT KAMAR — GAYA KARTU STATUS KAMAR     */
+/* RIWAYAT OKUPANSI PER KAMAR — TAB HIJAU      */
+/* Semua tab hijau, diklik → border kuning     */
 /* ═══════════════════════════════════════════ */
 
+.riwayat-kamar-tabs,
 #riwayat-kamar-tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 8px 0;
   margin: 18px 0 24px;
-  padding: 4px;
-  overflow: hidden;
-  box-sizing: border-box;
+  width: 100%;
 }
 
-#riwayat-kamar-tabs .rk-tab {
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: 130px;
-  padding: 12px 6px;
-  border: 2px solid var(--border);
+/* ─── Tab default: hijau muda ─── */
+.rk-tab {
   border-radius: 14px;
-  background: var(--gray);
-  color: var(--text);
-  font-family: inherit;
-  text-align: center;
+  padding: 16px 12px;
+  border: 2px solid var(--green);
+  background: #e8f7ee;
+  transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  overflow-wrap: anywhere;
-  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 130px;
+  font-family: inherit;
+  color: var(--text);
 }
 
-#riwayat-kamar-tabs .rk-tab:hover {
+.rk-tab:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.25);
 }
 
-/* Kamar kosong */
-#riwayat-kamar-tabs .rk-tab.status-kosong {
-  background: #fff8e1;
-  border-color: var(--amber);
-}
-
-/* Kamar terisi */
-#riwayat-kamar-tabs .rk-tab.status-terisi {
-  background: #e8f7ee;
-  border-color: var(--green);
-}
-
-/* Kamar dengan DP */
-#riwayat-kamar-tabs .rk-tab.status-dp {
-  background: #fff7e6;
-  border-color: var(--amber);
-}
-
-/* Kontrak hampir habis */
-#riwayat-kamar-tabs .rk-tab.status-habis {
-  background: #ffebee;
-  border-color: var(--red);
-}
-
-/* Tab aktif */
-#riwayat-kamar-tabs .rk-tab.active {
+/* ─── AKTIF / DIKLIK: border kuning tebal ─── */
+.rk-tab.active {
   box-shadow: 0 0 0 3px var(--amber);
   transform: translateY(-2px);
+  border-color: var(--amber);
 }
 
-#riwayat-kamar-tabs .rk-tab-room {
+/* ─── Konten tab ─── */
+
+.rk-tab-room {
   font-family: 'Sora', sans-serif;
-  font-size: clamp(0.58rem, 0.8vw, 0.85rem);
+  font-size: 0.92rem;
   font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.rk-tab-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.rk-tab-total {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--teal);
+  display: block;
   line-height: 1.2;
 }
 
-#riwayat-kamar-tabs .rk-tab-label {
-  color: var(--muted);
-  font-size: clamp(0.5rem, 0.65vw, 0.68rem);
-  line-height: 1.25;
-}
+/* ─── Responsive ─── */
 
-#riwayat-kamar-tabs .rk-tab-total {
-  color: var(--text);
-  font-size: clamp(0.58rem, 0.75vw, 0.8rem);
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-/* ALL, mengikuti kartu ALL pada Status Kamar */
-#riwayat-kamar-tabs .rk-tab.all-card {
-  background: linear-gradient(135deg, var(--teal) 0%, #0d3d3d 100%);
-  border-color: var(--amber);
-  color: white;
-}
-
-#riwayat-kamar-tabs .rk-tab.all-card .rk-tab-room {
-  color: white;
-}
-
-#riwayat-kamar-tabs .rk-tab.all-card .rk-tab-label,
-#riwayat-kamar-tabs .rk-tab.all-card .rk-tab-total {
-  color: rgba(255, 255, 255, 0.75);
+@media (max-width: 1100px) {
+  .riwayat-kamar-tabs,
+  #riwayat-kamar-tabs {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
+  .riwayat-kamar-tabs,
   #riwayat-kamar-tabs {
-    gap: 4px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
-
-  #riwayat-kamar-tabs .rk-tab {
-    min-height: 105px;
-    padding: 8px 3px;
-    border-radius: 10px;
+  .rk-tab {
+    min-height: 100px;
+    padding: 12px 8px;
   }
-
-  #riwayat-kamar-tabs .rk-tab-room {
-    font-size: clamp(0.48rem, 1.8vw, 0.68rem);
-  }
-
-  #riwayat-kamar-tabs .rk-tab-label {
-    font-size: clamp(0.42rem, 1.4vw, 0.56rem);
-  }
-
-  #riwayat-kamar-tabs .rk-tab-total {
-    font-size: clamp(0.46rem, 1.6vw, 0.62rem);
+  .rk-tab-room {
+    font-size: 0.8rem;
   }
 }
