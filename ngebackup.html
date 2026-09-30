@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Backup – Griya Aleena</title>
+<title>Backup & Database – Griya Aleena</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,16 +30,13 @@
     padding: 24px;
   }
 
-  .container {
-    max-width: 1100px;
-    margin: 0 auto;
-  }
+  .container { max-width: 1400px; margin: 0 auto; }
 
   /* ─── HEADER ─── */
-  .header {
+  .page-header {
     background: white;
     border-radius: 16px;
-    padding: 24px 28px;
+    padding: 20px 28px;
     margin-bottom: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     display: flex;
@@ -48,28 +45,45 @@
     gap: 16px;
     flex-wrap: wrap;
   }
-  .header h1 {
+  .page-header h1 {
     font-family: 'Sora', sans-serif;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: var(--teal);
-    display: flex;
-    align-items: center;
-    gap: 10px;
   }
-  .header p {
-    font-size: 0.85rem;
+  .page-header p { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+  /* ─── TABS ─── */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+  }
+  .tab {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
     color: var(--muted);
-    margin-top: 4px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
   }
-  .header-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+  .tab:hover { color: var(--teal); }
+  .tab.active {
+    color: var(--teal);
+    border-bottom-color: var(--teal);
   }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 
   /* ─── BUTTONS ─── */
   .btn {
-    padding: 10px 18px;
+    padding: 9px 18px;
     border-radius: 10px;
     font-family: inherit;
     font-size: 0.85rem;
@@ -88,95 +102,122 @@
   .btn-ghost:hover:not(:disabled) { background: var(--bg); }
   .btn-danger { background: white; color: var(--red); border: 1.5px solid var(--red); }
   .btn-danger:hover:not(:disabled) { background: #fdecec; }
+  .btn-sm { padding: 6px 12px; font-size: 0.78rem; }
 
-  /* ─── STATS ─── */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .stat-card {
-    background: white;
-    border-radius: 14px;
-    padding: 18px 20px;
-    border: 1px solid var(--border);
-  }
-  .stat-label {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-  .stat-value {
-    font-family: 'Sora', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--teal);
-  }
-
-  /* ─── SECTION ─── */
-  .section {
+  /* ─── CARD ─── */
+  .card {
     background: white;
     border-radius: 16px;
     padding: 24px 28px;
     margin-bottom: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.04);
   }
-  .section-title {
+  .card-title {
     font-family: 'Sora', sans-serif;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: var(--text);
     margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
-  /* ─── TABLE ─── */
-  .table-wrap { overflow-x: auto; }
-  table {
+  /* ─── TABLE LIST ─── */
+  .table-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .table-item {
+    padding: 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    font-family: inherit;
+  }
+  .table-item:hover {
+    border-color: var(--teal-lt);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 92, 92, 0.1);
+  }
+  .table-item.active {
+    border-color: var(--teal);
+    background: #e0f0f0;
+  }
+  .table-item-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 4px;
+    display: block;
+  }
+  .table-item-count {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* ─── DATA TABLE ─── */
+  .data-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
   }
-  thead {
+  .data-table thead {
+    position: sticky;
+    top: 0;
     background: var(--teal);
     color: white;
+    z-index: 1;
   }
-  th, td {
-    padding: 12px 14px;
+  .data-table th {
+    padding: 10px 12px;
     text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  th {
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  tbody tr:hover { background: #f9fcfc; }
-  tbody tr:last-child td { border-bottom: none; }
-
-  .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 50px;
     font-size: 0.72rem;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
   }
-  .badge-today { background: #d4f4e2; color: #0e7a3c; }
-  .badge-old { background: #e0f0f0; color: var(--teal); }
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .data-table tbody tr:hover { background: #f9fcfc; }
+  .data-table tbody tr:last-child td { border-bottom: none; }
 
-  /* ─── EMPTY / LOADING ─── */
-  .empty, .loading {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-    font-size: 0.9rem;
+  .data-table .cell-actions {
+    display: flex;
+    gap: 6px;
   }
+  .cell-actions button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .cell-actions button:hover { background: var(--bg); }
+  .cell-actions button.danger { color: var(--red); border-color: var(--red); }
+  .cell-actions button.danger:hover { background: #fdecec; }
 
   /* ─── MODAL ─── */
   .modal {
@@ -186,107 +227,147 @@
     background: rgba(15, 30, 46, 0.75);
     z-index: 100;
     padding: 20px;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    overflow-y: auto;
   }
   .modal.open { display: flex; }
   .modal-card {
     background: white;
     border-radius: 16px;
     padding: 28px;
-    max-width: 500px;
+    max-width: 600px;
     width: 100%;
+    margin: auto;
     box-shadow: 0 20px 60px rgba(0,0,0,0.4);
   }
   .modal-card h3 {
     font-family: 'Sora', sans-serif;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     color: var(--teal);
-    margin-bottom: 16px;
-  }
-  .modal-card p {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    margin-bottom: 16px;
-    color: var(--text);
-  }
-  .modal-card .warning {
-    background: #fff9e6;
-    border-left: 4px solid var(--amber);
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    color: #6b5500;
     margin-bottom: 20px;
+  }
+  .form-field {
+    margin-bottom: 14px;
+  }
+  .form-field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .form-field input,
+  .form-field textarea,
+  .form-field select {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    background: white;
+  }
+  .form-field input:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: var(--teal-lt);
   }
   .modal-actions {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    margin-top: 20px;
   }
 
-  /* ─── LOG ─── */
-  .log-box {
-    margin-top: 16px;
-    background: #1c2e2e;
-    border-radius: 8px;
-    padding: 12px 14px;
-    font-family: 'SF Mono', Monaco, monospace;
-    font-size: 0.72rem;
-    color: #a8b8b8;
-    max-height: 180px;
-    overflow-y: auto;
-    display: none;
-    line-height: 1.6;
+  /* ─── BACKUP LIST ─── */
+  .backup-list {
+    display: grid;
+    gap: 10px;
   }
-  .log-box.show { display: block; }
-  .log-box div { margin-bottom: 2px; }
-  .log-box .ok { color: #25D366; }
-  .log-box .err { color: #e74c3c; }
-  .log-box .info { color: #4FC3F7; }
-
-  /* ─── TOAST ─── */
-  .toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: white;
-    border-radius: 12px;
-    padding: 14px 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-    font-size: 0.88rem;
-    font-weight: 600;
-    z-index: 200;
-    transform: translateX(400px);
-    transition: transform 0.3s;
+  .backup-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    max-width: 380px;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
-  .toast.show { transform: translateX(0); }
-  .toast.success { border-left: 4px solid var(--green); }
-  .toast.error { border-left: 4px solid var(--red); }
-  .toast.info { border-left: 4px solid var(--teal); }
+  .backup-item-info {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .backup-item-name {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+  .backup-item-meta {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .backup-item-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
 
+  /* ─── STATUS / TOAST ─── */
+  .status {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.info { background: #e0f0f0; color: var(--teal); }
+  .status.success { background: #d4f4e2; color: #0e7a3c; }
+  .status.error { background: #fcdcdc; color: #a81f1f; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .loading-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* ─── BACK LINK ─── */
   .back-link {
     text-align: center;
     margin-top: 20px;
+    padding: 20px;
   }
   .back-link a {
     color: var(--muted);
     font-size: 0.85rem;
     text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 8px;
   }
-  .back-link a:hover { text-decoration: underline; }
+  .back-link a:hover { background: white; text-decoration: underline; }
 
-  /* ─── RESPONSIVE ─── */
   @media (max-width: 640px) {
-    .header { padding: 18px 20px; }
-    .section { padding: 18px 20px; }
-    .header h1 { font-size: 1.15rem; }
-    table { font-size: 0.78rem; }
-    th, td { padding: 10px 8px; }
+    body { padding: 12px; }
+    .page-header { padding: 16px 20px; }
+    .card { padding: 16px 20px; }
+    .tab { padding: 10px 16px; font-size: 0.82rem; }
+    .table-list { grid-template-columns: 1fr 1fr; gap: 8px; }
   }
 </style>
 </head>
@@ -295,86 +376,108 @@
 <div class="container">
 
   <!-- HEADER -->
-  <div class="header">
+  <div class="page-header">
     <div>
-      <h1>💾 Dashboard Backup</h1>
-      <p>Kelola backup database D1 Griya Aleena</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-ghost" id="btn-refresh">🔄 Refresh</button>
-      <button class="btn btn-primary" id="btn-trigger">🚀 Trigger Backup</button>
+      <h1>💾 Backup & Database Manager</h1>
+      <p>Griya Aleena – Kelola backup & data database</p>
     </div>
   </div>
 
-  <!-- STATS -->
-  <div class="stats">
-    <div class="stat-card">
-      <div class="stat-label">Total Backup</div>
-      <div class="stat-value" id="st-total">–</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Backup Terakhir</div>
-      <div class="stat-value" id="st-latest" style="font-size: 1.1rem;">–</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Total Ukuran</div>
-      <div class="stat-value" id="st-size" style="font-size: 1.1rem;">–</div>
-    </div>
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="backup">💾 Backup</button>
+    <button class="tab" data-tab="database">🗄️ Database</button>
   </div>
 
-  <!-- LIST BACKUP -->
-  <div class="section">
-    <div class="section-title">📋 History Backup</div>
-    <div class="table-wrap" id="table-wrap">
-      <div class="loading">⏳ Memuat data backup...</div>
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: BACKUP -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-content active" id="tab-backup">
+
+    <div class="card">
+      <div class="card-title">
+        <span>💾 Backup Manual</span>
+        <button class="btn btn-primary" id="btn-trigger">🚀 Trigger Backup</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6;">
+        Backup akan tersimpan di R2 <code>griya-aleena-backup</code>. 
+        Backup otomatis juga berjalan via cron-job.org setiap Senin 12:00 WIB.
+      </p>
+      <div id="backup-status" class="status" style="margin-top: 16px;"></div>
     </div>
-    <div class="log-box" id="log-box"></div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>📋 History Backup</span>
+        <button class="btn btn-ghost btn-sm" id="btn-refresh">🔄 Refresh</button>
+      </div>
+      <div id="backup-list" class="backup-list">
+        <div class="loading-state">⏳ Memuat data backup...</div>
+      </div>
+    </div>
+
   </div>
 
-  <!-- INFO -->
-  <div class="section">
-    <div class="section-title">ℹ️ Informasi</div>
-    <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.7;">
-      • Backup berjalan otomatis via <strong>cron-job.org</strong> 1 minggu sekali (Senin, 12:00 WIB)<br>
-      • File disimpan di <strong>R2 bucket</strong> <code>griya-aleena-backup</code><br>
-      • File lebih dari 30 hari otomatis terhapus (Lifecycle Rule)<br>
-      • Klik <strong>⬇ Download</strong> untuk unduh file <code>.sql</code><br>
-      • Klik <strong>🔄 Restore</strong> untuk restore database ke kondisi backup
-    </p>
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: DATABASE -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-database">
+
+    <div class="card">
+      <div class="card-title">
+        <span>🗄️ Tabel Database</span>
+        <button class="btn btn-ghost btn-sm" id="btn-refresh-tables">🔄 Refresh</button>
+      </div>
+      <div id="table-list" class="table-list">
+        <div class="loading-state">⏳ Memuat daftar tabel...</div>
+      </div>
+    </div>
+
+    <div class="card" id="table-data-card" style="display:none;">
+      <div class="card-title">
+        <span id="table-data-title">📊 Data Tabel</span>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="btn-add-row">➕ Tambah Baris</button>
+          <button class="btn btn-ghost btn-sm" id="btn-export-csv">⬇ Export CSV</button>
+          <button class="btn btn-ghost btn-sm" id="btn-import-csv">⬆ Import CSV</button>
+          <input type="file" id="import-file" accept=".csv" style="display:none;">
+        </div>
+      </div>
+      <div id="table-data-status" class="status"></div>
+      <div id="table-data-content">
+        <div class="loading-state">⏳ Pilih tabel untuk melihat data</div>
+      </div>
+    </div>
+
   </div>
 
+  <!-- BACK LINK -->
   <div class="back-link">
     <a href="ngadmin.html">← Kembali ke Dashboard Utama</a>
   </div>
 
 </div>
 
-<!-- MODAL RESTORE -->
-<div class="modal" id="modal-restore">
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- MODAL: Edit / Tambah Baris -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="modal" id="modal-row">
   <div class="modal-card">
-    <h3>⚠️ Konfirmasi Restore Database</h3>
-    <p>Anda akan <strong>menimpa SELURUH database</strong> dengan isi dari backup:</p>
-    <p style="font-family: monospace; background: var(--bg); padding: 10px; border-radius: 6px; font-size: 0.78rem;" id="restore-filename">–</p>
-    <div class="warning">
-      <strong>⚠️ PERINGATAN:</strong><br>
-      Semua data saat ini akan <strong>DIGANTI</strong> dengan data dari backup.<br>
-      Pastikan Anda sudah download backup terbaru sebelum melakukan restore.
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="btn-cancel-restore">Batal</button>
-      <button class="btn btn-danger" id="btn-confirm-restore">Ya, Restore Sekarang</button>
-    </div>
+    <h3 id="modal-row-title">Edit Baris</h3>
+    <form id="form-row">
+      <div id="form-fields"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btn-cancel-row">Batal</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-row">Simpan</button>
+      </div>
+    </form>
   </div>
 </div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════
 // KONFIGURASI
 // ═══════════════════════════════════════════════════════════
-const API = 'https://griya-api.lintangglangitt.workers.dev';
 const WORKFLOW_API = 'https://griya-backup-workflow.lintangglangitt.workers.dev';
 const TOKEN = localStorage.getItem('ga_token') || '';
 
@@ -384,18 +487,21 @@ if (!TOKEN) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// DOM ELEMENTS
+// STATE
 // ═══════════════════════════════════════════════════════════
-const tableWrap = document.getElementById('table-wrap');
-const logBox = document.getElementById('log-box');
-const stTotal = document.getElementById('st-total');
-const stLatest = document.getElementById('st-latest');
-const stSize = document.getElementById('st-size');
-const toast = document.getElementById('toast');
+let ACTIVE_TABLE = null;
+let TABLE_COLUMNS = [];
+let EDITING_ROW = null; // null = tambah baru, object = edit
 
 // ═══════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return '0 B';
   const k = 1024;
@@ -408,57 +514,13 @@ function formatDateWIB(isoString) {
   if (!isoString) return '—';
   const d = new Date(isoString);
   return d.toLocaleString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Jakarta',
-    hour12: false,
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Jakarta', hour12: false,
   }).replace(/\./g, ':');
 }
 
-function showToast(msg, type = 'info') {
-  toast.textContent = msg;
-  toast.className = 'toast show ' + type;
-  setTimeout(() => {
-    toast.className = 'toast ' + type;
-  }, 4000);
-}
-
-function log(msg, type = '') {
-  logBox.classList.add('show');
-  const time = new Date().toLocaleTimeString('id-ID', { hour12: false, timeZone: 'Asia/Jakarta' });
-  const line = document.createElement('div');
-  line.className = type;
-  line.textContent = `[${time}] ${msg}`;
-  logBox.appendChild(line);
-  logBox.scrollTop = logBox.scrollHeight;
-}
-
-async function api(path, options = {}) {
-  const res = await fetch(`${API}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${TOKEN}`,
-      ...(options.headers || {}),
-    },
-  });
-  if (res.status === 401) {
-    alert('Sesi berakhir. Silakan login ulang.');
-    localStorage.removeItem('ga_token');
-    localStorage.removeItem('ga_user');
-    window.location.href = 'ibun.html';
-    throw new Error('Sesi berakhir');
-  }
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  return data;
-}
-
 async function workflowApi(path, options = {}) {
-  // Workflow tidak butuh auth token untuk /list, tapi /restore butuh
   const res = await fetch(`${WORKFLOW_API}${path}`, {
     ...options,
     headers: {
@@ -473,251 +535,447 @@ async function workflowApi(path, options = {}) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// LOAD BACKUP LIST
+// TABS
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+
+    if (tab.dataset.tab === 'database' && !ACTIVE_TABLE) {
+      loadTables();
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// TAB: BACKUP
 // ═══════════════════════════════════════════════════════════
 async function loadBackups() {
-  tableWrap.innerHTML = '<div class="loading">⏳ Memuat data backup...</div>';
-  logBox.innerHTML = '';
-  logBox.classList.remove('show');
+  const listEl = document.getElementById('backup-list');
+  listEl.innerHTML = '<div class="loading-state">⏳ Memuat data backup...</div>';
 
   try {
-    log('Mengambil daftar backup dari R2...');
-
     const data = await workflowApi('/list');
+    const files = (data.files || []).sort((a, b) =>
+      new Date(b.uploaded) - new Date(a.uploaded)
+    );
 
-    if (!data.ok) {
-      throw new Error(data.error || 'Gagal memuat daftar backup');
-    }
-
-    const files = (data.files || []).sort((a, b) => {
-      // Sort by uploaded descending (terbaru dulu)
-      return new Date(b.uploaded) - new Date(a.uploaded);
-    });
-
-    // Update stats
-    stTotal.textContent = files.length;
-    if (files.length > 0) {
-      stLatest.textContent = formatDateWIB(files[0].uploaded);
-      const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
-      stSize.textContent = formatBytes(totalSize);
-    } else {
-      stLatest.textContent = '—';
-      stSize.textContent = '0 B';
-    }
-
-    // Render table
     if (files.length === 0) {
-      tableWrap.innerHTML = '<div class="empty">📭 Belum ada backup tersimpan</div>';
-      log('Belum ada backup di R2', 'info');
+      listEl.innerHTML = '<div class="empty-state">📭 Belum ada backup tersimpan</div>';
       return;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
-    const rows = files.map(f => {
-      const uploadedDate = new Date(f.uploaded).toISOString().slice(0, 10);
-      const isToday = uploadedDate === today;
-      const badgeClass = isToday ? 'badge-today' : 'badge-old';
-      const badgeText = isToday ? 'Hari ini' : 'Arsip';
+    listEl.innerHTML = files.map(f => {
       const shortName = f.key.split('/').pop() || f.key;
-
       return `
-        <tr>
-          <td><strong>${shortName}</strong></td>
-          <td>${formatDateWIB(f.uploaded)}</td>
-          <td>${formatBytes(f.size)}</td>
-          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-          <td>
-            <button class="btn btn-ghost" data-download="${f.key}" style="padding: 6px 12px; font-size: 0.78rem;">⬇ Download</button>
-            <button class="btn btn-danger" data-restore="${f.key}" style="padding: 6px 12px; font-size: 0.78rem; margin-left: 4px;">🔄 Restore</button>
-          </td>
-        </tr>
+        <div class="backup-item">
+          <div class="backup-item-info">
+            <div class="backup-item-name">${escapeHtml(shortName)}</div>
+            <div class="backup-item-meta">${formatDateWIB(f.uploaded)} · ${formatBytes(f.size)}</div>
+          </div>
+          <div class="backup-item-actions">
+            <button class="btn btn-ghost btn-sm" data-download="${escapeHtml(f.key)}">⬇ Download</button>
+            <button class="btn btn-danger btn-sm" data-restore="${escapeHtml(f.key)}">🔄 Restore</button>
+          </div>
+        </div>
       `;
     }).join('');
 
-    tableWrap.innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Nama File</th>
-            <th>Tanggal</th>
-            <th>Ukuran</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `;
-
-    log(`Berhasil memuat ${files.length} file backup`, 'ok');
-
-    // Bind download & restore buttons
-    tableWrap.querySelectorAll('[data-download]').forEach(btn => {
+    listEl.querySelectorAll('[data-download]').forEach(btn => {
       btn.addEventListener('click', () => handleDownload(btn.dataset.download));
     });
-    tableWrap.querySelectorAll('[data-restore]').forEach(btn => {
-      btn.addEventListener('click', () => openRestoreModal(btn.dataset.restore));
+    listEl.querySelectorAll('[data-restore]').forEach(btn => {
+      btn.addEventListener('click', () => handleRestore(btn.dataset.restore));
     });
-
   } catch (err) {
-    console.error('Load backups error:', err);
-    tableWrap.innerHTML = `<div class="empty" style="color: var(--red);">❌ Gagal memuat: ${err.message}</div>`;
-    log('ERROR: ' + err.message, 'err');
+    listEl.innerHTML = `<div class="empty-state" style="color:var(--red);">❌ ${escapeHtml(err.message)}</div>`;
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-// DOWNLOAD BACKUP
-// ═══════════════════════════════════════════════════════════
 async function handleDownload(key) {
-  const btn = event.target;
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '⏳...';
-
   try {
-    log(`Download: ${key.split('/').pop()}`);
-
-    // Get signed URL for download
-    const data = await workflowApi(`/download?key=${encodeURIComponent(key)}`);
-
-    if (!data.ok || !data.signed_url) {
-      throw new Error(data.error || 'Gagal mendapatkan URL download');
-    }
-
-    // Fetch and download
-    const res = await fetch(data.signed_url);
-    if (!res.ok) throw new Error('Gagal download file');
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const filename = key.split('/').pop() || 'backup.sql';
-
+    const url = `${WORKFLOW_API}/download?key=${encodeURIComponent(key)}`;
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
+    a.download = key.split('/').pop() || 'backup.sql';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
-
-    log(`✅ Downloaded: ${filename}`, 'ok');
-    showToast(`✅ Download berhasil: ${filename}`, 'success');
-
+    document.body.removeChild(a);
   } catch (err) {
-    console.error('Download error:', err);
-    log('ERROR: ' + err.message, 'err');
-    showToast('❌ Gagal download: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
+    alert('Gagal download: ' + err.message);
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-// RESTORE MODAL
-// ═══════════════════════════════════════════════════════════
-let restoreTargetKey = null;
-
-function openRestoreModal(key) {
-  restoreTargetKey = key;
-  const filename = key.split('/').pop() || key;
-  document.getElementById('restore-filename').textContent = filename;
-  document.getElementById('modal-restore').classList.add('open');
-}
-
-function closeRestoreModal() {
-  restoreTargetKey = null;
-  document.getElementById('modal-restore').classList.remove('open');
-}
-
-async function confirmRestore() {
-  if (!restoreTargetKey) return;
-
-  const btn = document.getElementById('btn-confirm-restore');
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '⏳ Restoring...';
-
-  try {
-    const filename = restoreTargetKey.split('/').pop() || restoreTargetKey;
-    log(`Restore: ${filename}`, 'info');
-
-    const data = await workflowApi('/restore', {
-      method: 'POST',
-      body: JSON.stringify({ key: restoreTargetKey }),
-    });
-
-    if (!data.ok) {
-      throw new Error(data.error || 'Gagal restore');
-    }
-
-    log(`✅ Restore berhasil: ${data.message || 'Database sudah direstore'}`, 'ok');
-    showToast(`✅ Restore berhasil!`, 'success');
-    closeRestoreModal();
-
-  } catch (err) {
-    console.error('Restore error:', err);
-    log('ERROR: ' + err.message, 'err');
-    showToast('❌ Restore gagal: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// TRIGGER BACKUP
-// ═══════════════════════════════════════════════════════════
-async function triggerBackup() {
+async function handleRestore(key) {
   if (!confirm(
-    'Mulai backup database sekarang?\n\n' +
-    '⚠️ Database akan terkunci sementara (30-60 detik).\n' +
-    'File akan tersimpan di R2 (bukan download langsung).'
+    '⚠️ Restore database dari:\n\n' + key + '\n\n' +
+    'Semua data saat ini akan DIGANTI dengan data backup.\n\n' +
+    'Lanjutkan?'
   )) return;
 
+  if (!confirm('Anda YAKIN? Ini tidak bisa dibatalkan.')) return;
+
+  try {
+    const data = await workflowApi('/restore', {
+      method: 'POST',
+      body: JSON.stringify({ key }),
+    });
+    alert('✅ ' + (data.message || 'Restore berhasil'));
+  } catch (err) {
+    alert('❌ Gagal restore: ' + err.message);
+  }
+}
+
+async function triggerBackup() {
+  if (!confirm('Mulai backup sekarang?')) return;
+
   const btn = document.getElementById('btn-trigger');
-  const originalText = btn.textContent;
+  const statusEl = document.getElementById('backup-status');
   btn.disabled = true;
   btn.textContent = '⏳ Trigger...';
 
-  logBox.innerHTML = '';
-  log('Memulai backup...');
-
   try {
-    const res = await fetch(`${WORKFLOW_API}/trigger`, { method: 'POST' });
-    const data = await res.json();
+    const data = await workflowApi('/trigger', { method: 'POST' });
+    statusEl.className = 'status show success';
+    statusEl.textContent = '✅ Backup dimulai! Cek history dalam 1-2 menit.';
 
-    if (data.ok) {
-      log(`✅ Backup dimulai: ${data.instance_id}`, 'ok');
-      showToast('✅ Backup dimulai! Cek history dalam 1-2 menit.', 'success');
-
-      // Auto-refresh setelah 30 detik
-      setTimeout(() => {
-        log('Auto-refresh...');
-        loadBackups();
-      }, 30000);
-    } else {
-      throw new Error(data.error || 'Gagal trigger backup');
-    }
+    setTimeout(loadBackups, 30000);
   } catch (err) {
-    log('ERROR: ' + err.message, 'err');
-    showToast('❌ Gagal trigger: ' + err.message, 'error');
+    statusEl.className = 'status show error';
+    statusEl.textContent = '❌ ' + err.message;
   } finally {
     btn.disabled = false;
-    btn.textContent = originalText;
+    btn.textContent = '🚀 Trigger Backup';
   }
 }
 
 // ═══════════════════════════════════════════════════════════
-// BIND EVENTS
+// TAB: DATABASE
 // ═══════════════════════════════════════════════════════════
-document.getElementById('btn-refresh').addEventListener('click', loadBackups);
-document.getElementById('btn-trigger').addEventListener('click', triggerBackup);
-document.getElementById('btn-cancel-restore').addEventListener('click', closeRestoreModal);
-document.getElementById('btn-confirm-restore').addEventListener('click', confirmRestore);
+async function loadTables() {
+  const listEl = document.getElementById('table-list');
+  listEl.innerHTML = '<div class="loading-state">⏳ Memuat daftar tabel...</div>';
 
-// Close modal on backdrop click
-document.getElementById('modal-restore').addEventListener('click', (e) => {
-  if (e.target.id === 'modal-restore') closeRestoreModal();
+  try {
+    const data = await workflowApi('/db/tables');
+    if (!data.tables || data.tables.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">📭 Belum ada tabel</div>';
+      return;
+    }
+
+    listEl.innerHTML = data.tables.map(t => `
+      <button class="table-item ${ACTIVE_TABLE === t.name ? 'active' : ''}" data-table="${escapeHtml(t.name)}">
+        <span class="table-item-name">${escapeHtml(t.name)}</span>
+        <span class="table-item-count">${t.count} baris</span>
+      </button>
+    `).join('');
+
+    listEl.querySelectorAll('[data-table]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ACTIVE_TABLE = btn.dataset.table;
+        document.querySelectorAll('.table-item').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        loadTableData(ACTIVE_TABLE);
+      });
+    });
+  } catch (err) {
+    listEl.innerHTML = `<div class="empty-state" style="color:var(--red);">❌ ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function loadTableData(tableName) {
+  const card = document.getElementById('table-data-card');
+  const title = document.getElementById('table-data-title');
+  const content = document.getElementById('table-data-content');
+
+  card.style.display = 'block';
+  title.textContent = `📊 Data Tabel: ${tableName}`;
+  content.innerHTML = '<div class="loading-state">⏳ Memuat data...</div>';
+
+  try {
+    const data = await workflowApi(`/db/table/${tableName}`);
+    TABLE_COLUMNS = data.columns || [];
+
+    if (!data.rows || data.rows.length === 0) {
+      content.innerHTML = '<div class="empty-state">📭 Tabel kosong. Klik "Tambah Baris" untuk menambah.</div>';
+      return;
+    }
+
+    const headers = TABLE_COLUMNS.map(c => `<th>${escapeHtml(c)}</th>`).join('');
+    const rows = data.rows.map(row => {
+      const cells = TABLE_COLUMNS.map(col => {
+        const val = row[col];
+        const display = val === null || val === undefined ? '<em style="color:#999;">null</em>' : escapeHtml(String(val));
+        return `<td title="${escapeHtml(String(val ?? ''))}">${display}</td>`;
+      }).join('');
+      const id = row.id;
+      const actions = id !== undefined ? `
+        <td>
+          <div class="cell-actions">
+            <button data-edit='${escapeHtml(JSON.stringify(row))}'>✏️ Edit</button>
+            <button class="danger" data-delete="${id}">🗑️ Hapus</button>
+          </div>
+        </td>
+      ` : '<td></td>';
+      return `<tr>${cells}${actions}</tr>`;
+    }).join('');
+
+    content.innerHTML = `
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>${headers}<th>Aksi</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="margin-top: 12px; font-size: 0.78rem; color: var(--muted); text-align: center;">
+        Menampilkan ${data.rows.length} dari ${data.total} baris
+      </div>
+    `;
+
+    content.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', () => openEditRow(JSON.parse(btn.dataset.edit)));
+    });
+    content.querySelectorAll('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', () => deleteRow(btn.dataset.delete));
+    });
+  } catch (err) {
+    content.innerHTML = `<div class="empty-state" style="color:var(--red);">❌ ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODAL: TAMBAH / EDIT BARIS
+// ═══════════════════════════════════════════════════════════
+function openAddRow() {
+  if (!ACTIVE_TABLE) return alert('Pilih tabel dulu');
+  EDITING_ROW = null;
+  document.getElementById('modal-row-title').textContent = `➕ Tambah Baris ke ${ACTIVE_TABLE}`;
+
+  const fieldsEl = document.getElementById('form-fields');
+  fieldsEl.innerHTML = TABLE_COLUMNS.map(col => `
+    <div class="form-field">
+      <label>${escapeHtml(col)}</label>
+      <input type="text" name="${escapeHtml(col)}" placeholder="Kosongkan untuk NULL">
+    </div>
+  `).join('');
+
+  document.getElementById('modal-row').classList.add('open');
+}
+
+function openEditRow(row) {
+  EDITING_ROW = row;
+  document.getElementById('modal-row-title').textContent = `✏️ Edit Baris #${row.id}`;
+
+  const fieldsEl = document.getElementById('form-fields');
+  fieldsEl.innerHTML = TABLE_COLUMNS.map(col => {
+    const val = row[col];
+    const value = val === null || val === undefined ? '' : String(val);
+    const isLong = value.length > 60;
+    const input = isLong
+      ? `<textarea name="${escapeHtml(col)}" rows="3">${escapeHtml(value)}</textarea>`
+      : `<input type="text" name="${escapeHtml(col)}" value="${escapeHtml(value)}">`;
+    return `
+      <div class="form-field">
+        <label>${escapeHtml(col)}</label>
+        ${input}
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('modal-row').classList.add('open');
+}
+
+async function saveRow(e) {
+  e.preventDefault();
+  if (!ACTIVE_TABLE) return;
+
+  const form = e.target;
+  const formData = new FormData(form);
+  const data = {};
+
+  for (const [key, value] of formData.entries()) {
+    data[key] = value === '' ? null : value;
+  }
+
+  const btn = document.getElementById('btn-save-row');
+  btn.disabled = true;
+  btn.textContent = '⏳ Menyimpan...';
+
+  try {
+    if (EDITING_ROW && EDITING_ROW.id !== undefined) {
+      await workflowApi(`/db/table/${ACTIVE_TABLE}/${EDITING_ROW.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ data }),
+      });
+    } else {
+      await workflowApi(`/db/table/${ACTIVE_TABLE}`, {
+        method: 'POST',
+        body: JSON.stringify({ data }),
+      });
+    }
+
+    closeRowModal();
+    loadTableData(ACTIVE_TABLE);
+    loadTables();
+  } catch (err) {
+    alert('❌ Gagal simpan: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Simpan';
+  }
+}
+
+async function deleteRow(id) {
+  if (!confirm(`Hapus baris dengan ID ${id}?`)) return;
+
+  try {
+    await workflowApi(`/db/table/${ACTIVE_TABLE}/${id}`, { method: 'DELETE' });
+    loadTableData(ACTIVE_TABLE);
+    loadTables();
+  } catch (err) {
+    alert('❌ Gagal hapus: ' + err.message);
+  }
+}
+
+function closeRowModal() {
+  document.getElementById('modal-row').classList.remove('open');
+  EDITING_ROW = null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT / IMPORT CSV
+// ═══════════════════════════════════════════════════════════
+async function exportCsv() {
+  if (!ACTIVE_TABLE) return;
+
+  try {
+    const data = await workflowApi(`/db/table/${ACTIVE_TABLE}?limit=500`);
+    if (!data.rows || data.rows.length === 0) {
+      alert('Tabel kosong');
+      return;
+    }
+
+    const headers = data.columns;
+    const rows = data.rows.map(row =>
+      headers.map(h => {
+        const val = row[h];
+        if (val === null || val === undefined) return '';
+        return String(val).replace(/"/g, '""');
+      })
+    );
+
+    const csv = [headers, ...rows]
+      .map(r => r.map(c => `"${c}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${ACTIVE_TABLE}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('❌ Gagal export: ' + err.message);
+  }
+}
+
+async function importCsv(file) {
+  if (!ACTIVE_TABLE) return;
+
+  if (!confirm(`Import ${file.name} ke tabel "${ACTIVE_TABLE}"?\n\nPastikan kolom CSV sesuai.`)) return;
+
+  try {
+    const text = await file.text();
+    const rows = parseCSV(text);
+
+    if (rows.length === 0) {
+      alert('CSV kosong atau format tidak valid');
+      return;
+    }
+
+    const data = await workflowApi(`/db/import/${ACTIVE_TABLE}`, {
+      method: 'POST',
+      body: JSON.stringify({ rows }),
+    });
+
+    const statusEl = document.getElementById('table-data-status');
+    statusEl.className = 'status show ' + (data.failed > 0 ? 'info' : 'success');
+    statusEl.innerHTML = `✅ Berhasil: ${data.success} baris · ❌ Gagal: ${data.failed} baris`;
+
+    if (data.errors && data.errors.length > 0) {
+      statusEl.innerHTML += `<br><small>${data.errors.slice(0, 3).map(e => escapeHtml(e)).join('<br>')}</small>`;
+    }
+
+    loadTableData(ACTIVE_TABLE);
+    loadTables();
+  } catch (err) {
+    alert('❌ Gagal import: ' + err.message);
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = parseCSVLine(lines[0]);
+  const rows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const values = parseCSVLine(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => {
+      obj[h.trim()] = (values[idx] || '').trim() || null;
+    });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '';
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+      else { inQuote = !inQuote; }
+    } else if (c === ',' && !inQuote) {
+      result.push(cur); cur = '';
+    } else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BIND
+// ═══════════════════════════════════════════════════════════
+document.getElementById('btn-trigger').addEventListener('click', triggerBackup);
+document.getElementById('btn-refresh').addEventListener('click', loadBackups);
+document.getElementById('btn-refresh-tables').addEventListener('click', loadTables);
+document.getElementById('btn-add-row').addEventListener('click', openAddRow);
+document.getElementById('btn-export-csv').addEventListener('click', exportCsv);
+document.getElementById('btn-import-csv').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) importCsv(file);
+  e.target.value = '';
+});
+
+document.getElementById('btn-cancel-row').addEventListener('click', closeRowModal);
+document.getElementById('form-row').addEventListener('submit', saveRow);
+document.getElementById('modal-row').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-row') closeRowModal();
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -725,5 +983,6 @@ document.getElementById('modal-restore').addEventListener('click', (e) => {
 // ═══════════════════════════════════════════════════════════
 loadBackups();
 </script>
+
 </body>
 </html>
