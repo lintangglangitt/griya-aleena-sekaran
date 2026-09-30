@@ -137,7 +137,7 @@
     font-family: 'SF Mono', Monaco, monospace;
     font-size: 0.72rem;
     color: var(--muted);
-    max-height: 120px;
+    max-height: 140px;
     overflow-y: auto;
     display: none;
     line-height: 1.6;
@@ -198,7 +198,7 @@
 
   <div class="meta">
     Backup berjalan via Worker API<br>
-    File akan otomatis ter-download sebagai <code>.sql</code>
+    Format file: <code>griya-aleena-db-backup_YYYYMMDD_HHMM.sql</code> (WIB)
   </div>
 
   <div class="back-link">
@@ -281,6 +281,24 @@ async function api(path, options = {}) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// BUAT NAMA FILE — FORMAT WIB (GMT+7)
+// ═══════════════════════════════════════════════════════════
+function generateBackupFilename() {
+  // Pakai timezone browser (kalau user di Indonesia → otomatis WIB)
+  // Untuk konsistensi, kita hitung manual WIB dari UTC
+  const now = new Date();
+  const wib = new Date(now.getTime() + (7 * 60 - now.getTimezoneOffset()) * 60 * 1000);
+
+  const yyyy = wib.getFullYear();
+  const mm = String(wib.getMonth() + 1).padStart(2, '0');
+  const dd = String(wib.getDate()).padStart(2, '0');
+  const hh = String(wib.getHours()).padStart(2, '0');
+  const mi = String(wib.getMinutes()).padStart(2, '0');
+
+  return `griya-aleena-db-backup_${yyyy}${mm}${dd}_${hh}${mi}.sql`;
+}
+
+// ═══════════════════════════════════════════════════════════
 // HANDLE BACKUP
 // ═══════════════════════════════════════════════════════════
 async function handleBackup() {
@@ -308,92 +326,100 @@ async function handleBackup() {
     const startRes = await api('/backup/start', { method: 'POST' });
 
     if (!startRes.ok || !startRes.bookmark) {
+      if (startRes.retry_after) {
+        throw new Error(
+          `Sedang ada backup lain yang berjalan.\n\n` +
+          `Tunggu ${Math.ceil(startRes.retry_after / 60)} menit, lalu coba lagi.`
+        );
+      }
       throw new Error(startRes.error || 'Tidak dapat bookmark backup');
     }
 
     const bookmark = startRes.bookmark;
-    log('Bookmark: ' + bookmark.substring(0, 20) + '...', 'ok');
+    log('Bookmark: ' + bookmark.substring(0, 30) + '...', 'ok');
     setProgress(20);
 
     // ═══ Step 2: Polling ═══
-    const maxAttempts = 60;  // 60 × 2s = 120s max
+    const maxAttempts = 30;   // 30 × 1s = 30 detik max
     const intervalMs = 1000;
     let attempt = 0;
+    let signedUrl = null;
 
     while (attempt < maxAttempts) {
       attempt++;
-      const elapsed = attempt * 2;
+      const elapsed = attempt;
       btnBackup.textContent = `⏳ Menunggu... (${elapsed}s)`;
       showStatus(`Server menyiapkan file... (${elapsed}s)`, 'info');
 
-      // Progress bar naik dari 20% → 90%
-      setProgress(20 + Math.min(70, (attempt / 30) * 70));
+      setProgress(20 + Math.min(70, (attempt / 15) * 70));
 
       await new Promise(r => setTimeout(r, intervalMs));
 
       const statusRes = await api(`/backup/status?bookmark=${encodeURIComponent(bookmark)}`);
       log(`Status #${attempt}: ${statusRes.status}`);
 
+      // ✅ Cek status complete — signed_url mungkin nested atau direct
       if (statusRes.status === 'complete') {
-            if (!statusRes.signed_url) {
-              log('⚠️ Status complete tapi signed_url kosong. Cek Console.', 'err');
-              console.log('Full response:', statusRes);
-              throw new Error('Status complete tapi tidak ada signed_url.');
-            }
-        log('Backup selesai! Mengunduh...', 'ok');
-        setProgress(95);
-        showStatus('Mengunduh file...', 'info');
-        btnBackup.textContent = '⬇️ Mengunduh...';
-
-        // ═══ Step 3: Download ═══
-        const fileRes = await fetch(statusRes.signed_url);
-        if (!fileRes.ok) throw new Error('Gagal unduh file backup');
-
-        const blob = await fileRes.blob();
-        const url = URL.createObjectURL(blob);
-
-        // Nama file: griya-aleena-backup-YYYY-MM-DD-HHmm.sql
-        const now = new Date();
-        const ts =
-          now.getFullYear() +
-          String(now.getMonth() + 1).padStart(2, '0') +
-          String(now.getDate()).padStart(2, '0') + '-' +
-          String(now.getHours()).padStart(2, '0') +
-          String(now.getMinutes()).padStart(2, '0');
-
-        const filename = statusRes.filename || `griya-aleena-backup-${ts}.sql`;
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        setProgress(100);
-        log('File tersimpan: ' + filename, 'ok');
-        log('Ukuran: ' + (blob.size / 1024).toFixed(2) + ' KB', 'ok');
-        showStatus(
-          `✅ Backup berhasil! File ${filename} (${(blob.size / 1024).toFixed(1)} KB)`,
-          'success'
-        );
-
-        btnBackup.textContent = '✅ Selesai!';
-        setTimeout(() => {
-          btnBackup.disabled = false;
-          btnBackup.textContent = originalText;
-          hideProgress();
-        }, 3000);
-
-        return;
+        signedUrl = statusRes.signed_url || (statusRes._raw_result?.result?.signed_url);
+        if (signedUrl) {
+          log('Backup selesai! Mengunduh...', 'ok');
+          break;
+        } else {
+          log('⚠️ Status complete tapi signed_url kosong', 'err');
+          console.log('Full response:', statusRes);
+          throw new Error('Status complete tapi signed_url tidak tersedia. Cek Console untuk detail.');
+        }
       }
 
       if (statusRes.status === 'error') {
         throw new Error('Backup gagal di server Cloudflare');
       }
-      // status 'in_progress' → lanjut polling
+
+      // Kalau status 'unknown' tapi ada error text
+      if (statusRes._raw_result?.error === 'Not currently exporting anything.') {
+        log('⚠️ Export tidak aktif — mungkin polling terlalu lambat', 'err');
+        throw new Error('Export sudah selesai di Cloudflare tapi tidak terdeteksi. Coba lagi.');
+      }
     }
 
-    throw new Error('Timeout: backup tidak selesai dalam 2 menit');
+    if (!signedUrl) {
+      throw new Error(`Timeout: backup tidak selesai dalam ${maxAttempts} detik`);
+    }
+
+    // ═══ Step 3: Download ═══
+    setProgress(95);
+    showStatus('Mengunduh file...', 'info');
+    btnBackup.textContent = '⬇️ Mengunduh...';
+
+    const fileRes = await fetch(signedUrl);
+    if (!fileRes.ok) throw new Error('Gagal unduh file backup: HTTP ' + fileRes.status);
+
+    const blob = await fileRes.blob();
+    const url = URL.createObjectURL(blob);
+
+    // ─── Nama file: griya-aleena-db-backup_YYYYMMDD_HHMM.sql (WIB) ───
+    const filename = generateBackupFilename();
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setProgress(100);
+    log('File tersimpan: ' + filename, 'ok');
+    log('Ukuran: ' + (blob.size / 1024).toFixed(2) + ' KB', 'ok');
+    showStatus(
+      `✅ Backup berhasil! File ${filename} (${(blob.size / 1024).toFixed(1)} KB)`,
+      'success'
+    );
+
+    btnBackup.textContent = '✅ Selesai!';
+    setTimeout(() => {
+      btnBackup.disabled = false;
+      btnBackup.textContent = originalText;
+      hideProgress();
+    }, 3000);
 
   } catch (err) {
     console.error('[Backup] Error:', err);
