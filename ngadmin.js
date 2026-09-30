@@ -270,7 +270,6 @@ function buildRiwayatKamar(roomId) {
     // Ascending dulu (biar akumulasi benar), baru dibalik untuk tampilan
   return rows.reverse();
 }
-}
 
 
 function renderRiwayatKamarTabs() {
