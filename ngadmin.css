@@ -1360,19 +1360,21 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
 
 
 /* ═══════════════════════════════════════════ */
-/* FOOTER LINKS */
+/* FOOTER LINKS — Center & Cantik */
 /* ═══════════════════════════════════════════ */
 .footer-links {
-  text-align: center;
-  padding: 32px 20px 40px;
-  margin-top: 20px;
-  font-size: 0.9rem;
-  color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
+  text-align: center;
+  padding: 32px 20px 40px;
+  margin: 24px auto 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  width: 100%;
+  max-width: 1400px;
 }
 
 .footer-links a {
@@ -1381,28 +1383,32 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   font-weight: 600;
   padding: 8px 16px;
   border-radius: 8px;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .footer-links a:hover {
   background: var(--gray);
   color: var(--teal-lt);
-  text-decoration: underline;
+  transform: translateY(-1px);
 }
 
 .footer-links .separator {
   color: var(--border);
-  font-size: 1.2rem;
+  font-size: 0.6rem;
   user-select: none;
+  padding: 0 4px;
+  line-height: 1;
 }
 
+/* Mobile: stack vertikal */
 @media (max-width: 640px) {
   .footer-links {
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     padding: 24px 16px 32px;
   }
   .footer-links .separator {
