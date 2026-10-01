@@ -645,10 +645,6 @@ document.querySelectorAll('.tab').forEach(function(tab) {
     tab.classList.add('active');
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
 
-    // Stats row: tampil hanya di tab Backup
-    var statsRow = document.getElementById('stats-row');
-    statsRow.style.display = tab.dataset.tab === 'backup' ? 'grid' : 'none';
-
     if (tab.dataset.tab === 'database' && !ACTIVE_TABLE) {
       loadTables();
     }
@@ -975,16 +971,6 @@ function loadBackups() {
     var files = (data.files || []).sort(function(a, b) {
       return new Date(b.uploaded) - new Date(a.uploaded);
     });
-
-    document.getElementById('st-total-backup').textContent = files.length;
-    if (files.length > 0) {
-      document.getElementById('st-last-backup').textContent = formatDateWIB(files[0].uploaded);
-      var totalSize = files.reduce(function(sum, f) { return sum + (f.size || 0); }, 0);
-      document.getElementById('st-total-size').textContent = formatBytes(totalSize);
-    } else {
-      document.getElementById('st-last-backup').textContent = '—';
-      document.getElementById('st-total-size').textContent = '0 B';
-    }
 
     if (files.length === 0) {
       listEl.innerHTML = '<div class="empty-state">📭 Belum ada backup tersimpan</div>';
