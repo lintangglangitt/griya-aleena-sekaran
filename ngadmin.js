@@ -571,8 +571,8 @@ function renderRooms() {
       tanggal = `${fmtDate(active.tanggal_mulai)} — ${fmtDate(active.tanggal_selesai)}`;
       const sisa = daysBetween(today, active.tanggal_selesai);
       if (active.status_bayar === 'lunas') {
-        statusClass = sisa <= 14 ? 'status-habis' : 'status-terisi';
-        statusLabel = sisa <= 14 ? `⚠️ Habis dalam<br>${sisa} hari` : 'Terisi';
+        statusClass = sisa <= 10 ? 'status-habis' : 'status-terisi';
+        statusLabel = sisa <= 10 ? `⚠️ Habis dalam<br>${sisa} hari` : 'Terisi';
       } else {
         statusClass = 'status-dp';
         statusLabel = active.status_bayar === 'dp' ? 'DP' : 'Belum Bayar';
@@ -660,7 +660,7 @@ function renderTable() {
     const sudahSelesai = o.tanggal_selesai < today;
     const akanHabis = !sudahSelesai &&
       o.tanggal_selesai >= today &&
-      daysBetween(today, o.tanggal_selesai) <= 14 &&
+      daysBetween(today, o.tanggal_selesai) <= 10 &&
       o.tanggal_mulai <= today;
 
     const badgeClass = { lunas: 'lunas', dp: 'dp', belum: 'belum' }[o.status_bayar] || 'belum';
