@@ -429,6 +429,12 @@ async function init() {
   updateAnalyticsBadge();
   setInterval(updateAnalyticsBadge, 5 * 60 * 1000);
 
+  // Bind form tambah kamar
+  const formAddRoom = document.getElementById('form-add-room');
+  if (formAddRoom) {
+    formAddRoom.addEventListener('submit', handleSaveRoom);
+  }
+
   console.log('[Init] Done.');
 }
 
@@ -1303,82 +1309,121 @@ function setupAutoHarga() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// TAMBAH KAMAR BARU
+// TAMBAH KAMAR BARU — PAKAI MODAL FORM
 // ═══════════════════════════════════════════════════════════
 function setupAddRoomListener() {
   const fr = document.getElementById('f-room');
   if (!fr || fr.dataset.addRoomBound) return;
 
-  fr.addEventListener('change', async (e) => {
+  fr.addEventListener('change', (e) => {
     if (e.target.value !== '__add_new__') return;
 
     // Reset select dulu
     e.target.value = '';
 
-    // Prompt nama kamar
-    const namaKamar = prompt(
-      'Tambah Kamar Baru\n\n' +
-      'Masukkan nama kamar (contoh: KAMAR NOMOR 8):'
-    );
-
-    if (!namaKamar || !namaKamar.trim()) return;
-
-    // Prompt tipe kamar
-    const tipe = prompt(
-      'Tipe Kamar\n\n' +
-      'Masukkan tipe (contoh: AC / NON-AC / NON AC):',
-      'NON-AC'
-    );
-
-    if (!tipe || !tipe.trim()) return;
-
-    // Konfirmasi
-    const confirmed = confirm(
-      'Tambah kamar baru?\n\n' +
-      'Nama: ' + namaKamar.trim() + '\n' +
-      'Tipe: ' + tipe.trim().toUpperCase() + '\n\n' +
-      'Kamar akan langsung ditambahkan ke database.'
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const result = await api('/rooms', {
-        method: 'POST',
-        body: JSON.stringify({
-          nama_kamar: namaKamar.trim(),
-          tipe: tipe.trim().toUpperCase(),
-        }),
-      });
-
-      if (!result.ok && !result.id) {
-        throw new Error(result.error || 'Gagal tambah kamar');
-      }
-
-      // Reload ROOMS
-      await loadRooms();
-      await loadStats();
-
-      // Refresh UI
-      renderRooms();
-      renderTable();
-      fillRoomSelect(EDITING_ID);
-
-      // Pilih kamar baru di dropdown
-      setTimeout(() => {
-        const newRoomId = result.id;
-        if (newRoomId) {
-          fr.value = newRoomId;
-        }
-      }, 100);
-
-      alert('✅ Kamar "' + namaKamar.trim() + '" berhasil ditambahkan!');
-    } catch (err) {
-      alert('❌ Gagal tambah kamar:\n\n' + err.message);
-    }
+    // Buka modal
+    openAddRoomModal();
   });
 
   fr.dataset.addRoomBound = 'true';
+}
+
+function openAddRoomModal() {
+  const modal = document.getElementById('modal-add-room');
+  const form = document.getElementById('form-add-room');
+  if (!modal || !form) {
+    alert('❌ Modal tambah kamar tidak ditemukan.');
+    return;
+  }
+
+  // Reset form
+  form.reset();
+
+  // Set default harga bulanan
+  document.getElementById('ar-harga').value = 800000;
+
+  // Auto-set urutan (kalau kosong)
+  const lastUrutan = ROOMS.reduce((max, r) => Math.max(max, Number(r.urutan) || 0), 0);
+  document.getElementById('ar-urutan').placeholder = `Otomatis: ${lastUrutan + 1}`;
+
+  openModalExclusive(modal);
+
+  // Focus ke nama kamar
+  setTimeout(() => document.getElementById('ar-nama').focus(), 100);
+}
+
+// Handler submit form tambah kamar
+async function handleSaveRoom(e) {
+  e.preventDefault();
+
+  const nama_kamar = document.getElementById('ar-nama').value.trim();
+  const tipe = document.getElementById('ar-tipe').value;
+  const harga_bulanan = Number(document.getElementById('ar-harga').value);
+  const urutanInput = document.getElementById('ar-urutan').value;
+  const urutan = urutanInput ? Number(urutanInput) : null;
+
+  // Validasi
+  if (!nama_kamar) {
+    alert('Nama kamar wajib diisi');
+    return;
+  }
+  if (!harga_bulanan || harga_bulanan <= 0) {
+    alert('Harga bulanan wajib diisi (minimal Rp1.000)');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-room');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Menyimpan...';
+
+  try {
+    // Kirim ke API
+    const payload = {
+      nama_kamar: nama_kamar,
+      tipe: tipe,
+      harga_bulanan: harga_bulanan,
+    };
+    if (urutan !== null) payload.urutan = urutan;
+
+    const result = await api('/rooms', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (!result.ok && !result.id) {
+      throw new Error(result.error || 'Gagal tambah kamar');
+    }
+
+    // Reload ROOMS
+    await loadRooms();
+    await loadStats();
+
+    // Refresh UI
+    renderRooms();
+    renderTable();
+    fillRoomSelect(EDITING_ID);
+
+    // Tutup modal
+    closeModal(document.getElementById('modal-add-room'));
+
+    // Pilih kamar baru di dropdown
+    setTimeout(() => {
+      const newRoomId = result.id;
+      if (newRoomId) {
+        const fr = document.getElementById('f-room');
+        if (fr) fr.value = newRoomId;
+      }
+    }, 100);
+
+    alert(`✅ Kamar "${nama_kamar}" berhasil ditambahkan!`);
+  } catch (err) {
+    console.error('Gagal tambah kamar:', err);
+    alert('❌ Gagal tambah kamar:\n\n' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
