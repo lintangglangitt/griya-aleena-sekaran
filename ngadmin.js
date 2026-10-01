@@ -1339,17 +1339,40 @@ function openAddRoomModal() {
   // Reset form
   form.reset();
 
-  // Set default harga bulanan
+  // ─── Hitung nomor kamar berikutnya ───
+  // Ambil angka dari nama kamar yang ada (mis. "KAMAR NOMOR 7" → 7)
+  let maxNomorKamar = 0;
+  ROOMS.forEach(r => {
+    const nama = String(r.nama_kamar || '');
+    const match = nama.match(/\d+/);
+    if (match) {
+      const num = parseInt(match[0], 10);
+      if (num > maxNomorKamar) maxNomorKamar = num;
+    }
+  });
+  const nextNomorKamar = maxNomorKamar + 1;
+
+  // ─── Hitung urutan berikutnya ───
+  const maxUrutan = ROOMS.reduce((max, r) => Math.max(max, Number(r.urutan) || 0), 0);
+  const nextUrutan = maxUrutan + 1;
+
+  // ─── Set default values ───
+  document.getElementById('ar-nama').value = `KAMAR NOMOR ${nextNomorKamar}`;
+  document.getElementById('ar-tipe').value = 'NON-AC';
   document.getElementById('ar-harga').value = 800000;
+  document.getElementById('ar-urutan').value = nextUrutan;
 
-  // Auto-set urutan (kalau kosong)
-  const lastUrutan = ROOMS.reduce((max, r) => Math.max(max, Number(r.urutan) || 0), 0);
-  document.getElementById('ar-urutan').placeholder = `Otomatis: ${lastUrutan + 1}`;
-
+  // Buka modal
   openModalExclusive(modal);
 
-  // Focus ke nama kamar
-  setTimeout(() => document.getElementById('ar-nama').focus(), 100);
+  // Focus + select nama kamar (biar langsung bisa ditimpa)
+  setTimeout(() => {
+    const namaInput = document.getElementById('ar-nama');
+    if (namaInput) {
+      namaInput.focus();
+      namaInput.select();
+    }
+  }, 100);
 }
 
 // Handler submit form tambah kamar
