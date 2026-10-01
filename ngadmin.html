@@ -390,6 +390,49 @@
 
 </div>
 
+  <!-- MODAL: Tambah Kamar Baru -->
+<div class="modal" id="modal-add-room" data-modal>
+  <div class="modal-card">
+    <div class="modal-top-bar">
+      <h3>➕ Tambah Kamar Baru</h3>
+      <button type="button" class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
+    </div>
+
+    <form id="form-add-room">
+      <div class="form-section">
+        <div class="form-section-title">🏠 Data Kamar</div>
+
+        <label>Nama Kamar
+          <input type="text" id="ar-nama" required placeholder="Mis. KAMAR NOMOR 8">
+        </label>
+
+        <label>Tipe Kamar
+          <select id="ar-tipe" required>
+            <option value="NON-AC">NON-AC</option>
+            <option value="AC">AC</option>
+          </select>
+        </label>
+
+        <label>Harga Bulanan (Rp)
+          <input type="number" id="ar-harga" min="0" step="50000" required
+                 value="800000" placeholder="Mis. 800000">
+        </label>
+
+        <label>Urutan (Opsional)
+          <input type="number" id="ar-urutan" min="0" step="1" placeholder="Kosongkan untuk otomatis">
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close-modal>Batal</button>
+        <button type="submit" class="btn-primary" id="btn-save-room">Simpan Kamar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="ngadmin.js"></script>
+  
 <script src="ngadmin.js"></script>
 </body>
 </html>
