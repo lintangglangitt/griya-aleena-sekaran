@@ -290,14 +290,13 @@ function renderRiwayatKamarTabs() {
     ACTIVE_RK_ROOM = rooms[0].id;
   }
 
-  wrap.innerHTML = rooms.map(room => {
-    // Gunakan OCCS, bukan OCCUPANCIES.
+  // Render kartu kamar
+  const roomCards = rooms.map(room => {
     const totalSewa = OCCS
       .filter(o => String(o.room_id) === String(room.id))
       .reduce((sum, o) => {
         const value = o.harga_total;
         if (value === null || value === undefined || value === '') return sum;
-
         const amount = Number(value);
         return Number.isFinite(amount) ? sum + amount : sum;
       }, 0);
@@ -319,6 +318,22 @@ function renderRiwayatKamarTabs() {
     `;
   }).join('');
 
+  // Kartu "Tambah Kamar Baru"
+  const addCard = `
+    <button
+      type="button"
+      class="rk-tab rk-tab-add"
+      data-rk-add="true"
+      aria-label="Tambah Kamar Baru"
+    >
+      <span class="rk-tab-add-icon">➕</span>
+      <span class="rk-tab-add-label">TAMBAH KAMAR BARU</span>
+    </button>
+  `;
+
+  wrap.innerHTML = roomCards + addCard;
+
+  // Event listener kamar
   wrap.querySelectorAll('[data-rk-room]').forEach(button => {
     button.addEventListener('click', () => {
       ACTIVE_RK_ROOM = button.dataset.rkRoom;
@@ -326,9 +341,14 @@ function renderRiwayatKamarTabs() {
       renderRiwayatKamar();
     });
   });
+
+  // Event listener tambah kamar
+  wrap.querySelectorAll('[data-rk-add]').forEach(button => {
+    button.addEventListener('click', () => {
+      openAddRoomModal();
+    });
+  });
 }
-
-
 function renderRiwayatKamar() {
   const tbody = document.getElementById('riwayat-kamar-body');
   if (!tbody) return;
