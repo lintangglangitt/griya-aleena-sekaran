@@ -1138,3 +1138,22 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
     font-size: 0.68rem;
   }
 }
+
+
+/* Tabel riwayat penyewa: tampilkan semua kolom tanpa scroll horizontal */
+.table-wrap {
+  overflow-x: visible;
+}
+
+#occ-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+#occ-table th,
+#occ-table td {
+  padding: 8px 5px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+}
