@@ -374,7 +374,38 @@
   </div>
 </div>
 
+<!-- RIWAYAT PEMASUKAN PER BULAN -->
+<section class="section-block">
+  <h2 class="section-h">Riwayat Pemasukan Per Bulan</h2>
 
+  <div class="table-actions" style="margin-bottom:16px;">
+    <label for="filter-income-year">Tahun</label>
+    <select id="filter-income-year">
+      <option value="2025">2025</option>
+      <option value="2026" selected>2026</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table id="income-month-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Bulan</th>
+          <th>Pemasukan</th>
+        </tr>
+      </thead>
+      <tbody id="income-month-body"></tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2" style="text-align:right;">Total</th>
+          <th id="income-year-total">Rp0,00</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</section>
+  
 <!-- FOOTER LINKS -->
 <div class="footer-links">
 
