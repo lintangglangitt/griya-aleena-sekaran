@@ -1,0 +1,18 @@
+name = "griya-api"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "griya-aleena-db"
+database_id = "ba8dd491-6782-453f-a0b6-122e80e4d389"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "griya-aleena-files"
+
+[vars]
+R2_PUBLIC_URL = "https://pub-6ed42b9786094eb7950d91d8d75817d9.r2.dev"
+ALLOWED_ORIGINS = "https://griya-aleena.pages.dev,https://lintangglangitt.github.io"
+CF_ACCOUNT_ID = "dcc586c807d72848492725bec61953bd"
+CF_D1_DATABASE_ID = "ba8dd491-6782-453f-a0b6-122e80e4d389"

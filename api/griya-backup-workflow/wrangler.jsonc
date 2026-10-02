@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "griya-backup-workflow",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-26",
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "griya-aleena-db",
+      "database_id": "ba8dd491-6782-453f-a0b6-122e80e4d389"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BACKUP_BUCKET",
+      "bucket_name": "griya-aleena-backup"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "griya-aleena-backup-workflow",
+      "binding": "BACKUP_WORKFLOW",
+      "class_name": "DatabaseBackupWorkflow"
+    }
+  ]
+}
