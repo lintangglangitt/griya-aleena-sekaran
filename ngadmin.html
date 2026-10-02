@@ -142,35 +142,40 @@
       <div class="form-section">
         <div class="form-section-title">📋 Data Kontrak</div>
         <div class="grid-2">
-          <label>Kamar
-            <select id="f-room" required></select>
-          </label>
-          <label>Tipe Sewa
-            <select id="f-tipe" required>
-              <option value="harian">Harian</option>
-              <option value="mingguan">Mingguan</option>
-              <option value="bulanan" selected>Bulanan</option>
-              <option value="semesteran">Semesteran</option>
-              <option value="tahunan">Tahunan</option>
-            </select>
-          </label>
-          <label>Tanggal Mulai
-            <input type="date" id="f-mulai" required>
-          </label>
-          <label>Tanggal Selesai
-            <input type="date" id="f-selesai" required>
-          </label>
-          <label>Harga Total (Rp)
-            <input type="number" id="f-harga" min="0" step="1000" required placeholder="Otomatis sesuai tipe sewa">
-          </label>
-          <label>Status Bayar
-            <select id="f-status" required>
-              <option value="lunas">✅ Lunas</option>
-              <option value="dp">⏳ DP</option>
-              <option value="belum">❌ Belum</option>
-            </select>
-          </label>
-        </div>
+  <label>Tanggal Mulai
+    <input type="date" id="f-mulai" required>
+  </label>
+
+  <label>Tanggal Selesai
+    <input type="date" id="f-selesai" required>
+  </label>
+
+  <label>Tipe Sewa
+    <select id="f-tipe" required>
+      <option value="harian">Harian</option>
+      <option value="mingguan">Mingguan</option>
+      <option value="bulanan" selected>Bulanan</option>
+      <option value="semesteran">Semesteran</option>
+      <option value="tahunan">Tahunan</option>
+    </select>
+  </label>
+
+  <label>Kamar
+    <select id="f-room" required></select>
+  </label>
+
+  <label>Harga Total (Rp)
+    <input type="number" id="f-harga" min="0" step="1000" required placeholder="Otomatis sesuai tipe sewa">
+  </label>
+
+  <label>Status Bayar
+    <select id="f-status" required>
+      <option value="lunas">✅ Lunas</option>
+      <option value="dp">⏳ DP</option>
+      <option value="belum">❌ Belum</option>
+    </select>
+  </label>
+</div>
 
         <div style="margin-top:20px;">
           <div style="font-weight:700;color:var(--teal);font-size:0.85rem;margin-bottom:12px;padding-bottom:6px;border-bottom:1px dashed #e3ebeb;">
