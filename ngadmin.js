@@ -92,7 +92,13 @@ function fmtDateLong(s) {
   const d = new Date(s);
   return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 }
-function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+function todayISO() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
 function daysBetween(a, b) { return Math.ceil((new Date(b) - new Date(a)) / 86400000); }
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -1270,7 +1276,7 @@ function fillRoomSelect(currentEditingId = null) {
 
       if (String(o.room_id) !== String(r.id)) return false;
 
-      // Kamar terisi jika tanggal mulai pilihan berada dalam periode kontrak
+      // Cek apakah tanggal mulai berada dalam periode sewa
       return (
         tanggalMulai >= String(o.tanggal_mulai) &&
         tanggalMulai <= String(o.tanggal_selesai)
@@ -1288,19 +1294,19 @@ function fillRoomSelect(currentEditingId = null) {
     `;
   }).join('');
 
-  const addRoomOption = `
-    <option value="__add_new__" style="font-weight:700;color:#1a5c5c;background:#e0f0f0;">
-      ➕ TAMBAH KAMAR BARU...
-    </option>
+  fr.innerHTML = roomOptions + `
+    <option value="__add_new__">➕ TAMBAH KAMAR BARU...</option>
   `;
 
-  fr.innerHTML = roomOptions + addRoomOption;
-
-  // Pertahankan pilihan jika kamar masih tersedia pada tanggal tersebut
   if ([...fr.options].some(
     option => option.value === selectedRoom && !option.disabled
   )) {
     fr.value = selectedRoom;
+  } else {
+    const firstAvailable = [...fr.options].find(
+      option => option.value !== '__add_new__' && !option.disabled
+    );
+    fr.value = firstAvailable?.value || '';
   }
 }
 
@@ -1308,8 +1314,13 @@ function openModal(id) {
   console.log('[openModal] id:', id);
   EDITING_ID = id;
   const f = document.getElementById('form-occ');
-  f.reset();
-  fillRoomSelect(id);
+f.reset();
+
+if (!id) {
+  document.getElementById('f-mulai').value = todayISO();
+}
+
+fillRoomSelect(id);
   setupAutoHarga();
   setupAddRoomListener();   // ⬅️ TAMBAH BARIS INI
 
@@ -1335,12 +1346,20 @@ function openModal(id) {
   if (id) {
     const o = OCCS.find(x => x.id === id);
     if (!o) { console.error('[openModal] occ not found', id); return; }
-    document.getElementById('modal-title').textContent = 'Edit Okupansi';
-    safeSet('f-id', o.id);
-    safeSet('f-room', o.room_id);
-    safeSet('f-tipe', o.tipe_sewa);
-    safeSet('f-mulai', o.tanggal_mulai);
-    safeSet('f-selesai', o.tanggal_selesai);
+    document.getElementById('modal-title').textContent = 'Edit Penyewa';
+  safeSet('f-id', o.id);
+  safeSet('f-tipe', o.tipe_sewa);
+  safeSet('f-mulai', o.tanggal_mulai);
+
+  // Isi opsi kamar dengan pengecekan berdasarkan tanggal mulai saja.
+  // ID kontrak yang sedang diedit dikecualikan dari pengecekan.
+  fillRoomSelect(o.id);
+  safeSet('f-room', o.room_id);
+
+  // Tetap isi tanggal selesai untuk data kontrak,
+  // tetapi tanggal tersebut tidak dipakai untuk cek ketersediaan.
+  safeSet('f-selesai', o.tanggal_selesai);
+    
     safeSet('f-harga', o.harga_total);
     safeSet('f-status', o.status_bayar);
     safeSet('f-nama', o.nama_penyewa);
