@@ -409,6 +409,8 @@ function renderRiwayatKamar() {
 async function init() {
   console.log('[Init] Starting...');
 
+
+
   // Reset semua modal
   closeAllModals();
 
@@ -433,6 +435,7 @@ async function init() {
     fillYearFilter();
     renderRooms();
     renderTable();
+    renderMonthlyIncome();
     setupIncomeCardKeyboard();   // ⬅️ nama baru
     setupAutoHarga();
     renderRiwayatKamarTabs();   // ⬅️ TAMBAH
@@ -488,6 +491,52 @@ async function loadStats() {
   document.getElementById('st-income-month').textContent = rupiahFull(s.penghasilan_bulan_ini);
 }
 
+
+function renderMonthlyIncome() {
+  const yearSelect = document.getElementById('filter-income-year');
+  const tbody = document.getElementById('income-month-body');
+  const totalEl = document.getElementById('income-year-total');
+
+  if (!yearSelect || !tbody || !totalEl) return;
+
+  const year = Number(yearSelect.value);
+  const monthNames = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+
+  const monthlyTotals = Array(12).fill(0);
+
+  OCCS.forEach(o => {
+    const startDate = String(o.tanggal_mulai || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return;
+
+    const startYear = Number(startDate.slice(0, 4));
+    const monthIndex = Number(startDate.slice(5, 7)) - 1;
+    const amount = Number(o.harga_total);
+
+    if (
+      startYear === year &&
+      monthIndex >= 0 &&
+      monthIndex < 12 &&
+      Number.isFinite(amount)
+    ) {
+      monthlyTotals[monthIndex] += amount;
+    }
+  });
+
+  tbody.innerHTML = monthlyTotals.map((amount, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td>${monthNames[index]}</td>
+      <td><strong>${escapeHtml(rupiahFull(amount))}</strong></td>
+    </tr>
+  `).join('');
+
+  totalEl.textContent = rupiahFull(
+    monthlyTotals.reduce((sum, amount) => sum + amount, 0)
+  );
+}
 // ═══════════════════════════════════════════════════════════
 // BADGE ANALYTICS
 // ═══════════════════════════════════════════════════════════
@@ -2444,6 +2493,8 @@ document.addEventListener('change', async (e) => {
   if (input.id === 'filter-tahun') { renderTable(); return; }
   if (input.id === 'filter-status') { renderTable(); return; }
   if (input.id === 'analytics-period') { loadAnalytics(); return; }
+
+  if (input.id === 'filter-income-year') { renderMonthlyIncome(); return; }
 
   // Import file
   if (input.id === 'import-file') {
