@@ -1157,3 +1157,25 @@ tbody tr.akan-habis td:first-child { border-left: 4px solid var(--red); }
   overflow-wrap: anywhere;
   font-size: 0.78rem;
 }
+
+#occ-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: auto;
+}
+
+#occ-table th,
+#occ-table td {
+  white-space: normal;
+}
+
+#occ-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+#occ-table .btn-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+}
