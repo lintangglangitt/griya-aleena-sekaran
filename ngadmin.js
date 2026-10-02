@@ -1327,8 +1327,7 @@ function openModal(id) {
       });
     }
   } else {
-    document.getElementById('modal-title').textContent = 'Tambah Okupansi';
-    safeSet('f-mulai', todayISO());
+    document.getElementById('modal-title').textContent = 'Tambah Penyewa';
     updateHargaOtomatis();
   }
   openModalExclusive(document.getElementById('modal-occ'));
