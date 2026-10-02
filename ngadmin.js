@@ -708,7 +708,6 @@ function renderTable() {
         <td>${fmtDate(o.tanggal_selesai)}</td>
         <td><strong>${rupiahFull(o.harga_total)}</strong></td>
         <td><span class="badge ${badgeClass}">${escapeHtml(o.status_bayar)}</span></td>
-        <td>${link}</td>
         <td>
           <div class="btn-row">
             <button class="btn-icon" data-invoice="${o.id}" title="Print Invoice">🧾</button>
