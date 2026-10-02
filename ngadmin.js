@@ -715,6 +715,7 @@ function renderTable() {
             <button class="btn-icon" data-kuitansi="${o.id}" title="Print Kuitansi">💰</button>
             <button class="btn-icon" data-perjanjian="${o.id}" title="Print Perjanjian">📄</button>
             <button class="btn-icon" data-edit="${o.id}" title="Edit">✏️</button>
+            <button class="btn-icon" data-duplicate="${o.id}" title="Duplikasi">📑</button>
             <button class="btn-icon danger" data-del="${o.id}" title="Hapus">🗑️</button>
           </div>
         </td>
@@ -1121,6 +1122,47 @@ function openPerjanjian(id) {
   document.getElementById('perjanjian-content').innerHTML = html;
   openModalExclusive(document.getElementById('perjanjian-modal'));
 }
+
+function duplicateOcc(id) {
+  const o = OCCS.find(x => Number(x.id) === Number(id));
+  if (!o) return;
+
+  // Mulai sehari setelah tanggal selesai kontrak yang dipilih
+  const mulai = addDaysISO(o.tanggal_selesai, 1);
+  const selesai = addDaysISO(mulai, 30);
+
+  openModal(null);
+
+  const set = (fieldId, value) => {
+    const el = document.getElementById(fieldId);
+    if (el) el.value = value ?? '';
+  };
+
+  set('f-room', o.room_id);
+  set('f-tipe', 'bulanan');
+  set('f-mulai', mulai);
+  set('f-selesai', selesai);
+  set('f-harga', HARGA_DEFAULT.bulanan);
+  set('f-status', 'belum');
+
+  set('f-nama', o.nama_penyewa);
+  set('f-ktp', o.no_ktp);
+  set('f-alamat', o.alamat_penyewa);
+  set('f-hp', o.no_hp);
+  set('f-kampus', o.asal_kampus);
+  set('f-nama-ortu', o.nama_ortu);
+  set('f-ktp-ortu', o.no_ktp_ortu);
+  set('f-alamat-ortu', o.alamat_ortu);
+  set('f-hp-ortu', o.no_hp_ortu);
+  set('f-hubungan', o.hubungan_keluarga);
+  set('f-catatan', o.catatan);
+
+  document.getElementById('modal-title').textContent = 'Duplikasi Okupansi';
+  fillRoomSelect(null);
+  set('f-room', o.room_id);
+}
+
+
 
 // ═══════════════════════════════════════════════════════════
 // MODAL OKUPANSI — OPEN / CANCEL
@@ -2315,6 +2357,14 @@ document.addEventListener('click', (e) => {
       return;
     }
 
+    const btnDuplicate = target.closest('[data-duplicate]');
+if (btnDuplicate) {
+  e.preventDefault();
+  e.stopPropagation();
+  duplicateOcc(Number(btnDuplicate.dataset.duplicate));
+  return;
+}
+    
     const btnEdit = target.closest('[data-edit]');
     if (btnEdit) {
       console.log('[Click] Edit', btnEdit.dataset.edit);
