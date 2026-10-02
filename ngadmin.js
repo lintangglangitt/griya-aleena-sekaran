@@ -409,27 +409,6 @@ function renderRiwayatKamar() {
 async function init() {
   console.log('[Init] Starting...');
 
-  //reset ketersediaan kamar jika tanggal diubah
-  ['f-mulai', 'f-selesai'].forEach(id => {
-  const input = document.getElementById(id);
-  if (input && !input.dataset.roomDateBound) {
-    input.addEventListener('change', () => {
-      const roomSelect = document.getElementById('f-room');
-      const selectedRoom = roomSelect.value;
-
-      fillRoomSelect(EDITING_ID);
-
-      // Pertahankan pilihan kamar jika masih valid
-      if ([...roomSelect.options].some(
-        option => option.value === selectedRoom && !option.disabled
-      )) {
-        roomSelect.value = selectedRoom;
-      }
-    });
-    input.dataset.roomDateBound = 'true';
-  }
-});
-
   // Reset semua modal
   closeAllModals();
 
@@ -460,6 +439,14 @@ async function init() {
     renderRiwayatKamar();        // ⬅️ TAMBAH
   } catch (e) { console.error('[Init] Render error:', e); }
 
+    //reset ketersediaan kamar jika tanggal mulai diubah
+  const mulaiInput = document.getElementById('f-mulai');
+  if (mulaiInput && !mulaiInput.dataset.roomDateBound) {
+    mulaiInput.addEventListener('change', () => {
+      fillRoomSelect(EDITING_ID);
+    });
+    mulaiInput.dataset.roomDateBound = 'true';
+  }
   // Hide users button kalau bukan owner
   if (USER.role !== 'owner') {
     const btnUsers = document.getElementById('btn-users');
@@ -1181,16 +1168,11 @@ function fillRoomSelect(currentEditingId = null) {
   if (!fr) return;
 
   const tanggalMulai = document.getElementById('f-mulai')?.value || '';
-  const tanggalSelesai = document.getElementById('f-selesai')?.value || '';
-
-  const tanggalValid =
-    tanggalMulai &&
-    tanggalSelesai &&
-    tanggalMulai <= tanggalSelesai;
+  const selectedRoom = fr.value;
 
   const roomOptions = ROOMS.map(r => {
-    const bentrok = tanggalValid && OCCS.some(o => {
-      // Abaikan kontrak yang sedang diedit
+    const sudahTersewa = tanggalMulai && OCCS.some(o => {
+      // Saat edit, abaikan kontrak yang sedang diedit
       if (
         currentEditingId != null &&
         String(o.id) === String(currentEditingId)
@@ -1198,20 +1180,19 @@ function fillRoomSelect(currentEditingId = null) {
 
       if (String(o.room_id) !== String(r.id)) return false;
 
-      // Rentang tanggal inklusif:
-      // tanggal yang sama dengan awal/akhir kontrak dianggap bentrok.
+      // Kamar terisi jika tanggal mulai pilihan berada dalam periode kontrak
       return (
-        tanggalMulai <= String(o.tanggal_selesai) &&
-        tanggalSelesai >= String(o.tanggal_mulai)
+        tanggalMulai >= String(o.tanggal_mulai) &&
+        tanggalMulai <= String(o.tanggal_selesai)
       );
     });
 
-    const label = bentrok
-      ? `${r.nama_kamar} (${r.tipe}) — BENTROK TANGGAL`
+    const label = sudahTersewa
+      ? `${r.nama_kamar} (${r.tipe}) — TERISI`
       : `${r.nama_kamar} (${r.tipe})`;
 
     return `
-      <option value="${escapeHtml(String(r.id))}" ${bentrok ? 'disabled' : ''}>
+      <option value="${escapeHtml(String(r.id))}" ${sudahTersewa ? 'disabled' : ''}>
         ${escapeHtml(label)}
       </option>
     `;
@@ -1223,11 +1204,10 @@ function fillRoomSelect(currentEditingId = null) {
     </option>
   `;
 
-  const selectedRoom = fr.value;
   fr.innerHTML = roomOptions + addRoomOption;
 
-  // Pertahankan pilihan jika masih tersedia
-  if (selectedRoom && [...fr.options].some(
+  // Pertahankan pilihan jika kamar masih tersedia pada tanggal tersebut
+  if ([...fr.options].some(
     option => option.value === selectedRoom && !option.disabled
   )) {
     fr.value = selectedRoom;
