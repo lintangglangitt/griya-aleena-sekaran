@@ -409,6 +409,27 @@ function renderRiwayatKamar() {
 async function init() {
   console.log('[Init] Starting...');
 
+  //reset ketersediaan kamar jika tanggal diubah
+  ['f-mulai', 'f-selesai'].forEach(id => {
+  const input = document.getElementById(id);
+  if (input && !input.dataset.roomDateBound) {
+    input.addEventListener('change', () => {
+      const roomSelect = document.getElementById('f-room');
+      const selectedRoom = roomSelect.value;
+
+      fillRoomSelect(EDITING_ID);
+
+      // Pertahankan pilihan kamar jika masih valid
+      if ([...roomSelect.options].some(
+        option => option.value === selectedRoom && !option.disabled
+      )) {
+        roomSelect.value = selectedRoom;
+      }
+    });
+    input.dataset.roomDateBound = 'true';
+  }
+});
+
   // Reset semua modal
   closeAllModals();
 
@@ -1157,37 +1178,60 @@ async function cancelModal() {
 
 function fillRoomSelect(currentEditingId = null) {
   const fr = document.getElementById('f-room');
-  const today = todayISO();
+  if (!fr) return;
 
-  let editingRoomId = null;
-  if (currentEditingId) {
-    const editingOcc = OCCS.find(x => x.id === currentEditingId);
-    if (editingOcc) editingRoomId = editingOcc.room_id;
-  }
+  const tanggalMulai = document.getElementById('f-mulai')?.value || '';
+  const tanggalSelesai = document.getElementById('f-selesai')?.value || '';
 
-  // Opsi kamar yang sudah ada
+  const tanggalValid =
+    tanggalMulai &&
+    tanggalSelesai &&
+    tanggalMulai <= tanggalSelesai;
+
   const roomOptions = ROOMS.map(r => {
-    const activeOcc = OCCS.find(o =>
-      o.room_id === r.id &&
-      o.tanggal_mulai <= today &&
-      o.tanggal_selesai >= today
-    );
-    const isDisabled = activeOcc && activeOcc.room_id !== editingRoomId;
-    const disabledAttr = isDisabled ? 'disabled' : '';
-    const label = isDisabled
-      ? `${r.nama_kamar} (${r.tipe}) — TERISI`
+    const bentrok = tanggalValid && OCCS.some(o => {
+      // Abaikan kontrak yang sedang diedit
+      if (
+        currentEditingId != null &&
+        String(o.id) === String(currentEditingId)
+      ) return false;
+
+      if (String(o.room_id) !== String(r.id)) return false;
+
+      // Rentang tanggal inklusif:
+      // tanggal yang sama dengan awal/akhir kontrak dianggap bentrok.
+      return (
+        tanggalMulai <= String(o.tanggal_selesai) &&
+        tanggalSelesai >= String(o.tanggal_mulai)
+      );
+    });
+
+    const label = bentrok
+      ? `${r.nama_kamar} (${r.tipe}) — BENTROK TANGGAL`
       : `${r.nama_kamar} (${r.tipe})`;
-    return `<option value="${r.id}" ${disabledAttr}>${escapeHtml(label)}</option>`;
+
+    return `
+      <option value="${escapeHtml(String(r.id))}" ${bentrok ? 'disabled' : ''}>
+        ${escapeHtml(label)}
+      </option>
+    `;
   }).join('');
 
-  // Opsi untuk tambah kamar baru
   const addRoomOption = `
     <option value="__add_new__" style="font-weight:700;color:#1a5c5c;background:#e0f0f0;">
       ➕ TAMBAH KAMAR BARU...
     </option>
   `;
 
+  const selectedRoom = fr.value;
   fr.innerHTML = roomOptions + addRoomOption;
+
+  // Pertahankan pilihan jika masih tersedia
+  if (selectedRoom && [...fr.options].some(
+    option => option.value === selectedRoom && !option.disabled
+  )) {
+    fr.value = selectedRoom;
+  }
 }
 
 function openModal(id) {
