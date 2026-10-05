@@ -1061,3 +1061,31 @@ footer span { color: var(--amber-lt); }
   .cd-num { font-size: 1.1rem; }
   .cd-unit { font-size: 0.5rem; }
 }
+
+.diskon-item {
+  text-align: center;
+  margin: 18px 0;
+}
+
+.countdown-label {
+  margin-bottom: 28px;
+}
+
+.countdown-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 28px;
+  border: 1px solid #77702e;
+  border-radius: 999px;
+  color: #f5c34b;
+  font-weight: 700;
+}
+
+.note-dot {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  border-radius: 50%;
+  background: #827637;
+}
