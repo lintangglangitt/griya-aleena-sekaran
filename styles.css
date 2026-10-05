@@ -1068,6 +1068,8 @@ footer span { color: var(--amber-lt); }
 }
 
 .countdown-label {
+  font-size: 24px;
+  font-weight: 700;
   margin-bottom: 28px;
 }
 
@@ -1079,7 +1081,8 @@ footer span { color: var(--amber-lt); }
   border: 1px solid #77702e;
   border-radius: 999px;
   color: #f5c34b;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 .note-dot {
