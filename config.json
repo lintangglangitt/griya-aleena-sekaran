@@ -19,10 +19,11 @@
   },
   "heroChips": [
     "🏢 Bangunan Baru",
+    "✨ Penghuni Pertama",
     "🚿 Kamar Mandi Dalam",
     "🍜 Dapur Bersama",
     "☃️ Kulkas Bersama",
-    "👕 Mesin Cuci Bersama",
+    "👕 Mesin Cuci",
     "❄️ AC/NON AC",
     "🛜 Free WiFi",
     "🛵 Garasi Motor & Gerbang",
@@ -54,7 +55,7 @@
   "plusEye": "Lebih dari Sekadar Kos",
   "plusTitle": "Kenyamanan Adalah Prioritas",
   "hargaEye": "Harga Terjangkau",
-  "hargaTitle": "Dapatkan Diskon Early Bird & Diskon Prestasi/Kurang Mampu",
+  "hargaTitle": "Dapatkan Diskon Semesteran, Diskon Tahunan, & Diskon Prestasi/Kurang Mampu",
   "hargaDesc": "Pilih durasi yang sesuai kantong kamu. 1 kamar untuk 1 orang.",
   "lokasiEye": "Lokasi Strategis",
   "lokasiTitle": "Di Jantung Sekaran,<br>Mana-mana Dekat",
@@ -65,7 +66,12 @@
   "whatsapp": {
     "template": "Hai Kak!\nApakah kamar masih tersedia di Griya Aleena?\nTerima kasih."
   },
-
+  "countdown": {
+    "visible": true,
+    "label": "Diskon Semesteran dan Diskon Tahunan",
+    "label2": "Diskon Prestasi/Kurang Mampu *)",
+    "target": "2026-09-30T00:00:00"
+  },
   "contacts": [
     { "name": "Hakim (0898-5446-121)", "wa": "628985446121" }
   ],
