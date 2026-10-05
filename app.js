@@ -36,22 +36,7 @@ function formatRupiah(num) {
   return 'Rp' + new Intl.NumberFormat('id-ID').format(num);
 }
 
-// Format tanggal ke Bahasa Indonesia
-function formatTanggalIndonesia(isoString) {
-  const bulanID = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-  ];
-  const d = new Date(isoString);
-  if (isNaN(d.getTime())) return "-";
-  return `${d.getDate()} ${bulanID[d.getMonth()]} ${d.getFullYear()}`;
-}
 
-// Generate syarat early bird dari countdown.target
-function getEarlyBirdRequirement(countdownTarget) {
-  if (!countdownTarget) return "Booking kamar sebelum batas waktu yang ditentukan.";
-  return "Booking semesteran dan tahunan dengan pembayaran langsung di awal.";
-}
 
 // ─── LOAD CONFIG ──────────────────────────────────────────────
 async function loadConfig() {
@@ -168,43 +153,18 @@ function renderHero(c) {
   const title = document.getElementById('hero-title');
   const subtitle = document.getElementById('hero-subtitle');
   const sub = document.getElementById('hero-sub');
-  const cdWrapper = document.getElementById('countdown-wrapper');
+  const cdLabel = document.getElementById('countdown-label');
+  const cdLabel2 = document.getElementById('countdown-label-2');
+  const badge2 = document.getElementById('hero-badge2');
 
-  if (title) {
-    title.textContent = s.heroTitle || s.title || 'GRIYA ALEENA SEKARAN';
-  }
+  if (title) title.textContent = s.heroTitle || s.title || 'GRIYA ALEENA SEKARAN';
+  if (subtitle) subtitle.innerHTML = s.heroSubtitle || s.tagline || 'Kos Putri<br>UNIVERSITAS NEGERI SEMARANG';
+  if (sub) sub.textContent = s.heroSub || 'Fasilitas Lengkap. Harga Terjangkau.';
 
-  if (subtitle) {
-    subtitle.innerHTML =
-      s.heroSubtitle || s.tagline || 'Kos Putri<br>UNIVERSITAS NEGERI SEMARANG';
-  }
-
-  if (sub) {
-    sub.textContent = s.heroSub || 'Fasilitas Lengkap. Harga Terjangkau.';
-  }
-
-  if (cdWrapper) {
-    cdWrapper.style.display = 'block';
-    cdWrapper.innerHTML = `
-      <div class="diskon-item">
-        <div class="countdown-label">DISKON SEMESTERAN DAN TAHUNAN</div>
-        <div class="countdown-note">
-          <span class="note-dot"></span>
-          Silakan baca syarat dan ketentuan di bawah.
-        </div>
-      </div>
-
-      <div class="diskon-item">
-        <div class="countdown-label">DISKON PRESTASI/KURANG MAMPU *)</div>
-        <div class="countdown-note">
-          <span class="note-dot"></span>
-          Silakan baca syarat dan ketentuan di bawah.
-        </div>
-      </div>
-    `;
-  }
+  if (cdLabel) cdLabel.textContent = c.countdown?.label || 'Diskon Semesteran dan Tahunan';
+  if (cdLabel2) cdLabel2.textContent = c.countdown?.label2 || 'Diskon Prestasi/Kurang Mampu *)';
+  if (badge2) badge2.textContent = s.heroBadge2 || 'Silakan baca syarat dan ketentuan di bawah.';
 }
-
 // ─── 4. CHIPS ────────────────────────────────────────────────────
 function renderChips(c) {
   const container = document.getElementById('hero-chips');
@@ -319,7 +279,7 @@ function renderPricing(c) {
   const container = document.getElementById('harga-container');
 
   if (eye) eye.textContent = c.hargaEye || 'Harga Terjangkau';
-  if (title) title.innerHTML = c.hargaTitle || 'Dapatkan Diskon Semesteran, Diskon tahunan, & Diskon Prestasi/Kurang Mampu';
+  if (title) title.innerHTML = c.hargaTitle || 'Dapatkan Diskon Semesteran, DIskon Tahunan, & Diskon Prestasi/Kurang Mampu';
   if (desc) desc.textContent = c.hargaDesc || 'Pilih durasi yang sesuai kantong kamu. 1 Kamar untuk 1 Orang.';
 
   if (!container) return;
@@ -573,33 +533,6 @@ function renderFooter(c) {
   if (year) year.textContent = c.site?.footerYear || new Date().getFullYear();
 }
 
-// ─── COUNTDOWN ─────────────────────────────────────────────────
-function initCountdown(targetDate) {
-  const els = {
-    d: document.getElementById('cd-d'),
-    h: document.getElementById('cd-h'),
-    m: document.getElementById('cd-m'),
-    s: document.getElementById('cd-s')
-  };
-  if (!els.d || !els.h || !els.m || !els.s) return;
-
-  const target = new Date(targetDate);
-  if (isNaN(target.getTime())) return;
-
-  function update() {
-    const diff = target - new Date();
-    if (diff <= 0) {
-      Object.values(els).forEach(el => el.textContent = '00');
-      return;
-    }
-    els.d.textContent = String(Math.floor(diff / 86400000)).padStart(2, '0');
-    els.h.textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
-    els.m.textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-    els.s.textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-  }
-  update();
-  setInterval(update, 1000);
-}
 
 // ─── HIT COUNTER ──────────────────────────────────────────────
 async function initCounter() {
