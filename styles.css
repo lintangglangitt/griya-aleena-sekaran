@@ -1452,26 +1452,3 @@ footer span { color: var(--amber-lt); }
   }
 }
 
-.diskon-syarat,
-.diskon-syarat-early,
-.info-harian-mingguan {
-  text-align: left;
-}
-
-.diskon-syarat .countdown-label {
-  text-align: left;
-}
-
-.diskon-syarat .hero-badge1,
-.diskon-syarat .hero-badge2 {
-  margin-left: 0;
-  margin-right: 0;
-}
-
-.syarat-item {
-  text-align: left;
-}
-
-.syarat-item ul {
-  padding-left: 0;
-}
