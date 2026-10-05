@@ -98,3 +98,29 @@
     font-size: 12px;
   }
 }
+
+.hero-diskon-info {
+  margin-top: 8px;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+.hero-diskon-info .countdown-label {
+  color: var(--amber-lt);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  margin-bottom: 6px;
+}
+
+.hero-diskon-info #countdown-label-2 {
+  color: rgba(255,255,255,0.75);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.hero-diskon-info .hero-badge2 {
+  display: none;
+}
