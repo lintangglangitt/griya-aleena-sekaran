@@ -395,17 +395,16 @@ function renderInfoHarianMingguan(c) {
   `;
 }
 // ─── 11. EARLY BIRD ────────────────────────────────────────────
-function renderEarlyBird(c) {
+function renderEarlyBird() {
   const container = document.getElementById('early-bird-container');
   if (!container) return;
 
-  // ✅ AUTO-GENERATE dari countdown.target
-  const req = getEarlyBirdRequirement(c.countdown?.target);
-
   container.innerHTML = `
     <div class="diskon-syarat">
-      <h4>🐦 Syarat Diskon Early Bird</h4>
-      <div class="syarat-item"><p>${req}</p></div>
+      <h4>🐦 Syarat Diskon Semesteran dan Diskon Tahunan</h4>
+      <div class="syarat-item">
+        <p>Booking kamar semesteran/tahunan dan pembayaran dilakukan di awal sebelum menempati.</p>
+      </div>
     </div>
   `;
 }
