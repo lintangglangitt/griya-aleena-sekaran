@@ -397,14 +397,14 @@ function buildPriceCard(data, type, emoji, badgeClass, version = 1) {
         <div class="price-segment">
           <div class="harga-durasi">Semesteran (${semesterMonths} Bulan)</div>
           <div class="price-calc-row">${semesterMonths} × ${formatRupiah(monthly)} = <span class="calc-base">${formatRupiah(semesterBase)}</span></div>
-          <div class="price-calc-row early">Diskon Early Bird: Potongan ${formatRupiah(semesterEB)} → <span class="calc-early">${formatRupiah(semesterBase - semesterEB)}</span></div>
+          <div class="price-calc-row early">Diskon Semesteran: Potongan ${formatRupiah(semesterEB)} → <span class="calc-early">${formatRupiah(semesterBase - semesterEB)}</span></div>
           <div class="price-calc-row spesial">Diskon Prestasi/Kurang Mampu: Potongan ${formatRupiah(semesterSpecial)} → <span class="calc-spesial">${formatRupiah(semesterBase - semesterSpecial)}</span></div>
         </div>
         <div class="price-sep"></div>
         <div class="price-segment">
           <div class="harga-durasi">Tahunan (${yearMonths} Bulan) <span class="hemat-tag">💡 Paling Hemat</span></div>
           <div class="price-calc-row">${yearMonths} × ${formatRupiah(monthly)} = <span class="calc-base">${formatRupiah(yearBase)}</span></div>
-          <div class="price-calc-row early">Diskon Early Bird: Potongan ${formatRupiah(yearEB)} → <span class="calc-early">${formatRupiah(yearBase - yearEB)}</span></div>
+          <div class="price-calc-row early">Diskon Tahunan: Potongan ${formatRupiah(yearEB)} → <span class="calc-early">${formatRupiah(yearBase - yearEB)}</span></div>
           <div class="price-calc-row spesial">Diskon Prestasi/Kurang Mampu: Potongan ${formatRupiah(yearSpecial)} → <span class="calc-spesial">${formatRupiah(yearBase - yearSpecial)}</span></div>
         </div>
       </div>
