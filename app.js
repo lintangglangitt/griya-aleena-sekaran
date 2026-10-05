@@ -148,23 +148,55 @@ function renderNav(c) {
 }
 
 // ─── 3. HERO ────────────────────────────────────────────────────
+
 function renderHero(c) {
   const s = c.site || {};
+
   const title = document.getElementById('hero-title');
   const subtitle = document.getElementById('hero-subtitle');
   const sub = document.getElementById('hero-sub');
-  const cdLabel = document.getElementById('countdown-label');
-  const cdLabel2 = document.getElementById('countdown-label-2');
+
+  const label1 = document.getElementById('countdown-label1');
+  const badge1 = document.getElementById('hero-badge1');
+  const label2 = document.getElementById('countdown-label2');
   const badge2 = document.getElementById('hero-badge2');
 
-  if (title) title.textContent = s.heroTitle || s.title || 'GRIYA ALEENA SEKARAN';
-  if (subtitle) subtitle.innerHTML = s.heroSubtitle || s.tagline || 'Kos Putri<br>UNIVERSITAS NEGERI SEMARANG';
-  if (sub) sub.textContent = s.heroSub || 'Fasilitas Lengkap. Harga Terjangkau.';
+  if (title) {
+    title.textContent = s.heroTitle || s.title || 'GRIYA ALEENA SEKARAN';
+  }
 
-  if (cdLabel) cdLabel.textContent = c.countdown?.label || 'Diskon Semesteran dan Tahunan';
-  if (cdLabel2) cdLabel2.textContent = c.countdown?.label2 || 'Diskon Prestasi/Kurang Mampu *)';
-  if (badge2) badge2.textContent = s.heroBadge2 || 'Silakan baca syarat dan ketentuan di bawah.';
+  if (subtitle) {
+    subtitle.innerHTML =
+      s.heroSubtitle || s.tagline || 'Kos Putri<br>UNIVERSITAS NEGERI SEMARANG';
+  }
+
+  if (sub) {
+    sub.textContent = s.heroSub || 'Fasilitas Lengkap. Harga Terjangkau.';
+  }
+
+  if (label1) {
+    label1.textContent =
+      c.countdown?.label || 'Diskon Semesteran dan Tahunan';
+  }
+
+  if (badge1) {
+    badge1.textContent =
+      c.countdown?.badge1 || 'Booking dan pembayaran dilakukan di awal.';
+  }
+
+  if (label2) {
+    label2.textContent =
+      c.countdown?.label2 || 'Diskon Prestasi/Kurang Mampu *)';
+  }
+
+  if (badge2) {
+    badge2.textContent =
+      c.countdown?.badge2 ||
+      s.heroBadge2 ||
+      'Silakan baca syarat dan ketentuan di bawah.';
+  }
 }
+
 // ─── 4. CHIPS ────────────────────────────────────────────────────
 function renderChips(c) {
   const container = document.getElementById('hero-chips');
