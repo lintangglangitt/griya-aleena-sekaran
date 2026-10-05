@@ -1280,3 +1280,14 @@ footer span { color: var(--amber-lt); }
     font-size: 0.75rem;
   }
 }
+
+.info-harian-mingguan {
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 32px auto 0;
+  padding: 24px 32px;
+}
+
+.info-harian-mingguan h3 {
+  color: #fff;
+}
