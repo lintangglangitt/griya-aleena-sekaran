@@ -1281,13 +1281,9 @@ footer span { color: var(--amber-lt); }
   }
 }
 
-.info-harian-mingguan {
-  width: fit-content;
-  max-width: calc(100% - 32px);
-  margin: 32px auto 0;
-  padding: 24px 32px;
-}
-
-.info-harian-mingguan h3 {
-  color: #fff;
+.hero {
+  min-height: 0;
+  height: auto;
+  padding-top: 32px;
+  padding-bottom: 32px;
 }
