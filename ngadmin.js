@@ -497,52 +497,89 @@ async function loadStats() {
   document.getElementById('st-income-month').textContent = rupiahFull(s.penghasilan_bulan_ini);
 }
 
-
 function renderMonthlyIncome() {
-  const yearSelect = document.getElementById('filter-income-year');
   const tbody = document.getElementById('income-month-body');
-  const totalEl = document.getElementById('income-year-total');
+  const table = document.getElementById('income-month-table');
 
-  if (!yearSelect || !tbody || !totalEl) return;
+  if (!tbody || !table) return;
 
-  const year = Number(yearSelect.value);
   const monthNames = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
 
-  const monthlyTotals = Array(12).fill(0);
+  // Tahun mulai dari 2025 dan bertambah sampai tahun terbaru di data.
+  const yearsInData = OCCS
+    .map(o => String(o.tanggal_mulai || '').match(/^(\d{4})-\d{2}-\d{2}$/))
+    .filter(Boolean)
+    .map(match => Number(match[1]));
+
+  const latestYear = Math.max(2025, ...yearsInData);
+  const years = Array.from(
+    { length: latestYear - 2025 + 1 },
+    (_, i) => 2025 + i
+  );
+
+  // Jumlahkan harga berdasarkan tahun dan bulan tanggal mulai kontrak.
+  const totals = Object.fromEntries(
+    years.map(year => [year, Array(12).fill(0)])
+  );
 
   OCCS.forEach(o => {
-    const startDate = String(o.tanggal_mulai || '');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return;
+    const match = String(o.tanggal_mulai || '').match(/^(\d{4})-(\d{2})-\d{2}$/);
+    if (!match) return;
 
-    const startYear = Number(startDate.slice(0, 4));
-    const monthIndex = Number(startDate.slice(5, 7)) - 1;
+    const year = Number(match[1]);
+    const monthIndex = Number(match[2]) - 1;
     const amount = Number(o.harga_total);
 
     if (
-      startYear === year &&
+      totals[year] &&
       monthIndex >= 0 &&
       monthIndex < 12 &&
       Number.isFinite(amount)
     ) {
-      monthlyTotals[monthIndex] += amount;
+      totals[year][monthIndex] += amount;
     }
   });
 
-  tbody.innerHTML = monthlyTotals.map((amount, index) => `
+  // Buat ulang header agar kolom tahun mengikuti data.
+  const thead = table.querySelector('thead');
+  if (thead) {
+    thead.innerHTML = `
+      <tr>
+        <th>No.</th>
+        <th>Bulan</th>
+        ${years.map(year => `<th>${year}</th>`).join('')}
+      </tr>
+    `;
+  }
+
+  tbody.innerHTML = monthNames.map((month, index) => `
     <tr>
       <td>${index + 1}</td>
-      <td>${monthNames[index]}</td>
-      <td><strong>${escapeHtml(rupiahFull(amount))}</strong></td>
+      <td>${month}</td>
+      ${years.map(year => `
+        <td><strong>${escapeHtml(rupiahFull(totals[year][index]))}</strong></td>
+      `).join('')}
     </tr>
   `).join('');
 
-  totalEl.textContent = rupiahFull(
-    monthlyTotals.reduce((sum, amount) => sum + amount, 0)
-  );
+  // Baris total tahunan.
+  const totalRow = `
+    <tr class="income-total-row">
+      <td colspan="2"><strong>Total</strong></td>
+      ${years.map(year => {
+        const total = totals[year].reduce((sum, amount) => sum + amount, 0);
+        return `<td><strong>${escapeHtml(rupiahFull(total))}</strong></td>`;
+      }).join('')}
+    </tr>
+  `;
+
+  tbody.insertAdjacentHTML('beforeend', totalRow);
 }
+
+
 // ═══════════════════════════════════════════════════════════
 // BADGE ANALYTICS
 // ═══════════════════════════════════════════════════════════
