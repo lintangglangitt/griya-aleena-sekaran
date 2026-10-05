@@ -170,7 +170,6 @@ function renderHero(c) {
   const title = document.getElementById('hero-title');
   const subtitle = document.getElementById('hero-subtitle');
   const sub = document.getElementById('hero-sub');
-  const badge2 = document.getElementById('hero-badge2');
   const cdWrapper = document.getElementById('countdown-wrapper');
 
   if (title) {
@@ -189,10 +188,21 @@ function renderHero(c) {
   if (cdWrapper) {
     cdWrapper.style.display = 'block';
     cdWrapper.innerHTML = `
-      <div class="countdown-label">DISKON SEMESTERAN DAN TAHUNAN</div>
-      <div class="countdown-note">Silakan baca syarat dan ketentuan di bawah.</div>
-      <div class="countdown-label-2">DISKON PRESTASI/KURANG MAMPU *)</div>
-      <div class="countdown-note">Silakan baca syarat dan ketentuan di bawah.</div>
+      <div class="diskon-item">
+        <div class="countdown-label">DISKON SEMESTERAN DAN TAHUNAN</div>
+        <div class="countdown-note">
+          <span class="note-dot"></span>
+          Silakan baca syarat dan ketentuan di bawah.
+        </div>
+      </div>
+
+      <div class="diskon-item">
+        <div class="countdown-label">DISKON PRESTASI/KURANG MAMPU *)</div>
+        <div class="countdown-note">
+          <span class="note-dot"></span>
+          Silakan baca syarat dan ketentuan di bawah.
+        </div>
+      </div>
     `;
   }
 }
