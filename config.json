@@ -67,10 +67,13 @@
     "template": "Hai Kak!\nApakah kamar masih tersedia di Griya Aleena?\nTerima kasih."
   },
   "countdown": {
-    "visible": true,
-    "label": "Diskon Semesteran dan Diskon Tahunan",
-    "label2": "Diskon Prestasi/Kurang Mampu *)",
-    "target": "2026-09-30T00:00:00"
+  "visible": true,
+  "label1": "Diskon Semesteran dan Diskon Tahunan",
+  "badge1": "Booking dan pembayaran dilakukan di awal.",
+  "label2": "Diskon Prestasi/Kurang Mampu *)",
+  "badge2": "Silakan baca syarat dan ketentuan di bawah."
+}
+    
   },
   "contacts": [
     { "name": "Hakim (0898-5446-121)", "wa": "628985446121" }
