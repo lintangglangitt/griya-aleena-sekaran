@@ -36,7 +36,22 @@ function formatRupiah(num) {
   return 'Rp' + new Intl.NumberFormat('id-ID').format(num);
 }
 
+// Format tanggal ke Bahasa Indonesia
+function formatTanggalIndonesia(isoString) {
+  const bulanID = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "-";
+  return `${d.getDate()} ${bulanID[d.getMonth()]} ${d.getFullYear()}`;
+}
 
+// Generate syarat early bird dari countdown.target
+function getEarlyBirdRequirement(countdownTarget) {
+  if (!countdownTarget) return "Booking kamar sebelum batas waktu yang ditentukan.";
+  return `Booking kamar sebelum ${formatTanggalIndonesia(countdownTarget)}.`;
+}
 
 // ─── LOAD CONFIG ──────────────────────────────────────────────
 async function loadConfig() {
@@ -78,6 +93,8 @@ function renderAll(c) {
   renderFloatingWA(c);
   renderFooter(c);
   renderHeroCTA(c);
+  
+  if (c.countdown?.target) initCountdown(c.countdown.target);
   initCounter();
   
   console.log('✅ All sections rendered');
@@ -148,52 +165,32 @@ function renderNav(c) {
 }
 
 // ─── 3. HERO ────────────────────────────────────────────────────
-
 function renderHero(c) {
   const s = c.site || {};
-
   const title = document.getElementById('hero-title');
   const subtitle = document.getElementById('hero-subtitle');
   const sub = document.getElementById('hero-sub');
-
-  const label1 = document.getElementById('countdown-label1');
-  const badge1 = document.getElementById('hero-badge1');
-  const label2 = document.getElementById('countdown-label2');
   const badge2 = document.getElementById('hero-badge2');
+  const cdWrapper = document.getElementById('countdown-wrapper');
+  const cdLabel = document.getElementById('countdown-label');
+  const cdLabel2 = document.getElementById('countdown-label-2');
 
-  if (title) {
-    title.textContent = s.heroTitle || s.title || 'GRIYA ALEENA SEKARAN';
+  if (title) title.textContent = s.heroTitle || s.title || 'GRIYA ALEENA SEKARAN';
+  if (subtitle) subtitle.innerHTML = s.heroSubtitle || s.tagline || 'Kos Putri<br>UNIVERSITAS NEGERI SEMARANG';
+  if (sub) sub.textContent = s.heroSub || 'Fasilitas Lengkap. Harga Terjangkau.';
+  
+  if (badge2 && s.heroBadge2) {
+    badge2.innerHTML = `<span class="badge-dot"></span> ${s.heroBadge2}`;
   }
 
-  if (subtitle) {
-    subtitle.innerHTML =
-      s.heroSubtitle || s.tagline || 'Kos Putri<br>UNIVERSITAS NEGERI SEMARANG';
-  }
-
-  if (sub) {
-    sub.textContent = s.heroSub || 'Fasilitas Lengkap. Harga Terjangkau.';
-  }
-
-  if (label1) {
-    label1.textContent =
-      c.countdown?.label || 'Diskon Semesteran dan Tahunan';
-  }
-
-  if (badge1) {
-    badge1.textContent =
-      c.countdown?.badge1 || 'Booking dan pembayaran dilakukan di awal.';
-  }
-
-  if (label2) {
-    label2.textContent =
-      c.countdown?.label2 || 'Diskon Prestasi/Kurang Mampu *)';
-  }
-
-  if (badge2) {
-    badge2.textContent =
-      c.countdown?.badge2 ||
-      s.heroBadge2 ||
-      'Silakan baca syarat dan ketentuan di bawah.';
+  if (cdWrapper) {
+    if (c.countdown?.visible === false) {
+      cdWrapper.style.display = 'none';
+    } else {
+      cdWrapper.style.display = 'block';
+      if (cdLabel) cdLabel.textContent = c.countdown?.label || 'Diskon Early Bird Berakhir Dalam';
+      if (cdLabel2) cdLabel2.textContent = c.countdown?.label2 || 'Diskon Prestasi/Kurang Mampu *)';
+    }
   }
 }
 
@@ -311,7 +308,7 @@ function renderPricing(c) {
   const container = document.getElementById('harga-container');
 
   if (eye) eye.textContent = c.hargaEye || 'Harga Terjangkau';
-  if (title) title.innerHTML = c.hargaTitle || 'Dapatkan Diskon Semesteran, DIskon Tahunan, & Diskon Prestasi/Kurang Mampu';
+  if (title) title.innerHTML = c.hargaTitle || 'Dapatkan Diskon Early Bird & Diskon Prestasi/Kurang Mampu';
   if (desc) desc.textContent = c.hargaDesc || 'Pilih durasi yang sesuai kantong kamu. 1 Kamar untuk 1 Orang.';
 
   if (!container) return;
@@ -367,14 +364,14 @@ function buildPriceCard(data, type, emoji, badgeClass, version = 1) {
         <div class="price-segment">
           <div class="harga-durasi">Semesteran (${semesterMonths} Bulan)</div>
           <div class="price-calc-row">${semesterMonths} × ${formatRupiah(monthly)} = <span class="calc-base">${formatRupiah(semesterBase)}</span></div>
-          <div class="price-calc-row early">Diskon Semesteran: Potongan ${formatRupiah(semesterEB)} → <span class="calc-early">${formatRupiah(semesterBase - semesterEB)}</span></div>
+          <div class="price-calc-row early">Diskon Early Bird: Potongan ${formatRupiah(semesterEB)} → <span class="calc-early">${formatRupiah(semesterBase - semesterEB)}</span></div>
           <div class="price-calc-row spesial">Diskon Prestasi/Kurang Mampu: <a href="#kontak" class="btn-hubungi-kami">Chat untuk Info →</a></div>
         </div>
         <div class="price-sep"></div>
         <div class="price-segment">
           <div class="harga-durasi">Tahunan (${yearMonths} Bulan) <span class="hemat-tag">💡 Paling Hemat</span></div>
           <div class="price-calc-row">${yearMonths} × ${formatRupiah(monthly)} = <span class="calc-base">${formatRupiah(yearBase)}</span></div>
-          <div class="price-calc-row early">Diskon Tahunan: Potongan ${formatRupiah(yearEB)} → <span class="calc-early">${formatRupiah(yearBase - yearEB)}</span></div>
+          <div class="price-calc-row early">Diskon Early Bird: Potongan ${formatRupiah(yearEB)} → <span class="calc-early">${formatRupiah(yearBase - yearEB)}</span></div>
           <div class="price-calc-row spesial">Diskon Prestasi/Kurang Mampu: <a href="#kontak" class="btn-hubungi-kami">Chat untuk Info →</a></div>
         </div>
       </div>
@@ -397,14 +394,14 @@ function buildPriceCard(data, type, emoji, badgeClass, version = 1) {
         <div class="price-segment">
           <div class="harga-durasi">Semesteran (${semesterMonths} Bulan)</div>
           <div class="price-calc-row">${semesterMonths} × ${formatRupiah(monthly)} = <span class="calc-base">${formatRupiah(semesterBase)}</span></div>
-          <div class="price-calc-row early">Diskon Semesteran: Potongan ${formatRupiah(semesterEB)} → <span class="calc-early">${formatRupiah(semesterBase - semesterEB)}</span></div>
+          <div class="price-calc-row early">Diskon Early Bird: Potongan ${formatRupiah(semesterEB)} → <span class="calc-early">${formatRupiah(semesterBase - semesterEB)}</span></div>
           <div class="price-calc-row spesial">Diskon Prestasi/Kurang Mampu: Potongan ${formatRupiah(semesterSpecial)} → <span class="calc-spesial">${formatRupiah(semesterBase - semesterSpecial)}</span></div>
         </div>
         <div class="price-sep"></div>
         <div class="price-segment">
           <div class="harga-durasi">Tahunan (${yearMonths} Bulan) <span class="hemat-tag">💡 Paling Hemat</span></div>
           <div class="price-calc-row">${yearMonths} × ${formatRupiah(monthly)} = <span class="calc-base">${formatRupiah(yearBase)}</span></div>
-          <div class="price-calc-row early">Diskon Tahunan: Potongan ${formatRupiah(yearEB)} → <span class="calc-early">${formatRupiah(yearBase - yearEB)}</span></div>
+          <div class="price-calc-row early">Diskon Early Bird: Potongan ${formatRupiah(yearEB)} → <span class="calc-early">${formatRupiah(yearBase - yearEB)}</span></div>
           <div class="price-calc-row spesial">Diskon Prestasi/Kurang Mampu: Potongan ${formatRupiah(yearSpecial)} → <span class="calc-spesial">${formatRupiah(yearBase - yearSpecial)}</span></div>
         </div>
       </div>
@@ -427,16 +424,17 @@ function renderInfoHarianMingguan(c) {
   `;
 }
 // ─── 11. EARLY BIRD ────────────────────────────────────────────
-function renderEarlyBird() {
+function renderEarlyBird(c) {
   const container = document.getElementById('early-bird-container');
   if (!container) return;
 
+  // ✅ AUTO-GENERATE dari countdown.target
+  const req = getEarlyBirdRequirement(c.countdown?.target);
+
   container.innerHTML = `
     <div class="diskon-syarat">
-      <h4>🐦 Syarat Diskon Semesteran dan Diskon Tahunan</h4>
-      <div class="syarat-item">
-        <p>Booking kamar semesteran/tahunan dan pembayaran dilakukan di awal sebelum menempati.</p>
-      </div>
+      <h4>🐦 Syarat Diskon Early Bird</h4>
+      <div class="syarat-item"><p>${req}</p></div>
     </div>
   `;
 }
@@ -564,6 +562,33 @@ function renderFooter(c) {
   if (year) year.textContent = c.site?.footerYear || new Date().getFullYear();
 }
 
+// ─── COUNTDOWN ─────────────────────────────────────────────────
+function initCountdown(targetDate) {
+  const els = {
+    d: document.getElementById('cd-d'),
+    h: document.getElementById('cd-h'),
+    m: document.getElementById('cd-m'),
+    s: document.getElementById('cd-s')
+  };
+  if (!els.d || !els.h || !els.m || !els.s) return;
+
+  const target = new Date(targetDate);
+  if (isNaN(target.getTime())) return;
+
+  function update() {
+    const diff = target - new Date();
+    if (diff <= 0) {
+      Object.values(els).forEach(el => el.textContent = '00');
+      return;
+    }
+    els.d.textContent = String(Math.floor(diff / 86400000)).padStart(2, '0');
+    els.h.textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
+    els.m.textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+    els.s.textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+  }
+  update();
+  setInterval(update, 1000);
+}
 
 // ─── HIT COUNTER ──────────────────────────────────────────────
 async function initCounter() {
