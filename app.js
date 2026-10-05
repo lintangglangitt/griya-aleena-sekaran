@@ -49,7 +49,7 @@ function formatTanggalIndonesia(isoString) {
 
 // Generate syarat early bird dari countdown.target
 function getEarlyBirdRequirement(countdownTarget) {
-  if (!countdownTarget) return "Booking kamar sebelum batas waktu yang ditentukan.";
+  if (!countdownTarget) return "Booking kamar semesteran/tahunan dan pembayaran dilakukan di awal sebelum menempati.";
   return `Booking kamar sebelum ${formatTanggalIndonesia(countdownTarget)}.`;
 }
 
