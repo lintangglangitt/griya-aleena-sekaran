@@ -50,7 +50,7 @@ function formatTanggalIndonesia(isoString) {
 // Generate syarat early bird dari countdown.target
 function getEarlyBirdRequirement(countdownTarget) {
   if (!countdownTarget) return "Booking kamar sebelum batas waktu yang ditentukan.";
-  return `Booking kamar sebelum ${formatTanggalIndonesia(countdownTarget)}.`;
+  return "Booking semesteran dan tahunan dengan pembayaran langsung di awal.";
 }
 
 // ─── LOAD CONFIG ──────────────────────────────────────────────
@@ -321,7 +321,7 @@ function renderPricing(c) {
   const container = document.getElementById('harga-container');
 
   if (eye) eye.textContent = c.hargaEye || 'Harga Terjangkau';
-  if (title) title.innerHTML = c.hargaTitle || 'Dapatkan Diskon Early Bird & Diskon Prestasi/Kurang Mampu';
+  if (title) title.innerHTML = c.hargaTitle || 'Dapatkan Diskon Semesteran, Diskon tahunan, & Diskon Prestasi/Kurang Mampu';
   if (desc) desc.textContent = c.hargaDesc || 'Pilih durasi yang sesuai kantong kamu. 1 Kamar untuk 1 Orang.';
 
   if (!container) return;
@@ -377,14 +377,14 @@ function buildPriceCard(data, type, emoji, badgeClass, version = 1) {
         <div class="price-segment">
           <div class="harga-durasi">Semesteran (${semesterMonths} Bulan)</div>
           <div class="price-calc-row">${semesterMonths} × ${formatRupiah(monthly)} = <span class="calc-base">${formatRupiah(semesterBase)}</span></div>
-          <div class="price-calc-row early">Diskon Early Bird: Potongan ${formatRupiah(semesterEB)} → <span class="calc-early">${formatRupiah(semesterBase - semesterEB)}</span></div>
+          <div class="price-calc-row early">Diskon Semesteran: Potongan ${formatRupiah(semesterEB)} → <span class="calc-early">${formatRupiah(semesterBase - semesterEB)}</span></div>
           <div class="price-calc-row spesial">Diskon Prestasi/Kurang Mampu: <a href="#kontak" class="btn-hubungi-kami">Chat untuk Info →</a></div>
         </div>
         <div class="price-sep"></div>
         <div class="price-segment">
           <div class="harga-durasi">Tahunan (${yearMonths} Bulan) <span class="hemat-tag">💡 Paling Hemat</span></div>
           <div class="price-calc-row">${yearMonths} × ${formatRupiah(monthly)} = <span class="calc-base">${formatRupiah(yearBase)}</span></div>
-          <div class="price-calc-row early">Diskon Early Bird: Potongan ${formatRupiah(yearEB)} → <span class="calc-early">${formatRupiah(yearBase - yearEB)}</span></div>
+          <div class="price-calc-row early">Diskon Tahunan: Potongan ${formatRupiah(yearEB)} → <span class="calc-early">${formatRupiah(yearBase - yearEB)}</span></div>
           <div class="price-calc-row spesial">Diskon Prestasi/Kurang Mampu: <a href="#kontak" class="btn-hubungi-kami">Chat untuk Info →</a></div>
         </div>
       </div>
