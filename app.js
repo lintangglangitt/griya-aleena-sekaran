@@ -190,6 +190,7 @@ function renderHero(c) {
     cdWrapper.style.display = 'block';
     cdWrapper.innerHTML = `
       <div class="countdown-label">DISKON SEMESTERAN DAN TAHUNAN</div>
+      <div class="countdown-note">Silakan baca syarat dan ketentuan di bawah.</div>
       <div class="countdown-label-2">DISKON PRESTASI/KURANG MAMPU *)</div>
       <div class="countdown-note">Silakan baca syarat dan ketentuan di bawah.</div>
     `;
