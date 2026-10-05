@@ -93,8 +93,6 @@ function renderAll(c) {
   renderFloatingWA(c);
   renderFooter(c);
   renderHeroCTA(c);
-  
-  if (c.countdown?.target) initCountdown(c.countdown.target);
   initCounter();
   
   console.log('✅ All sections rendered');
