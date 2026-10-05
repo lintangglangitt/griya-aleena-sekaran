@@ -109,8 +109,8 @@
       "yearMonths": 12,
       "semesterEB": 200000,
       "yearEB": 500000,
-      "semesterSpecial": 400000,
-      "yearSpecial": 900000
+      "semesterSpecial": 300000,
+      "yearSpecial": 700000
     },
     "nonac": {
       "monthly": 800000,
@@ -118,8 +118,8 @@
       "yearMonths": 12,
       "semesterEB": 200000,
       "yearEB": 500000,
-      "semesterSpecial": 400000,
-      "yearSpecial": 900000
+      "semesterSpecial": 300000,
+      "yearSpecial": 700000
     }
   },
 
