@@ -517,6 +517,10 @@ section {
 }
 
 .diskon-syarat {
+
+  width: fit-content;
+  max-width: 100%;
+  margin: 24px auto 0;
   margin-top: 32px; background: rgba(245,166,35,0.07);
   border: 1.5px solid rgba(245,166,35,0.2); border-radius: 16px;
   padding: 24px;
