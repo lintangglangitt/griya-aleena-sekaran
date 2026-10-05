@@ -170,6 +170,7 @@ function renderHero(c) {
   const title = document.getElementById('hero-title');
   const subtitle = document.getElementById('hero-subtitle');
   const sub = document.getElementById('hero-sub');
+  const badge1 = document.getElementById('hero-badge1');
   const badge2 = document.getElementById('hero-badge2');
   const cdWrapper = document.getElementById('countdown-wrapper');
   const cdLabel = document.getElementById('countdown-label');
