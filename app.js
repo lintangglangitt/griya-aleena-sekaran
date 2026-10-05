@@ -172,25 +172,27 @@ function renderHero(c) {
   const sub = document.getElementById('hero-sub');
   const badge2 = document.getElementById('hero-badge2');
   const cdWrapper = document.getElementById('countdown-wrapper');
-  const cdLabel = document.getElementById('countdown-label');
-  const cdLabel2 = document.getElementById('countdown-label-2');
 
-  if (title) title.textContent = s.heroTitle || s.title || 'GRIYA ALEENA SEKARAN';
-  if (subtitle) subtitle.innerHTML = s.heroSubtitle || s.tagline || 'Kos Putri<br>UNIVERSITAS NEGERI SEMARANG';
-  if (sub) sub.textContent = s.heroSub || 'Fasilitas Lengkap. Harga Terjangkau.';
-  
-  if (badge2 && s.heroBadge2) {
-    badge2.innerHTML = `<span class="badge-dot"></span> ${s.heroBadge2}`;
+  if (title) {
+    title.textContent = s.heroTitle || s.title || 'GRIYA ALEENA SEKARAN';
+  }
+
+  if (subtitle) {
+    subtitle.innerHTML =
+      s.heroSubtitle || s.tagline || 'Kos Putri<br>UNIVERSITAS NEGERI SEMARANG';
+  }
+
+  if (sub) {
+    sub.textContent = s.heroSub || 'Fasilitas Lengkap. Harga Terjangkau.';
   }
 
   if (cdWrapper) {
-    if (c.countdown?.visible === false) {
-      cdWrapper.style.display = 'none';
-    } else {
-      cdWrapper.style.display = 'block';
-      if (cdLabel) cdLabel.textContent = c.countdown?.label || 'Diskon Early Bird Berakhir Dalam';
-      if (cdLabel2) cdLabel2.textContent = c.countdown?.label2 || 'Diskon Prestasi/Kurang Mampu *)';
-    }
+    cdWrapper.style.display = 'block';
+    cdWrapper.innerHTML = `
+      <div class="countdown-label">DISKON SEMESTERAN DAN TAHUNAN</div>
+      <div class="countdown-label-2">DISKON PRESTASI/KURANG MAMPU *)</div>
+      <div class="countdown-note">Silakan baca syarat dan ketentuan di bawah.</div>
+    `;
   }
 }
 
