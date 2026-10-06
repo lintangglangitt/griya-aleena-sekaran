@@ -2415,6 +2415,67 @@ async function exportLogsCsv() {
   }
 }
 
+
+// ─── Riwayat user ───
+function fmtWaktuJakarta(s) {
+  if (!s) return '—';
+  const d = new Date(String(s).replace(' ', 'T') + 'Z'); // D1 menyimpan UTC
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleString('id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta', hour12: false
+  }).replace(/\./g, ':').replace(',', '');
+}
+
+function ringkasUA(ua) {
+  ua = String(ua || '');
+  const browser = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome'
+    : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  const os = /iPhone|iPad/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android'
+    : /Mac OS/.test(ua) ? 'macOS' : /Windows/.test(ua) ? 'Windows' : '';
+  return os ? `${browser} · ${os}` : browser;
+}
+
+const ACTION_LABEL = {
+  create: '➕ Menambah', update: '✏️ Mengubah', delete: '🗑️ Menghapus',
+  upload: '📎 Upload', import: '⬆ Import', logout: '🚪 Logout',
+};
+const ENTITY_LABEL = {
+  occupancy: 'data penyewa', room: 'kamar', user: 'user', file: 'file dokumen', import: 'CSV',
+};
+
+async function loadUserHistory(userId, panel) {
+  panel.innerHTML = '<div class="analytics-loading">⏳ Memuat riwayat...</div>';
+  try {
+    const { logins = [], activities = [] } = await api(`/users/${userId}/history`);
+
+    const loginHtml = logins.length
+      ? logins.map(l => `
+          <div class="uh-row">
+            <span>${escapeHtml(fmtWaktuJakarta(l.logged_at))}</span>
+            <small>${escapeHtml(l.ip || '—')} · ${escapeHtml(ringkasUA(l.user_agent))}</small>
+          </div>`).join('')
+      : '<div class="analytics-empty">Belum ada riwayat login</div>';
+
+    const actHtml = activities.length
+      ? activities.map(a => `
+          <div class="uh-row">
+            <span>${escapeHtml(ACTION_LABEL[a.action] || a.action)}
+              ${escapeHtml(ENTITY_LABEL[a.entity] || a.entity || '')}
+              ${a.detail ? `<strong>${escapeHtml(a.detail)}</strong>` : ''}</span>
+            <small>${escapeHtml(fmtWaktuJakarta(a.created_at))}</small>
+          </div>`).join('')
+      : '<div class="analytics-empty">Belum ada aktivitas</div>';
+
+    panel.innerHTML = `
+      <div class="uh-block"><h5>🔑 10 Login Terakhir</h5>${loginHtml}</div>
+      <div class="uh-block"><h5>🕘 Aktivitas Terakhir</h5>${actHtml}</div>
+    `;
+  } catch (err) {
+    panel.innerHTML = `<p style="color:#e74c3c;font-size:0.85rem;">${escapeHtml(err.message)}</p>`;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════
 // USERS
 // ═══════════════════════════════════════════════════════════
@@ -2427,16 +2488,32 @@ async function renderUsersList() {
   try {
     const { users } = await api('/users');
     wrap.innerHTML = users.map(u => `
-      <div class="user-item">
-        <div class="u-info">
-          <strong>${escapeHtml(u.username)}</strong>
-          <small>${escapeHtml(u.nama_lengkap || '')} · ${escapeHtml(u.role)}</small>
+      <div class="user-wrap">
+        <div class="user-item">
+          <div class="u-info">
+            <strong>${escapeHtml(u.username)}</strong>
+            <small>${escapeHtml(u.nama_lengkap || '')} · ${escapeHtml(u.role)}</small>
+          </div>
+          <div class="btn-row">
+            <button class="btn-icon" data-history="${u.id}" title="Riwayat login & aktivitas">🕘</button>
+            ${u.username !== USER.username
+              ? `<button class="btn-icon danger" data-deluser="${u.id}" title="Hapus">🗑️</button>`
+              : '<small style="color:#5a7373;align-self:center;">(Anda)</small>'}
+          </div>
         </div>
-        ${u.username !== USER.username
-          ? `<button class="btn-icon danger" data-deluser="${u.id}" title="Hapus">🗑️</button>`
-          : '<small style="color:#5a7373;">(Anda)</small>'}
+        <div class="user-history" id="uh-${u.id}" style="display:none;"></div>
       </div>
     `).join('');
+
+    wrap.querySelectorAll('[data-history]').forEach(b =>
+      b.addEventListener('click', () => {
+        const panel = document.getElementById(`uh-${b.dataset.history}`);
+        const open = panel.style.display !== 'none';
+        wrap.querySelectorAll('.user-history').forEach(p => p.style.display = 'none');
+        if (open) return;
+        panel.style.display = 'block';
+        loadUserHistory(b.dataset.history, panel);
+      }));
 
     wrap.querySelectorAll('[data-deluser]').forEach(b =>
       b.addEventListener('click', async () => {
@@ -2450,7 +2527,6 @@ async function renderUsersList() {
     wrap.innerHTML = `<p style="color:#e74c3c;">${escapeHtml(err.message)}</p>`;
   }
 }
-
 // ═══════════════════════════════════════════════════════════
 // LOGOUT
 // ═══════════════════════════════════════════════════════════
