@@ -1026,6 +1026,7 @@ function lampiranImgLoaded(img) {
 
 // Dipanggil inline oleh <img onerror>: coba alternatif, kalau habis tampilkan pesan
 function lampiranImgError(img) {
+  img.dataset.tried = (img.dataset.tried ? img.dataset.tried + ' | ' : '') + img.getAttribute('src');
   const alts = (img.dataset.alts || '').split('|').filter(Boolean);
   if (alts.length) {
     img.dataset.alts = alts.slice(1).join('|');
@@ -1033,7 +1034,10 @@ function lampiranImgError(img) {
     return;
   }
   img.style.display = 'none';
-  img.insertAdjacentHTML('afterend', '<div class="lampiran-kosong">Gagal memuat gambar</div>');
+  const debug = img.dataset.tried.includes('|')
+    ? `<br><small>Dicoba: ${escapeHtml(img.dataset.tried)}</small>` : '';
+  img.insertAdjacentHTML('afterend',
+    `<div class="lampiran-kosong">Gagal memuat gambar${debug}</div>`);
 }
 
 function lampiranItem(no, label, url, alts = []) {
@@ -1075,19 +1079,6 @@ function buildLampiranPage(o) {
   `;
 }
 
-function buildLampiranPage(o) {
-  return `
-    <div class="lampiran-page">
-      <h2>Lampiran Dokumen</h2>
-      <div class="lampiran-grid">
-        ${lampiranItem(1, 'KTP/SIM Pemilik', KTP_PEMILIK_CANDIDATES)}
-        ${lampiranItem(2, 'KTP/SIM Penyewa', o.file_ktp_penyewa)}
-        ${lampiranItem(3, 'KTP/SIM Orang Tua/Wali/Kontak Darurat', o.file_ktp_ortu)}
-        ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
-      </div>
-    </div>
-  `;
-}
 
 // ═══════════════════════════════════════════════════════════
 // PERJANJIAN
