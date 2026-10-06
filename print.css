@@ -413,17 +413,25 @@
   padding-top: 24px;
   border-top: 2px dashed #c5d4d4;
 }
+
 .lampiran-grid {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8mm 0;
+  margin: 0 -4mm;
 }
 .lampiran-item {
+  flex: 0 0 85.6mm;
+  width: 85.6mm;
+  box-sizing: border-box;
   text-align: center;
   break-inside: avoid;
   page-break-inside: avoid;
 }
+
 .lampiran-label {
   font-size: 0.8rem;
   font-weight: 700;
