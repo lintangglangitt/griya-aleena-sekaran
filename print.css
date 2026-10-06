@@ -414,14 +414,13 @@
   border-top: 2px dashed #c5d4d4;
 }
 .lampiran-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 16px;
 }
 .lampiran-item {
-  border: 1px solid #e3ebeb;
-  border-radius: 8px;
-  padding: 10px;
+  text-align: center;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -429,24 +428,25 @@
   font-size: 0.8rem;
   font-weight: 700;
   color: #1a5c5c;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.3;
-  min-height: 2.1em;
 }
 .lampiran-foto {
-  height: 8cm;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: #f4f7f7;
-  border-radius: 6px;
-  overflow: hidden;
 }
-.lampiran-foto img {
-  max-width: 100%;
-  max-height: 100%;
+
+/* Ukuran kartu ID-1: 85,60 x 53,98 mm */
+.lampiran-img {
+  display: block;
+  box-sizing: border-box;
+  border: 1px solid #c5d4d4;
   object-fit: contain;
+  background: #fff;
 }
+.lampiran-img.landscape { width: 85.6mm; height: 53.98mm; }
+.lampiran-img.portrait  { width: 53.98mm; height: 85.6mm; }
+
 .lampiran-kosong {
   padding: 12px;
   text-align: center;
@@ -671,7 +671,8 @@
     color-adjust: exact !important;
   }
 
-    /* ─── HALAMAN LAMPIRAN: paksa halaman baru ─── */
+
+    /* ─── HALAMAN LAMPIRAN: halaman baru, grid 2 kolom ─── */
   .perjanjian-wrapper .lampiran-page {
     page-break-before: always !important;
     break-before: page !important;
@@ -679,18 +680,30 @@
     padding-top: 0 !important;
     border-top: 0 !important;
   }
-  /* Override aturan "img max 60px" supaya foto KTP tidak mengecil */
-  .perjanjian-wrapper .lampiran-foto img {
-    max-width: 100% !important;
-    max-height: 100% !important;
-    width: auto !important;
-    height: auto !important;
+  .perjanjian-wrapper .lampiran-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 85.6mm) !important;
+    justify-content: center !important;
+    align-items: start !important;
+    column-gap: 0 !important;
+    row-gap: 8mm !important;
+  }
+  /* Override aturan lama "img max 60px" supaya ukuran kartu tetap */
+  .perjanjian-wrapper .lampiran-foto img.lampiran-img {
+    max-width: none !important;
+    max-height: none !important;
     object-fit: contain !important;
   }
-  .lampiran-foto {
-    height: 8cm !important;
-    background: none !important;
+  .perjanjian-wrapper .lampiran-foto img.lampiran-img.landscape {
+    width: 85.6mm !important;
+    height: 53.98mm !important;
   }
+  .perjanjian-wrapper .lampiran-foto img.lampiran-img.portrait {
+    width: 53.98mm !important;
+    height: 85.6mm !important;
+  }
+
+  
   /* A4 dengan margin 1.5cm */
   @page {
     size: A4;
