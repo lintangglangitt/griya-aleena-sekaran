@@ -1002,13 +1002,41 @@ function openKuitansi(id) {
 // ═══════════════════════════════════════════════════════════
 // HALAMAN LAMPIRAN KTP / KTM (untuk Perjanjian)
 // ═══════════════════════════════════════════════════════════
-const KTP_PEMILIK_URL = 'foto/ktp_pemilik.jpg';
+// Dicoba berurutan sampai ada yang berhasil dimuat
+const KTP_PEMILIK_CANDIDATES = [
+  'foto/ktp_pemilik.jpg',
+  'foto/ktp_pemilik.jpeg',
+  'foto/ktp_pemilik.png',
+  'foto/ktp_pemilik.JPG',
+  'foto/ktp_pemilik.JPEG',
+  'foto/ktp_pemilik.PNG',
+  'foto/ktp_pemilik.webp',
+];
 
 function isPdfUrl(url) {
   return /\.pdf(\?|#|$)/i.test(String(url || ''));
 }
 
-function lampiranItem(no, label, url) {
+// Dipanggil inline oleh <img onload>: deteksi landscape / portrait
+function lampiranImgLoaded(img) {
+  const portrait = img.naturalHeight > img.naturalWidth;
+  img.classList.toggle('portrait', portrait);
+  img.classList.toggle('landscape', !portrait);
+}
+
+// Dipanggil inline oleh <img onerror>: coba alternatif, kalau habis tampilkan pesan
+function lampiranImgError(img) {
+  const alts = (img.dataset.alts || '').split('|').filter(Boolean);
+  if (alts.length) {
+    img.dataset.alts = alts.slice(1).join('|');
+    img.src = alts[0];
+    return;
+  }
+  img.style.display = 'none';
+  img.insertAdjacentHTML('afterend', '<div class="lampiran-kosong">Gagal memuat gambar</div>');
+}
+
+function lampiranItem(no, label, url, alts = []) {
   let body;
   if (!url) {
     body = `<div class="lampiran-kosong">Belum diunggah</div>`;
@@ -1016,13 +1044,32 @@ function lampiranItem(no, label, url) {
     body = `<div class="lampiran-kosong">File berformat PDF, tidak dapat ditampilkan di sini.<br>
       <a href="${escapeHtml(url)}" target="_blank">Buka file</a></div>`;
   } else {
-    body = `<img src="${escapeHtml(url)}" alt="${escapeHtml(label)}" loading="eager"
-      onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=&quot;lampiran-kosong&quot;>Gagal memuat gambar</div>')">`;
+    body = `<img class="lampiran-img landscape"
+      src="${escapeHtml(url)}"
+      data-alts="${escapeHtml(alts.join('|'))}"
+      alt="${escapeHtml(label)}"
+      onload="lampiranImgLoaded(this)"
+      onerror="lampiranImgError(this)">`;
   }
   return `
     <div class="lampiran-item">
       <div class="lampiran-label">${no}. ${escapeHtml(label)}</div>
       <div class="lampiran-foto">${body}</div>
+    </div>
+  `;
+}
+
+function buildLampiranPage(o) {
+  const [ktpPemilik, ...ktpPemilikAlts] = KTP_PEMILIK_CANDIDATES;
+  return `
+    <div class="lampiran-page">
+      <h2>Lampiran Dokumen</h2>
+      <div class="lampiran-grid">
+        ${lampiranItem(1, 'KTP/SIM Pemilik', ktpPemilik, ktpPemilikAlts)}
+        ${lampiranItem(2, 'KTP/SIM Penyewa', o.file_ktp_penyewa)}
+        ${lampiranItem(3, 'KTP/SIM Orang Tua/Wali/Kontak Darurat', o.file_ktp_ortu)}
+        ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
+      </div>
     </div>
   `;
 }
