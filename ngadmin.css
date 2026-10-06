@@ -1114,6 +1114,37 @@ tbody tr.akan-habis td:first-child {
   background: #c0392b;
 }
 
+.user-wrap { margin-bottom: 8px; }
+.user-wrap .user-item { margin-bottom: 0; }
+
+.user-history {
+  margin: 6px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f8fbfb;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.uh-block + .uh-block { margin-top: 14px; }
+.uh-block h5 {
+  margin-bottom: 6px;
+  color: var(--teal);
+  font-family: "Sora", sans-serif;
+  font-size: 0.8rem;
+}
+.uh-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eaf0f0;
+  font-size: 0.8rem;
+}
+.uh-row:last-child { border-bottom: 0; }
+.uh-row small { color: var(--muted); white-space: nowrap; }
+
 /* ---------- Users ---------- */
 .user-item {
   display: flex;
