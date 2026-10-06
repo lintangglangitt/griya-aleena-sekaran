@@ -1080,7 +1080,7 @@ function buildLampiranPage(o) {
     <div class="lampiran-page">
       <h2>Lampiran Dokumen</h2>
       <div class="lampiran-grid">
-        ${lampiranItem(1, 'KTP/SIM Pemilik', KTP_PEMILIK_URL)}
+        ${lampiranItem(1, 'KTP/SIM Pemilik', KTP_PEMILIK_CANDIDATES)}
         ${lampiranItem(2, 'KTP/SIM Penyewa', o.file_ktp_penyewa)}
         ${lampiranItem(3, 'KTP/SIM Orang Tua/Wali/Kontak Darurat', o.file_ktp_ortu)}
         ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
