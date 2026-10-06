@@ -152,12 +152,19 @@ function getHariIndonesia() {
   const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   return hari[new Date().getDay()];
 }
-function printDoc(namaFile) {
+
+async function printDoc(namaFile) {
+  const imgs = [...document.querySelectorAll('.invoice-modal.open img')];
+  await Promise.all(imgs.map(img =>
+    img.complete ? null : new Promise(res => { img.onload = img.onerror = res; })
+  ));
+
   const originalTitle = document.title;
   document.title = namaFile;
   window.print();
   setTimeout(() => { document.title = originalTitle; }, 1500);
 }
+
 
 // ═══════════════════════════════════════════════════════════
 // MODAL HELPERS — SIMPLE & ROBUST
@@ -991,6 +998,49 @@ function openKuitansi(id) {
   openModalExclusive(document.getElementById('kuitansi-modal'));
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// HALAMAN LAMPIRAN KTP / KTM (untuk Perjanjian)
+// ═══════════════════════════════════════════════════════════
+const KTP_PEMILIK_URL = 'foto/ktp_pemilik.jpg';
+
+function isPdfUrl(url) {
+  return /\.pdf(\?|#|$)/i.test(String(url || ''));
+}
+
+function lampiranItem(no, label, url) {
+  let body;
+  if (!url) {
+    body = `<div class="lampiran-kosong">Belum diunggah</div>`;
+  } else if (isPdfUrl(url)) {
+    body = `<div class="lampiran-kosong">File berformat PDF, tidak dapat ditampilkan di sini.<br>
+      <a href="${escapeHtml(url)}" target="_blank">Buka file</a></div>`;
+  } else {
+    body = `<img src="${escapeHtml(url)}" alt="${escapeHtml(label)}" loading="eager"
+      onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=&quot;lampiran-kosong&quot;>Gagal memuat gambar</div>')">`;
+  }
+  return `
+    <div class="lampiran-item">
+      <div class="lampiran-label">${no}. ${escapeHtml(label)}</div>
+      <div class="lampiran-foto">${body}</div>
+    </div>
+  `;
+}
+
+function buildLampiranPage(o) {
+  return `
+    <div class="lampiran-page">
+      <h2>Lampiran Dokumen</h2>
+      <div class="lampiran-grid">
+        ${lampiranItem(1, 'KTP/SIM Pemilik', KTP_PEMILIK_URL)}
+        ${lampiranItem(2, 'KTP/SIM Penyewa', o.file_ktp_penyewa)}
+        ${lampiranItem(3, 'KTP/SIM Orang Tua/Wali/Kontak Darurat', o.file_ktp_ortu)}
+        ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
+      </div>
+    </div>
+  `;
+}
+
 // ═══════════════════════════════════════════════════════════
 // PERJANJIAN
 // ═══════════════════════════════════════════════════════════
@@ -1203,6 +1253,10 @@ function openPerjanjian(id) {
     <div class="inv-footer">
       Perjanjian ini dicetak otomatis dari sistem Griya Aleena. Wajib ditandatangani oleh kedua pihak.
     </div>
+
+
+${buildLampiranPage(o)}   <!-- ⬅️ TAMBAH -->
+
 
     <div class="invoice-actions">
       <button class="inv-btn-close" data-close-modal>Tutup</button>
