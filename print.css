@@ -682,14 +682,23 @@
     padding-top: 0 !important;
     border-top: 0 !important;
   }
+
   .perjanjian-wrapper .lampiran-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, 85.6mm) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
     justify-content: center !important;
-    align-items: start !important;
-    column-gap: 0 !important;
-    row-gap: 8mm !important;
+    align-items: flex-start !important;
+    gap: 8mm 0 !important;
+    margin: 0 -4mm !important;      /* lebar jadi 178 mm, cukup untuk 2 x 85,6 mm */
+    width: auto !important;
   }
+  .perjanjian-wrapper .lampiran-item {
+    flex: 0 0 85.6mm !important;
+    width: 85.6mm !important;
+    box-sizing: border-box !important;
+  }
+  
   /* Override aturan lama "img max 60px" supaya ukuran kartu tetap */
   .perjanjian-wrapper .lampiran-foto img.lampiran-img {
     max-width: none !important;
