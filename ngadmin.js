@@ -809,12 +809,14 @@ function renderTable() {
         <td><span class="badge ${badgeClass}">${escapeHtml(o.status_bayar)}</span></td>
         <td>
           <div class="btn-row">
-            <button class="btn-icon" data-invoice="${o.id}" title="Print Invoice">🧾</button>
-            <button class="btn-icon" data-kuitansi="${o.id}" title="Print Kuitansi">💰</button>
-            <button class="btn-icon" data-perjanjian="${o.id}" title="Print Perjanjian">📄</button>
-            <button class="btn-icon" data-duplicate="${o.id}" title="Duplikasi">📑</button>
-            <button class="btn-icon" data-edit="${o.id}" title="Edit">✏️</button>
-            <button class="btn-icon danger" data-del="${o.id}" title="Hapus">🗑️</button>
+            <div class="btn-row">
+              <button class="btn-icon" data-invoice="${o.id}" title="Print Invoice">🧾</button>
+              <button class="btn-icon" data-kuitansi="${o.id}" title="Print Kuitansi">💵</button>
+              <button class="btn-icon" data-perjanjian="${o.id}" title="Print Perjanjian">🤝</button>
+              <button class="btn-icon" data-duplicate="${o.id}" title="Duplikasi / Perpanjang">🆕</button>
+              <button class="btn-icon" data-edit="${o.id}" title="Edit">✏️</button>
+              <button class="btn-icon danger" data-del="${o.id}" title="Hapus">🗑️</button>
+            </div>
           </div>
         </td>
       </tr>
