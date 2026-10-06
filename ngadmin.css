@@ -897,6 +897,18 @@ tbody tr.akan-habis td:first-child {
   border-color: var(--teal-light);
 }
 
+#f-nama, #f-ktp, #f-alamat, #f-hp, #f-kampus,
+#f-nama-ortu, #f-ktp-ortu, #f-alamat-ortu, #f-hp-ortu, #f-hubungan {
+  text-transform: uppercase;
+}
+/* Placeholder tetap huruf biasa */
+#f-nama::placeholder, #f-ktp::placeholder, #f-alamat::placeholder,
+#f-hp::placeholder, #f-kampus::placeholder, #f-nama-ortu::placeholder,
+#f-ktp-ortu::placeholder, #f-alamat-ortu::placeholder,
+#f-hp-ortu::placeholder, #f-hubungan::placeholder {
+  text-transform: none;
+}
+
 .modal-card small {
   display: block;
   margin-top: 4px;
