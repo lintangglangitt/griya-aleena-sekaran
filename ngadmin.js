@@ -1735,11 +1735,17 @@ async function handleSaveRoom(e) {
   }
 }
 
+
 // ═══════════════════════════════════════════════════════════
 // SUBMIT FORM OKUPANSI
 // ═══════════════════════════════════════════════════════════
 document.getElementById('form-occ').addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  // Ambil nilai field, trim, ubah ke huruf kapital; kosong → null
+  const up = (id) =>
+    document.getElementById(id).value.trim().toUpperCase() || null;
+
   const payload = {
     room_id: Number(document.getElementById('f-room').value),
     tipe_sewa: document.getElementById('f-tipe').value,
@@ -1748,20 +1754,28 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
     harga_total: Number(document.getElementById('f-harga').value),
     link_kontrak: null,
     status_bayar: document.getElementById('f-status').value,
-    nama_penyewa: document.getElementById('f-nama').value.trim(),
-    no_ktp: document.getElementById('f-ktp').value.trim() || null,
-    alamat_penyewa: document.getElementById('f-alamat').value.trim() || null,
-    no_hp: document.getElementById('f-hp').value.trim() || null,
-    asal_kampus: document.getElementById('f-kampus').value.trim() || null,
-    nama_ortu: document.getElementById('f-nama-ortu').value.trim() || null,
-    no_ktp_ortu: document.getElementById('f-ktp-ortu').value.trim() || null,
-    alamat_ortu: document.getElementById('f-alamat-ortu').value.trim() || null,
-    no_hp_ortu: document.getElementById('f-hp-ortu').value.trim() || null,
-    hubungan_keluarga: document.getElementById('f-hubungan').value.trim() || null,
+
+    // Data penyewa (kapital)
+    nama_penyewa: up('f-nama'),
+    no_ktp: up('f-ktp'),
+    alamat_penyewa: up('f-alamat'),
+    no_hp: up('f-hp'),
+    asal_kampus: up('f-kampus'),
+
+    // Data orang tua/wali (kapital)
+    nama_ortu: up('f-nama-ortu'),
+    no_ktp_ortu: up('f-ktp-ortu'),
+    alamat_ortu: up('f-alamat-ortu'),
+    no_hp_ortu: up('f-hp-ortu'),
+    hubungan_keluarga: up('f-hubungan'),
+
+    // Link file (tidak diubah)
     file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
     file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
     file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
     file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
+
+    // Catatan tetap apa adanya
     catatan: document.getElementById('f-catatan').value.trim() || null,
   };
 
@@ -1799,7 +1813,7 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
     fillYearFilter();
     renderRooms();
     renderTable();
-    renderRiwayatKamar();   // ⬅️ TAMBAH
+    renderRiwayatKamar();
   } catch (err) {
     alert('Gagal simpan: ' + err.message);
   }
@@ -2664,6 +2678,29 @@ document.addEventListener('change', async (e) => {
     if (file) await uploadDokumen(file, cfg);
     return;
   }
+});
+
+
+// ═══════════════════════════════════════════════════════════
+// AUTO KAPITAL untuk field data penyewa & orang tua
+// ═══════════════════════════════════════════════════════════
+const UPPERCASE_FIELDS = [
+  'f-nama', 'f-ktp', 'f-alamat', 'f-hp', 'f-kampus',
+  'f-nama-ortu', 'f-ktp-ortu', 'f-alamat-ortu', 'f-hp-ortu', 'f-hubungan',
+];
+
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (!UPPERCASE_FIELDS.includes(el.id)) return;
+
+  const upper = el.value.toUpperCase();
+  if (el.value === upper) return;
+
+  // Pertahankan posisi kursor saat mengetik di tengah teks
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  el.value = upper;
+  try { el.setSelectionRange(start, end); } catch {}
 });
 
 // ═══════════════════════════════════════════════════════════
