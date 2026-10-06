@@ -533,6 +533,10 @@ function renderMonthlyIncome() {
   );
 
   OCCS.forEach(o => {
+
+     // Hanya hitung yang sudah lunas (DP dan Belum tidak dihitung)
+    if (o.status_bayar !== 'lunas') return;   // ⬅️ TAMBAH
+    
     const match = String(o.tanggal_mulai || '').match(/^(\d{4})-(\d{2})-\d{2}$/);
     if (!match) return;
 
