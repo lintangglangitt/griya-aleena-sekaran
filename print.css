@@ -524,7 +524,9 @@
   .table-head,
   .table-actions,
   .table-wrap,
-  .rooms-grid {
+  .rooms-grid,
+  .footer-links
+  {
     display: none !important;
   }
 
