@@ -1075,6 +1075,10 @@ function buildLampiranPage(o) {
         ${lampiranItem(3, 'KTP/SIM Orang Tua/Wali/Kontak Darurat', o.file_ktp_ortu)}
         ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
       </div>
+      <div class="inv-footer">
+        Perjanjian ini dicetak otomatis dari sistem Griya Aleena. Wajib ditandatangani oleh kedua pihak.
+      </div>
+      
     </div>
   `;
 }
