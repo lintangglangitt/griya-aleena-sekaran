@@ -406,6 +406,55 @@
   color: #1a5c5c;
 }
 
+
+/* ─── HALAMAN LAMPIRAN KTP/KTM ─── */
+.lampiran-page {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 2px dashed #c5d4d4;
+}
+.lampiran-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.lampiran-item {
+  border: 1px solid #e3ebeb;
+  border-radius: 8px;
+  padding: 10px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.lampiran-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1a5c5c;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  min-height: 2.1em;
+}
+.lampiran-foto {
+  height: 8cm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f7f7;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.lampiran-foto img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.lampiran-kosong {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: #8b9494;
+}
+
 /* ═══════════════════════════════════════════════ */
 /* ─── SAAT PRINT ─── */
 /* ═══════════════════════════════════════════════ */
@@ -620,6 +669,27 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
+  }
+
+    /* ─── HALAMAN LAMPIRAN: paksa halaman baru ─── */
+  .perjanjian-wrapper .lampiran-page {
+    page-break-before: always !important;
+    break-before: page !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: 0 !important;
+  }
+  /* Override aturan "img max 60px" supaya foto KTP tidak mengecil */
+  .perjanjian-wrapper .lampiran-foto img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+  .lampiran-foto {
+    height: 8cm !important;
+    background: none !important;
   }
   /* A4 dengan margin 1.5cm */
   @page {
