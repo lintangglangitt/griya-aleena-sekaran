@@ -1303,7 +1303,7 @@ ${buildLampiranPage(o)}   <!-- ⬅️ TAMBAH -->
 
     <div class="invoice-actions">
       <button class="inv-btn-close" data-close-modal>Tutup</button>
-      <button class="inv-btn-print" data-filename="Perjanjian - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
+      <button class="inv-btn-print" data-filename="Perjanjian & Tata Tertib - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
