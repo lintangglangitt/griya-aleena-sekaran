@@ -1291,10 +1291,10 @@ function openPerjanjian(id) {
     <div class="pj-lampiran">
       <h3>Lampiran:</h3>
       <ol type="a">
-        <li>Fotokopi KTP/SIM Pemilik.</li>
-        <li>Fotokopi KTP/SIM Penyewa.</li>
-        <li>Fotokopi KTP/SIM Orang Tua/Wali/Kontak Darurat.</li>
-        <li>Fotokopi Kartu Tanda Mahasiswa Penyewa.</li>
+        <li>Foto KTP/SIM Pemilik.</li>
+        <li>Foto KTP/SIM Penyewa.</li>
+        <li>Foto KTP/SIM Orang Tua/Wali/Kontak Darurat.</li>
+        <li>Foto Kartu Tanda Mahasiswa Penyewa.</li>
       </ol>
     </div>
 
