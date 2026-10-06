@@ -1062,7 +1062,8 @@ function lampiranItem(no, label, url, alts = []) {
 function buildLampiranPage(o) {
   const [ktpPemilik, ...ktpPemilikAlts] = KTP_PEMILIK_CANDIDATES;
   return `
-    <div class="lampiran-page">
+
+  <div class="lampiran-page" style="break-before:page;page-break-before:always;">
       <h2>Lampiran Dokumen</h2>
       <div class="lampiran-grid">
         ${lampiranItem(1, 'KTP/SIM Pemilik', ktpPemilik, ktpPemilikAlts)}
