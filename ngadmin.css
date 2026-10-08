@@ -1684,3 +1684,8 @@ tbody tr.akan-habis td:first-child {
     justify-content: center;
   }
 }
+.income-total-row td {
+  background: #f4f7f7;
+  border-top: 2px solid var(--teal);
+  color: var(--teal);
+}
