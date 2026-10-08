@@ -515,7 +515,7 @@ function renderMonthlyIncome() {
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
 
-  // Tahun mulai dari 2025 dan bertambah sampai tahun terbaru di data.
+  // Tahun mulai dari 2025 sampai tahun terbaru di data.
   const yearsInData = OCCS
     .map(o => String(o.tanggal_mulai || '').match(/^(\d{4})-\d{2}-\d{2}$/))
     .filter(Boolean)
@@ -527,16 +527,14 @@ function renderMonthlyIncome() {
     (_, i) => 2025 + i
   );
 
-  // Jumlahkan harga berdasarkan tahun dan bulan tanggal mulai kontrak.
   const totals = Object.fromEntries(
     years.map(year => [year, Array(12).fill(0)])
   );
 
   OCCS.forEach(o => {
+    // Hanya hitung yang sudah lunas
+    if (o.status_bayar !== 'lunas') return;
 
-     // Hanya hitung yang sudah lunas (DP dan Belum tidak dihitung)
-    if (o.status_bayar !== 'lunas') return;   // ⬅️ TAMBAH
-    
     const match = String(o.tanggal_mulai || '').match(/^(\d{4})-(\d{2})-\d{2}$/);
     if (!match) return;
 
@@ -554,7 +552,6 @@ function renderMonthlyIncome() {
     }
   });
 
-  // Buat ulang header agar kolom tahun mengikuti data.
   const thead = table.querySelector('thead');
   if (thead) {
     thead.innerHTML = `
@@ -576,13 +573,13 @@ function renderMonthlyIncome() {
     </tr>
   `).join('');
 
-  // Baris total tahunan + total keseluruhan di kolom Bulan.
+  // Baris total: kolom Bulan = total keseluruhan semua tahun
   const yearTotals = years.map(year =>
     totals[year].reduce((sum, amount) => sum + amount, 0)
   );
   const grandTotal = yearTotals.reduce((sum, amount) => sum + amount, 0);
 
-  const totalRow = `
+  tbody.insertAdjacentHTML('beforeend', `
     <tr class="income-total-row">
       <td><strong>Total</strong></td>
       <td><strong>${escapeHtml(rupiahFull(grandTotal))}</strong></td>
@@ -590,9 +587,8 @@ function renderMonthlyIncome() {
         `<td><strong>${escapeHtml(rupiahFull(total))}</strong></td>`
       ).join('')}
     </tr>
-  `;
-
-  tbody.insertAdjacentHTML('beforeend', totalRow);
+  `);
+}
 
 // ═══════════════════════════════════════════════════════════
 // BADGE ANALYTICS
