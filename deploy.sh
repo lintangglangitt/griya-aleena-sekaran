@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  deploy.sh — Alur kerja aman dev & prod (v2)
+#  deploy.sh — Alur kerja aman dev & prod (v2.5)
 #  Repo: griya-aleena-sekaran (dev) & griya-aleena (prod)
 # ============================================================
 
