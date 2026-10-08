@@ -576,20 +576,23 @@ function renderMonthlyIncome() {
     </tr>
   `).join('');
 
-  // Baris total tahunan.
+  // Baris total tahunan + total keseluruhan di kolom Bulan.
+  const yearTotals = years.map(year =>
+    totals[year].reduce((sum, amount) => sum + amount, 0)
+  );
+  const grandTotal = yearTotals.reduce((sum, amount) => sum + amount, 0);
+
   const totalRow = `
     <tr class="income-total-row">
-      <td colspan="2"><strong>Total</strong></td>
-      ${years.map(year => {
-        const total = totals[year].reduce((sum, amount) => sum + amount, 0);
-        return `<td><strong>${escapeHtml(rupiahFull(total))}</strong></td>`;
-      }).join('')}
+      <td><strong>Total</strong></td>
+      <td><strong>${escapeHtml(rupiahFull(grandTotal))}</strong></td>
+      ${yearTotals.map(total =>
+        `<td><strong>${escapeHtml(rupiahFull(total))}</strong></td>`
+      ).join('')}
     </tr>
   `;
 
   tbody.insertAdjacentHTML('beforeend', totalRow);
-}
-
 
 // ═══════════════════════════════════════════════════════════
 // BADGE ANALYTICS
