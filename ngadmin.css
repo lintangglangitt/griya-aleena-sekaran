@@ -723,13 +723,15 @@ tbody tr.akan-habis {
   background: #ffebee !important;
 }
 
-tbody tr.akan-habis td {
-  font-weight: 600;
+tbody tr.akan-habis {
+  background: #ffebee !important;
 }
 
-tbody tr.akan-habis td strong {
-  color: #c0392b;
-  font-weight: 800;
+tbody tr.akan-habis td,
+tbody tr.akan-habis td strong,
+tbody tr.akan-habis td a {
+  color: #c0392b !important;
+  font-weight: 700;
 }
 
 tbody tr.akan-habis td:first-child {
