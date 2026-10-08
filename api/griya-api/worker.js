@@ -36,26 +36,35 @@ export default {
         res = await handleLogout(request, env);
       } else if (path === '/auth/me' && request.method === 'GET') {
         res = await handleMe(request, env);
-     } else if (path === '/rooms' && request.method === 'GET') {
-  res = await withAuth(request, env, () => handleGetRooms(env));
-} else if (path === '/rooms' && request.method === 'POST') {
-  res = await withAuth(request, env, () => handleCreateRoom(request, env));
+      } else if (path === '/rooms' && request.method === 'GET') {
+        res = await withAuth(request, env, () => handleGetRooms(env));
+      } else if (path === '/rooms' && request.method === 'POST') {
+        // ⬅️ UBAH: kirim user
+        res = await withAuth(request, env, (user) => handleCreateRoom(request, env, user));
       } else if (path === '/occupancies' && request.method === 'GET') {
         res = await withAuth(request, env, () => handleGetOccupancies(env));
       } else if (path === '/occupancies' && request.method === 'POST') {
-        res = await withAuth(request, env, () => handleCreateOccupancy(request, env));
+        // ⬅️ UBAH: kirim user
+        res = await withAuth(request, env, (user) => handleCreateOccupancy(request, env, user));
       } else if (path === '/occupancies/bulk' && request.method === 'POST') {
-        res = await withAuth(request, env, () => handleBulkImport(request, env));
+        // ⬅️ UBAH: kirim user
+        res = await withAuth(request, env, (user) => handleBulkImport(request, env, user));
       } else if (path.match(/^\/occupancies\/\d+$/) && request.method === 'PUT') {
         const id = path.split('/').pop();
-        res = await withAuth(request, env, () => handleUpdateOccupancy(id, request, env));
+        // ⬅️ UBAH: kirim user
+        res = await withAuth(request, env, (user) => handleUpdateOccupancy(id, request, env, user));
       } else if (path.match(/^\/occupancies\/\d+$/) && request.method === 'DELETE') {
         const id = path.split('/').pop();
-        res = await withAuth(request, env, () => handleDeleteOccupancy(id, env));
+        // ⬅️ UBAH: kirim user
+        res = await withAuth(request, env, (user) => handleDeleteOccupancy(id, env, user));
       } else if (path === '/users' && request.method === 'GET') {
         res = await withAuth(request, env, (user) => handleGetUsers(env, user));
       } else if (path === '/users' && request.method === 'POST') {
         res = await withAuth(request, env, (user) => handleCreateUser(request, env, user));
+      } else if (path.match(/^\/users\/\d+\/history$/) && request.method === 'GET') {
+        // ⬅️ BARU: riwayat login & aktivitas user
+        const id = path.split('/')[2];
+        res = await withAuth(request, env, (user) => handleUserHistory(id, env, user));
       } else if (path.match(/^\/users\/\d+$/) && request.method === 'DELETE') {
         const id = path.split('/').pop();
         res = await withAuth(request, env, (user) => handleDeleteUser(id, env, user));
@@ -63,7 +72,7 @@ export default {
         res = await withAuth(request, env, () => handleStats(env));
 
       // ═══════════════════════════════════════════════════════
-      // BACKUP D1 — 2 ENDPOINT BARU
+      // BACKUP D1
       // ═══════════════════════════════════════════════════════
       } else if (path === '/backup/start' && request.method === 'POST') {
         res = await withAuth(request, env, () => handleBackupStart(env));
@@ -71,11 +80,14 @@ export default {
         res = await withAuth(request, env, () => handleBackupStatus(request, env));
 
       } else if (path === '/upload' && request.method === 'POST') {
-        res = await withAuth(request, env, () => handleUpload(request, env));
+        // ⬅️ UBAH: kirim user
+        res = await withAuth(request, env, (user) => handleUpload(request, env, user));
       } else if (path === '/delete-file' && request.method === 'POST') {
-        res = await withAuth(request, env, () => handleDeleteFile(request, env));
+        // ⬅️ UBAH: kirim user
+        res = await withAuth(request, env, (user) => handleDeleteFile(request, env, user));
       } else if (path === '/delete-files' && request.method === 'POST') {
-        res = await withAuth(request, env, () => handleBulkDeleteFiles(request, env));
+        // ⬅️ UBAH: kirim user
+        res = await withAuth(request, env, (user) => handleBulkDeleteFiles(request, env, user));
       } else if (path === '/check-file' && request.method === 'POST') {
         res = await withAuth(request, env, () => handleCheckFile(request, env));
       } else if (path === '/track' && request.method === 'POST') {
@@ -113,7 +125,50 @@ function json(data, status = 200, extraHeaders = {}) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// BACKUP D1 — START 1
+// ⬅️ BARU: CATAT AKTIVITAS USER
+// ═══════════════════════════════════════════════════════════
+// user = objek dari withAuth (memakai user.user_id)
+// Gagal mencatat TIDAK membatalkan aksi utama.
+async function logActivity(env, user, action, entity, entityId, detail) {
+  try {
+    await env.DB.prepare(
+      `INSERT INTO activity_logs (user_id, username, action, entity, entity_id, detail)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(
+      user.user_id,
+      user.username,
+      action,
+      entity,
+      String(entityId ?? ''),
+      String(detail || '').slice(0, 200)
+    ).run();
+  } catch (e) {
+    console.error('logActivity gagal', e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ⬅️ BARU: RIWAYAT LOGIN & AKTIVITAS PER USER (khusus owner)
+// ═══════════════════════════════════════════════════════════
+async function handleUserHistory(id, env, currentUser) {
+  if (currentUser.role !== 'owner') return json({ error: 'Hanya owner' }, 403);
+  const uid = Number(id);
+
+  const logins = await env.DB.prepare(
+    `SELECT logged_at, ip, user_agent FROM user_logins
+     WHERE user_id = ? ORDER BY id DESC LIMIT 10`
+  ).bind(uid).all();
+
+  const activities = await env.DB.prepare(
+    `SELECT action, entity, detail, created_at FROM activity_logs
+     WHERE user_id = ? ORDER BY id DESC LIMIT 20`
+  ).bind(uid).all();
+
+  return json({ logins: logins.results, activities: activities.results });
+}
+
+// ═══════════════════════════════════════════════════════════
+// BACKUP D1 — START
 // ═══════════════════════════════════════════════════════════
 async function handleBackupStart(env) {
   if (!env.CF_ACCOUNT_ID || !env.CF_D1_DATABASE_ID || !env.CF_API_TOKEN) {
@@ -191,7 +246,6 @@ async function handleBackupStatus(request, env) {
       }, 500);
     }
 
-    // Handle struktur nested: result.result.signed_url
     const r = data.result || {};
     const nested = r.result || {};
     const status = r.status || nested.status || 'unknown';
@@ -203,12 +257,13 @@ async function handleBackupStatus(request, env) {
       status: status,
       signed_url: signed_url,
       filename: filename,
-      _raw_result: data.result,   // debug
+      _raw_result: data.result,
     });
   } catch (err) {
     return json({ error: 'Gagal cek status: ' + err.message }, 500);
   }
 }
+
 // ═══════════════════════════════════════════════════════════
 // RATE LIMITING
 // ═══════════════════════════════════════════════════════════
@@ -355,6 +410,20 @@ async function handleLogin(request, env) {
     'INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)'
   ).bind(token, user.id, expiresAt).run();
 
+  // ⬅️ BARU: catat riwayat login (gagal mencatat tidak membatalkan login)
+  try {
+    await env.DB.prepare(
+      'INSERT INTO user_logins (user_id, username, ip, user_agent) VALUES (?, ?, ?, ?)'
+    ).bind(
+      user.id,
+      user.username,
+      ip,
+      (request.headers.get('User-Agent') || '').slice(0, 300)
+    ).run();
+  } catch (e) {
+    console.error('catat login gagal', e);
+  }
+
   return json({
     token,
     user: {
@@ -386,7 +455,7 @@ async function handleMe(request, env) {
 // UPLOAD FILE KONTRAK KE R2
 // ═══════════════════════════════════════════════════════════
 
-async function handleUpload(request, env) {
+async function handleUpload(request, env, user) {   // ⬅️ UBAH: tambah user
   if (!env.BUCKET) {
     return json({ error: 'R2 bucket belum dikonfigurasi. Hubungi admin.' }, 501);
   }
@@ -411,9 +480,7 @@ async function handleUpload(request, env) {
       return json({ error: 'File terlalu besar. Maksimal 5 MB.' }, 400);
     }
 
-    // ─── Buat nama file unik dengan format baru ───
-    // Format: kamarX_jenis_YYYYMMDDHHmm.ext
-    // Pakai timezone Asia/Jakarta (GMT+7 / WIB)
+    // Format: kamarX_jenis_YYYYMMDDHHmm.ext (timezone Asia/Jakarta)
     const now = new Date();
     const wibParts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Jakarta',
@@ -433,7 +500,6 @@ async function handleUpload(request, env) {
       getPart('hour') +
       getPart('minute');
 
-    // Ambil nama kamar dari database
     let kamarLabel = 'kamar';
     if (roomId) {
       const room = await env.DB.prepare('SELECT nama_kamar FROM rooms WHERE id = ?')
@@ -458,6 +524,9 @@ async function handleUpload(request, env) {
 
     const publicUrl = `${env.R2_PUBLIC_URL}/${filename}`;
 
+    // ⬅️ BARU
+    await logActivity(env, user, 'upload', 'file', '', `${jenisLabel} (${kamarLabel})`);
+
     return json({
       ok: true,
       url: publicUrl,
@@ -475,7 +544,7 @@ async function handleUpload(request, env) {
 // HAPUS FILE DARI R2
 // ═══════════════════════════════════════════════════════════
 
-async function handleDeleteFile(request, env) {
+async function handleDeleteFile(request, env, user) {   // ⬅️ UBAH: tambah user
   if (!env.BUCKET) {
     return json({ error: 'R2 bucket belum dikonfigurasi' }, 501);
   }
@@ -496,6 +565,9 @@ async function handleDeleteFile(request, env) {
 
     await env.BUCKET.delete(filename);
 
+    // ⬅️ BARU
+    await logActivity(env, user, 'delete', 'file', '', filename.split('/').pop());
+
     return json({ ok: true, deleted: filename });
   } catch (err) {
     console.error('Delete file error:', err);
@@ -507,7 +579,7 @@ async function handleDeleteFile(request, env) {
 // HAPUS BANYAK FILE DARI R2 (BULK)
 // ═══════════════════════════════════════════════════════════
 
-async function handleBulkDeleteFiles(request, env) {
+async function handleBulkDeleteFiles(request, env, user) {   // ⬅️ UBAH: tambah user
   if (!env.BUCKET) {
     return json({ error: 'R2 bucket belum dikonfigurasi' }, 501);
   }
@@ -541,6 +613,11 @@ async function handleBulkDeleteFiles(request, env) {
       } catch (err) {
         failed.push({ url, error: err.message });
       }
+    }
+
+    // ⬅️ BARU
+    if (deleted.length > 0) {
+      await logActivity(env, user, 'delete', 'file', '', `${deleted.length} file dokumen`);
     }
 
     return json({ ok: true, deleted, failed });
@@ -894,10 +971,11 @@ async function handleGetRooms(env) {
   ).all();
   return json({ rooms: results });
 }
+
 // ═══════════════════════════════════════════════════════════
 // CREATE ROOM — TAMBAH KAMAR BARU
 // ═══════════════════════════════════════════════════════════
-async function handleCreateRoom(request, env) {
+async function handleCreateRoom(request, env, user) {   // ⬅️ UBAH: tambah user
   try {
     const body = await request.json();
     const nama_kamar = (body.nama_kamar || '').trim();
@@ -905,7 +983,6 @@ async function handleCreateRoom(request, env) {
     const harga_bulanan = Number(body.harga_bulanan) || 0;
     const urutanInput = body.urutan;
 
-    // Validasi
     if (!nama_kamar) {
       return json({ error: 'Nama kamar wajib diisi' }, 400);
     }
@@ -916,7 +993,6 @@ async function handleCreateRoom(request, env) {
       return json({ error: 'Harga bulanan wajib diisi' }, 400);
     }
 
-    // Cek duplikat
     const existing = await env.DB.prepare(
       'SELECT id FROM rooms WHERE nama_kamar = ?'
     ).bind(nama_kamar).first();
@@ -925,7 +1001,6 @@ async function handleCreateRoom(request, env) {
       return json({ error: 'Kamar "' + nama_kamar + '" sudah ada' }, 409);
     }
 
-    // Ambil urutan
     let urutan;
     if (urutanInput !== null && urutanInput !== undefined && urutanInput !== '') {
       urutan = Number(urutanInput);
@@ -936,15 +1011,19 @@ async function handleCreateRoom(request, env) {
       urutan = (lastUrutan?.max_urutan || 0) + 1;
     }
 
-    // Insert — kirim SEMUA kolom yang wajib
     const result = await env.DB.prepare(
       `INSERT INTO rooms (nama_kamar, tipe, urutan, harga_bulanan)
        VALUES (?, ?, ?, ?)`
     ).bind(nama_kamar, tipe, urutan, harga_bulanan).run();
 
+    const newRoomId = result.meta.last_row_id;
+
+    // ⬅️ BARU
+    await logActivity(env, user, 'create', 'room', newRoomId, nama_kamar);
+
     return json({
       ok: true,
-      id: result.meta.last_row_id,
+      id: newRoomId,
       message: 'Kamar "' + nama_kamar + '" berhasil ditambahkan',
     });
   } catch (err) {
@@ -967,7 +1046,7 @@ async function handleGetOccupancies(env) {
   return json({ occupancies: results });
 }
 
-async function handleCreateOccupancy(request, env) {
+async function handleCreateOccupancy(request, env, user) {   // ⬅️ UBAH: tambah user
   const b = await request.json();
   const required = [
     'room_id',
@@ -991,7 +1070,7 @@ async function handleCreateOccupancy(request, env) {
 
   const newId = Number(maxRow?.max_id || 0) + 1;
 
-  const result = await env.DB.prepare(
+  await env.DB.prepare(
     `INSERT INTO occupancies
       (id, room_id, nama_penyewa, no_hp, asal_kampus, tipe_sewa,
        tanggal_mulai, tanggal_selesai, harga_total, status_bayar,
@@ -1026,10 +1105,14 @@ async function handleCreateOccupancy(request, env) {
     b.file_perjanjian || null
   ).run();
 
+  // ⬅️ BARU
+  await logActivity(env, user, 'create', 'occupancy', newId,
+    `${b.nama_penyewa} (kamar ID ${b.room_id})`);
+
   return json({ id: newId, ok: true });
 }
 
-async function handleBulkImport(request, env) {
+async function handleBulkImport(request, env, user) {   // ⬅️ UBAH: tambah user
   const { rows } = await request.json();
   if (!Array.isArray(rows) || rows.length === 0) {
     return json({ error: 'Data kosong' }, 400);
@@ -1092,10 +1175,16 @@ async function handleBulkImport(request, env) {
     }
   }
 
+  // ⬅️ BARU
+  if (sukses > 0) {
+    await logActivity(env, user, 'import', 'import', '',
+      `${sukses} baris berhasil, ${gagal} gagal`);
+  }
+
   return json({ sukses, gagal, errors: errors.slice(0, 20) });
 }
 
-async function handleUpdateOccupancy(id, request, env) {
+async function handleUpdateOccupancy(id, request, env, user) {   // ⬅️ UBAH: tambah user
   const b = await request.json();
   await env.DB.prepare(
     `UPDATE occupancies SET
@@ -1118,11 +1207,24 @@ async function handleUpdateOccupancy(id, request, env) {
     b.file_ktp_penyewa || null, b.file_ktp_ortu || null, b.file_ktm || null, b.file_perjanjian || null,
     id
   ).run();
+
+  // ⬅️ BARU
+  await logActivity(env, user, 'update', 'occupancy', id, b.nama_penyewa);
+
   return json({ ok: true });
 }
 
-async function handleDeleteOccupancy(id, env) {
+async function handleDeleteOccupancy(id, env, user) {   // ⬅️ UBAH: tambah user
+  // ⬅️ BARU: ambil nama sebelum dihapus
+  const row = await env.DB.prepare(
+    'SELECT nama_penyewa FROM occupancies WHERE id = ?'
+  ).bind(id).first();
+
   await env.DB.prepare('DELETE FROM occupancies WHERE id = ?').bind(id).run();
+
+  // ⬅️ BARU
+  await logActivity(env, user, 'delete', 'occupancy', id, row?.nama_penyewa || `ID ${id}`);
+
   return json({ ok: true });
 }
 
@@ -1150,7 +1252,13 @@ async function handleCreateUser(request, env, currentUser) {
       `INSERT INTO admin_users (username, nama_lengkap, password_hash, role)
        VALUES (?, ?, ?, ?)`
     ).bind(username, nama_lengkap || username, hash, role || 'admin').run();
-    return json({ id: r.meta.last_row_id, ok: true });
+
+    const newUserId = r.meta.last_row_id;
+
+    // ⬅️ BARU (password tidak dicatat)
+    await logActivity(env, currentUser, 'create', 'user', newUserId, username);
+
+    return json({ id: newUserId, ok: true });
   } catch (e) {
     if (String(e).includes('UNIQUE')) return json({ error: 'Username sudah dipakai' }, 409);
     throw e;
@@ -1162,7 +1270,17 @@ async function handleDeleteUser(id, env, currentUser) {
   if (Number(id) === currentUser.user_id) {
     return json({ error: 'Tidak bisa hapus akun sendiri' }, 400);
   }
+
+  // ⬅️ BARU: ambil username sebelum dihapus
+  const target = await env.DB.prepare(
+    'SELECT username FROM admin_users WHERE id = ?'
+  ).bind(id).first();
+
   await env.DB.prepare('DELETE FROM admin_users WHERE id = ?').bind(id).run();
+
+  // ⬅️ BARU
+  await logActivity(env, currentUser, 'delete', 'user', id, target?.username || `ID ${id}`);
+
   return json({ ok: true });
 }
 
