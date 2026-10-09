@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  deploy.sh — Alur kerja aman dev & prod (v2.5)
+#  deploy.sh — Alur kerja aman dev & prod (v3)
 #  Repo: griya-aleena-sekaran (dev) & griya-aleena (prod)
 # ============================================================
 
@@ -38,6 +38,78 @@ echo ""
 echo -e "${BLUE}────────────────────────────────────────────${NC}"
 
 # ─────────────────────────────────────────────
+# Fungsi: cek status
+# ─────────────────────────────────────────────
+show_status() {
+  echo ""
+  echo -e "${YELLOW}📡 Mengambil info terbaru dari remote...${NC}"
+  git fetch --all --quiet 2>/dev/null
+  echo -e "${GREEN}✅ Info remote diperbarui.${NC}"
+  echo ""
+
+  echo -e "${BLUE}📊 STATUS REPO${NC}"
+  echo "────────────────────────────────────────────"
+  echo -e "${YELLOW}Branch:${NC} $(git branch --show-current)"
+  echo ""
+  echo -e "${YELLOW}Remote:${NC}"
+  git remote -v | sed 's/^/   /'
+  echo ""
+
+  # Perubahan lokal belum di-commit
+  echo -e "${YELLOW}Perubahan lokal belum di-commit:${NC}"
+  local lokal_changes=$(git status --short)
+  if [ -z "$lokal_changes" ]; then
+    echo "   (tidak ada)"
+  else
+    echo "$lokal_changes" | sed 's/^/   /'
+  fi
+  echo ""
+
+  # Commit lokal belum di-push ke dev
+  echo -e "${YELLOW}Commit lokal belum di-push ke dev:${NC}"
+  local to_dev=$(git log origin/main..main --oneline 2>/dev/null)
+  if [ -z "$to_dev" ]; then
+    echo "   (tidak ada)"
+  else
+    echo "$to_dev" | sed 's/^/   /'
+  fi
+  echo ""
+
+  # Commit lokal belum di-push ke prod
+  echo -e "${YELLOW}Commit lokal belum di-push ke prod:${NC}"
+  local to_prod=$(git log prod/main..main --oneline 2>/dev/null)
+  if [ -z "$to_prod" ]; then
+    echo "   (tidak ada)"
+  else
+    echo "$to_prod" | sed 's/^/   /'
+  fi
+  echo ""
+
+  # Commit prod belum ada di lokal
+  echo -e "${YELLOW}Commit prod belum ada di lokal:${NC}"
+  local from_prod=$(git log main..prod/main --oneline 2>/dev/null)
+  if [ -z "$from_prod" ]; then
+    echo "   (tidak ada)"
+  else
+    echo "$from_prod" | sed 's/^/   /'
+  fi
+  echo ""
+
+  # Commit dev belum ada di lokal
+  echo -e "${YELLOW}Commit dev belum ada di lokal:${NC}"
+  local from_dev=$(git log main..origin/main --oneline 2>/dev/null)
+  if [ -z "$from_dev" ]; then
+    echo "   (tidak ada)"
+  else
+    echo "$from_dev" | sed 's/^/   /'
+  fi
+  echo ""
+
+  echo "────────────────────────────────────────────"
+  echo ""
+}
+
+# ─────────────────────────────────────────────
 # Fungsi: pull dari dev
 # ─────────────────────────────────────────────
 pull_dev() {
@@ -50,25 +122,6 @@ pull_dev() {
     return 1
   fi
   echo ""
-}
-
-# ─────────────────────────────────────────────
-# Fungsi: pull dari prod (untuk sync sebelum push)
-# ─────────────────────────────────────────────
-pull_prod() {
-  echo -e "${YELLOW}📥 Cek update dari prod (untuk hindari non-fast-forward)...${NC}"
-  if git pull prod main; then
-    echo -e "${GREEN}✅ Sinkron dengan prod.${NC}"
-    return 0
-  else
-    echo -e "${RED}❌ Gagal pull dari prod. Kemungkinan ada konflik.${NC}"
-    echo -e "${YELLOW}   Selesaikan konflik dulu:${NC}"
-    echo "     1. Edit file yang konflik (cari tanda <<<<<<< )"
-    echo "     2. git add <file>"
-    echo "     3. git commit -m \"merge: resolve conflict\""
-    echo "     4. Jalankan ./deploy.sh lagi"
-    return 1
-  fi
 }
 
 # ─────────────────────────────────────────────
@@ -119,7 +172,7 @@ push_prod() {
   echo -e "${RED}   URL: https://lintangglangitt.github.io/griya-aleena${NC}"
   echo ""
 
-  # ─── STEP 1: Pull dari prod dulu ───
+  # STEP 1: Pull dari prod dulu
   echo -e "${BLUE}🔄 Langkah 1/3: Sinkron dengan prod...${NC}"
   if ! git pull prod main; then
     echo ""
@@ -129,7 +182,7 @@ push_prod() {
   fi
   echo ""
 
-  # ─── STEP 2: Cek commit yang akan dikirim ───
+  # STEP 2: Cek commit yang akan dikirim
   echo -e "${BLUE}🔄 Langkah 2/3: Cek commit yang akan dikirim...${NC}"
   local commits=$(git log prod/main..main --oneline 2>/dev/null)
   if [ -z "$commits" ]; then
@@ -137,7 +190,7 @@ push_prod() {
     echo "   Dev dan prod sudah sinkron, atau lokal ketinggalan."
     echo ""
     echo -e "${YELLOW}   Kemungkinan:${NC}"
-    echo "   - Kamu lupa tarik dari dev dulu → jalankan menu [1]"
+    echo "   - Kamu lupa tarik dari dev dulu → jalankan menu [2]"
     echo "   - Commit sudah ada di prod"
     return 0
   fi
@@ -145,7 +198,7 @@ push_prod() {
   echo "$commits" | sed 's/^/   /'
   echo ""
 
-  # ─── STEP 3: Konfirmasi & push ───
+  # STEP 3: Konfirmasi & push
   echo -e "${BLUE}🔄 Langkah 3/3: Konfirmasi & push${NC}"
   read -p "❓ Sudah tes di dev & yakin mau ke PROD? (ketik 'YA'): " konfirmasi
   if [ "$konfirmasi" != "YA" ]; then
@@ -166,52 +219,24 @@ push_prod() {
 }
 
 # ─────────────────────────────────────────────
-# Fungsi: status
-# ─────────────────────────────────────────────
-show_status() {
-  echo ""
-  echo -e "${BLUE}📊 STATUS REPO${NC}"
-  echo "────────────────────────────────────────────"
-  echo -e "${YELLOW}Branch:${NC} $(git branch --show-current)"
-  echo ""
-  echo -e "${YELLOW}Remote:${NC}"
-  git remote -v | sed 's/^/   /'
-  echo ""
-  echo -e "${YELLOW}Perubahan belum di-commit:${NC}"
-  git status --short | sed 's/^/   /' || echo "   (bersih)"
-  echo ""
-  echo -e "${YELLOW}Commit lokal belum di-push ke dev:${NC}"
-  git log origin/main..main --oneline 2>/dev/null | sed 's/^/   /' || echo "   (tidak ada)"
-  echo ""
-  echo -e "${YELLOW}Commit lokal belum di-push ke prod:${NC}"
-  git log prod/main..main --oneline 2>/dev/null | sed 's/^/   /' || echo "   (tidak ada)"
-  echo ""
-  echo -e "${YELLOW}Commit prod belum ada di lokal:${NC}"
-  git log main..prod/main --oneline 2>/dev/null | sed 's/^/   /' || echo "   (tidak ada)"
-  echo ""
-  echo "────────────────────────────────────────────"
-  echo ""
-}
-
-# ─────────────────────────────────────────────
 # Menu utama
 # ─────────────────────────────────────────────
 while true; do
   echo -e "${BLUE}Pilih aksi:${NC}"
-  echo "  [1] 📥 Tarik update dari dev"
-  echo "  [2] 📦 Commit lokal & push ke DEV"
-  echo "  [3] 🚀 Push ke PROD (auto-pull prod dulu)"
-  echo "  [4] 📊 Lihat status"
+  echo "  [1] 📊 Cek status"
+  echo "  [2] 📥 Tarik update dari dev"
+  echo "  [3] 📦 Commit lokal & push ke DEV"
+  echo "  [4] 🚀 Push ke PROD (auto-pull prod dulu)"
   echo "  [5] ❌ Keluar"
   echo ""
   read -p "Pilihan [1-5]: " pilihan
   echo ""
 
   case $pilihan in
-    1) pull_dev ;;
-    2) push_dev ;;
-    3) push_prod ;;
-    4) show_status ;;
+    1) show_status ;;
+    2) pull_dev ;;
+    3) push_dev ;;
+    4) push_prod ;;
     5) echo -e "${GREEN}👋 Selesai.${NC}"; exit 0 ;;
     *) echo -e "${RED}❌ Pilihan tidak valid.${NC}" ;;
   esac
