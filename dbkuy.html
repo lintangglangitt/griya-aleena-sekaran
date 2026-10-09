@@ -221,6 +221,49 @@
     flex-wrap: wrap;
   }
 
+  /* PAGINATION */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .pagination button {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pagination button:hover:not(:disabled):not(.active) {
+    border-color: var(--teal-lt);
+    background: var(--bg);
+  }
+  .pagination button.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+  .pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .pagination-info {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
   /* LOG BOX */
   .log-box {
     margin-top: 16px;
@@ -480,8 +523,7 @@
     </div>
   </div>
 
-
-   <!-- TABS -->
+  <!-- TABS -->
   <div class="tabs">
     <button class="tab active" data-tab="backup">💾 Backup</button>
     <button class="tab" data-tab="database">🗄️ Database</button>
@@ -503,7 +545,7 @@
     <div class="info-section">
       <h2>ℹ️ Informasi</h2>
       <ul>
-        <li>Backup berjalan otomatis via <strong>cron-job.org</strong> 1 hari sekali (00:01 WIB)</li>
+        <li>Backup berjalan otomatis via <strong>cron-job.org</strong> 1 hari sekali (12:01 WIB)</li>
         <li>File disimpan di <strong>R2 bucket</strong> <code>griya-aleena-backup</code></li>
         <li>File lebih dari 30 hari otomatis terhapus (Lifecycle Rule)</li>
         <li>Klik <strong>⬇ Download</strong> untuk unduh file <code>.sql</code></li>
@@ -512,8 +554,7 @@
     </div>
   </div>
 
-
-   <!-- TAB: DATABASE -->
+  <!-- TAB: DATABASE -->
   <div class="tab-content" id="tab-database">
     <div class="card">
       <div class="card-title">
@@ -542,11 +583,12 @@
     </div>
   </div>
 
-   <div class="back-link">
-    <a href="ngadmin.html">← Kembali ke Halaman Admin</a>
+  <div class="back-link">
+    <a href="ngadmin.html">← Kembali ke Dashboard Utama</a>
   </div>
- </div>
- 
+
+</div>
+
 <!-- MODAL: Edit / Tambah Baris -->
 <div class="modal" id="modal-row">
   <div class="modal-card">
@@ -579,6 +621,11 @@ if (!TOKEN) {
 var ACTIVE_TABLE = null;
 var TABLE_COLUMNS = [];
 var EDITING_ROW = null;
+
+// ─── State pagination backup ───
+var BACKUP_FILES = [];        // semua file backup (hasil fetch)
+var BACKUP_PAGE = 1;          // halaman aktif
+var BACKUP_PER_PAGE = 5;      // 5 baris per halaman
 
 // ═══════════════════════════════════════════════════════════
 // HELPERS
@@ -969,60 +1016,134 @@ function loadBackups() {
   listEl.innerHTML = '<div class="loading-state">⏳ Memuat data backup...</div>';
 
   return workflowApi('/list').then(function(data) {
-    var files = (data.files || []).sort(function(a, b) {
+    BACKUP_FILES = (data.files || []).sort(function(a, b) {
       return new Date(b.uploaded) - new Date(a.uploaded);
     });
 
-    if (files.length === 0) {
+    if (BACKUP_FILES.length === 0) {
       listEl.innerHTML = '<div class="empty-state">📭 Belum ada backup tersimpan</div>';
       logTo('backup-log', 'Belum ada backup', 'info');
       return;
     }
 
-    var today = new Date().toISOString().slice(0, 10);
-    var rows = files.map(function(f) {
-      var uploadedDate = new Date(f.uploaded).toISOString().slice(0, 10);
-      var isToday = uploadedDate === today;
-      var badgeClass = isToday ? 'badge-today' : 'badge-old';
-      var badgeText = isToday ? 'Hari ini' : 'Arsip';
-      var shortName = f.key.split('/').pop() || f.key;
-
-      return '<tr>' +
-        '<td><div class="backup-filename">' + escapeHtml(shortName) + '</div></td>' +
-        '<td>' + formatDateWIB(f.uploaded) + '</td>' +
-        '<td>' + formatBytes(f.size) + '</td>' +
-        '<td><span class="badge ' + badgeClass + '">' + badgeText + '</span></td>' +
-        '<td><div class="backup-actions">' +
-          '<button class="btn btn-ghost btn-sm" data-download="' + escapeHtml(f.key) + '">⬇ Download</button>' +
-          '<button class="btn btn-danger btn-sm" data-restore="' + escapeHtml(f.key) + '">🔄 Restore</button>' +
-          '<button class="btn btn-danger btn-sm" data-delete-backup="' + escapeHtml(f.key) + '">🗑️ Hapus</button>' +
-        '</div></td>' +
-        '</tr>';
-    }).join('');
-
-    listEl.innerHTML =
-      '<table class="backup-table">' +
-        '<thead><tr>' +
-          '<th>Nama File</th><th>Tanggal</th><th>Ukuran</th><th>Status</th><th>Aksi</th>' +
-        '</tr></thead>' +
-        '<tbody>' + rows + '</tbody>' +
-      '</table>';
-
-    logTo('backup-log', 'Berhasil memuat ' + files.length + ' file backup', 'ok');
-
-    listEl.querySelectorAll('[data-download]').forEach(function(btn) {
-      btn.addEventListener('click', function() { handleDownload(btn.dataset.download); });
-    });
-    listEl.querySelectorAll('[data-restore]').forEach(function(btn) {
-      btn.addEventListener('click', function() { handleRestore(btn.dataset.restore); });
-    });
-    listEl.querySelectorAll('[data-delete-backup]').forEach(function(btn) {
-      btn.addEventListener('click', function() { handleDeleteBackup(btn.dataset.deleteBackup); });
-    });
+    // Reset ke halaman 1 saat load/refresh
+    BACKUP_PAGE = 1;
+    logTo('backup-log', 'Berhasil memuat ' + BACKUP_FILES.length + ' file backup', 'ok');
+    renderBackupPage();
   }).catch(function(err) {
     listEl.innerHTML = '<div class="empty-state" style="color:var(--red);">❌ ' + escapeHtml(err.message) + '</div>';
     logTo('backup-log', 'ERROR: ' + err.message, 'err');
   });
+}
+
+function renderBackupPage() {
+  var listEl = document.getElementById('backup-list');
+
+  if (BACKUP_FILES.length === 0) return;
+
+  var total = BACKUP_FILES.length;
+  var totalPages = Math.max(1, Math.ceil(total / BACKUP_PER_PAGE));
+
+  // Klem halaman
+  if (BACKUP_PAGE < 1) BACKUP_PAGE = 1;
+  if (BACKUP_PAGE > totalPages) BACKUP_PAGE = totalPages;
+
+  var start = (BACKUP_PAGE - 1) * BACKUP_PER_PAGE;
+  var end = start + BACKUP_PER_PAGE;
+  var pageFiles = BACKUP_FILES.slice(start, end);
+
+  var today = new Date().toISOString().slice(0, 10);
+  var rows = pageFiles.map(function(f) {
+    var uploadedDate = new Date(f.uploaded).toISOString().slice(0, 10);
+    var isToday = uploadedDate === today;
+    var badgeClass = isToday ? 'badge-today' : 'badge-old';
+    var badgeText = isToday ? 'Hari ini' : 'Arsip';
+    var shortName = f.key.split('/').pop() || f.key;
+
+    return '<tr>' +
+      '<td><div class="backup-filename">' + escapeHtml(shortName) + '</div></td>' +
+      '<td>' + formatDateWIB(f.uploaded) + '</td>' +
+      '<td>' + formatBytes(f.size) + '</td>' +
+      '<td><span class="badge ' + badgeClass + '">' + badgeText + '</span></td>' +
+      '<td><div class="backup-actions">' +
+        '<button class="btn btn-ghost btn-sm" data-download="' + escapeHtml(f.key) + '">⬇ Download</button>' +
+        '<button class="btn btn-danger btn-sm" data-restore="' + escapeHtml(f.key) + '">🔄 Restore</button>' +
+        '<button class="btn btn-danger btn-sm" data-delete-backup="' + escapeHtml(f.key) + '">🗑️ Hapus</button>' +
+      '</div></td>' +
+      '</tr>';
+  }).join('');
+
+  var paginationHtml = buildPagination(total, totalPages, start, end);
+
+  listEl.innerHTML =
+    '<table class="backup-table">' +
+      '<thead><tr>' +
+        '<th>Nama File</th><th>Tanggal</th><th>Ukuran</th><th>Status</th><th>Aksi</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>' +
+    paginationHtml;
+
+  // Bind aksi baris
+  listEl.querySelectorAll('[data-download]').forEach(function(btn) {
+    btn.addEventListener('click', function() { handleDownload(btn.dataset.download); });
+  });
+  listEl.querySelectorAll('[data-restore]').forEach(function(btn) {
+    btn.addEventListener('click', function() { handleRestore(btn.dataset.restore); });
+  });
+  listEl.querySelectorAll('[data-delete-backup]').forEach(function(btn) {
+    btn.addEventListener('click', function() { handleDeleteBackup(btn.dataset.deleteBackup); });
+  });
+
+  // Bind tombol pagination
+  listEl.querySelectorAll('[data-page]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var p = btn.dataset.page;
+      if (p === 'prev') BACKUP_PAGE--;
+      else if (p === 'next') BACKUP_PAGE++;
+      else BACKUP_PAGE = Number(p);
+      renderBackupPage();
+      // Scroll ke atas kartu backup
+      var card = document.getElementById('backup-list');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+function buildPagination(total, totalPages, start, end) {
+  if (totalPages <= 1) {
+    return '<div class="pagination-info">Menampilkan ' + total + ' file backup</div>';
+  }
+
+  // Bangun nomor halaman dengan elipsis jika terlalu banyak
+  var pages = [];
+  var maxVisible = 5;
+  var from = Math.max(1, BACKUP_PAGE - Math.floor(maxVisible / 2));
+  var to = Math.min(totalPages, from + maxVisible - 1);
+  if (to - from + 1 < maxVisible) {
+    from = Math.max(1, to - maxVisible + 1);
+  }
+
+  if (from > 1) {
+    pages.push('<button data-page="1">1</button>');
+    if (from > 2) pages.push('<span style="color:var(--muted);padding:0 4px;">…</span>');
+  }
+  for (var i = from; i <= to; i++) {
+    var cls = (i === BACKUP_PAGE) ? ' class="active"' : '';
+    pages.push('<button data-page="' + i + '"' + cls + '>' + i + '</button>');
+  }
+  if (to < totalPages) {
+    if (to < totalPages - 1) pages.push('<span style="color:var(--muted);padding:0 4px;">…</span>');
+    pages.push('<button data-page="' + totalPages + '">' + totalPages + '</button>');
+  }
+
+  return '' +
+    '<div class="pagination">' +
+      '<button data-page="prev"' + (BACKUP_PAGE === 1 ? ' disabled' : '') + '>‹ Prev</button>' +
+      pages.join('') +
+      '<button data-page="next"' + (BACKUP_PAGE === totalPages ? ' disabled' : '') + '>Next ›</button>' +
+    '</div>' +
+    '<div class="pagination-info">Menampilkan ' + (start + 1) + '–' + end + ' dari ' + total + ' file backup</div>';
 }
 
 function handleDownload(key) {
@@ -1052,36 +1173,53 @@ function handleRestore(key) {
   });
 }
 
-    function handleDeleteBackup(key) {
-      var fileName = key.split('/').pop() || key;
+function handleDeleteBackup(key) {
+  var fileName = key.split('/').pop() || key;
 
-      if (!confirm('⚠️ Hapus file backup?\n\n' + fileName + '\n\nFile akan dihapus permanen dari R2.\nTindakan ini tidak bisa dibatalkan.')) {
-        return;
-      }
+  if (!confirm('⚠️ Hapus file backup?\n\n' + fileName + '\n\nFile akan dihapus permanen dari R2.\nTindakan ini tidak bisa dibatalkan.')) {
+    return;
+  }
 
-      if (!confirm('Yakin ingin hapus ' + fileName + '?')) {
-        return;
-      }
+  if (!confirm('Yakin ingin hapus ' + fileName + '?')) {
+    return;
+  }
 
-      fetch(WORKFLOW_API + '/backup?key=' + encodeURIComponent(key), {
-        method: 'DELETE'
-      })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data.ok) {
-          logTo('backup-log', '✅ File ' + fileName + ' dihapus', 'ok');
-          loadBackups();
-        } else {
-          alert('❌ Gagal hapus: ' + (data.error || 'Unknown error'));
-          logTo('backup-log', '❌ Gagal hapus: ' + (data.error || ''), 'err');
-        }
-      })
-      .catch(function(err) {
-        alert('❌ Error: ' + err.message);
-        logTo('backup-log', '❌ Error: ' + err.message, 'err');
-      });
+  fetch(WORKFLOW_API + '/backup?key=' + encodeURIComponent(key), {
+    method: 'DELETE',
+    headers: {
+      'Authorization': 'Bearer ' + TOKEN
     }
- 
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      logTo('backup-log', '✅ File ' + fileName + ' dihapus', 'ok');
+
+      // Hapus dari array lokal & re-render tanpa fetch ulang (pertahankan halaman)
+      BACKUP_FILES = BACKUP_FILES.filter(function(f) { return f.key !== key; });
+
+      if (BACKUP_FILES.length === 0) {
+        document.getElementById('backup-list').innerHTML =
+          '<div class="empty-state">📭 Belum ada backup tersimpan</div>';
+        return;
+      }
+
+      // Kalau halaman sekarang jadi kosong, mundur satu halaman
+      var totalPages = Math.max(1, Math.ceil(BACKUP_FILES.length / BACKUP_PER_PAGE));
+      if (BACKUP_PAGE > totalPages) BACKUP_PAGE = totalPages;
+
+      renderBackupPage();
+    } else {
+      alert('❌ Gagal hapus: ' + (data.error || 'Unknown error'));
+      logTo('backup-log', '❌ Gagal hapus: ' + (data.error || ''), 'err');
+    }
+  })
+  .catch(function(err) {
+    alert('❌ Error: ' + err.message);
+    logTo('backup-log', '❌ Error: ' + err.message, 'err');
+  });
+}
+
 function triggerBackup() {
   if (!confirm('Mulai backup sekarang?')) return;
 
@@ -1124,7 +1262,7 @@ document.getElementById('modal-row').addEventListener('click', function(e) {
 });
 
 // ═══════════════════════════════════════════════════════════
-// START
+// START — Backup jadi tab default, jadi loadBackups() dulu
 // ═══════════════════════════════════════════════════════════
 loadBackups();
 </script>
