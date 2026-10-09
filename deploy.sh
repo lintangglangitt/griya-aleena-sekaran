@@ -137,7 +137,7 @@ commit_local() {
   echo -e "${YELLOW}📦 Stage semua perubahan...${NC}"
   git add -A
 
-  read -p "📝 Yakin mau ke commit? (ketik 'ya' atau kosongkan untuk batal): " msg
+  read -p "📝 Ketik pesan commit yang kamu mau (kosongkan untuk batal): " msg
   if [ -z "$msg" ]; then
     echo -e "${YELLOW}⏸️  Dibatalkan.${NC}"
     git reset > /dev/null
