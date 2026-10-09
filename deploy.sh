@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  deploy.sh — Alur kerja aman dev & prod (v4)
+#  deploy.sh — Alur kerja aman dev & prod (v5)
 #  Repo: griya-aleena-sekaran (dev) & griya-aleena (prod)
 # ============================================================
 
@@ -105,6 +105,42 @@ show_status() {
 }
 
 # ─────────────────────────────────────────────
+# Fungsi: commit lokal (tanpa push)
+# ─────────────────────────────────────────────
+commit_local() {
+  echo ""
+  echo -e "${BLUE}📋 Status perubahan:${NC}"
+  git status --short
+  echo ""
+
+  if [ -z "$(git status --porcelain)" ]; then
+    echo -e "${YELLOW}⚠️  Tidak ada perubahan untuk di-commit.${NC}"
+    return
+  fi
+
+  echo -e "${YELLOW}📦 Stage semua perubahan...${NC}"
+  git add -A
+
+  read -p "📝 Pesan commit (kosongkan untuk batal): " msg
+  if [ -z "$msg" ]; then
+    echo -e "${YELLOW}⏸️  Dibatalkan.${NC}"
+    git reset > /dev/null
+    return
+  fi
+
+  if git commit -m "$msg"; then
+    echo -e "${GREEN}✅ Commit berhasil.${NC}"
+    echo ""
+    echo -e "${BLUE}ℹ️  Langkah berikutnya:${NC}"
+    echo "   - Push ke dev: menu [5]"
+    echo "   - Cek status: menu [1]"
+    echo ""
+  else
+    echo -e "${RED}❌ Commit gagal.${NC}"
+  fi
+}
+
+# ─────────────────────────────────────────────
 # Fungsi: pull dari dev
 # ─────────────────────────────────────────────
 pull_dev() {
@@ -120,58 +156,50 @@ pull_dev() {
 }
 
 # ─────────────────────────────────────────────
-# Fungsi: commit lokal saja (TANPA push)
+# Fungsi: pull dari prod
 # ─────────────────────────────────────────────
-commit_local() {
-  echo ""
-  echo -e "${BLUE}📋 Status perubahan:${NC}"
-  git status --short
-  echo ""
-
-  if [ -z "$(git status --porcelain)" ]; then
-    echo -e "${YELLOW}⚠️  Tidak ada perubahan untuk di-commit.${NC}"
-    echo -e "${YELLOW}   (mungkin kamu hanya perlu push — pakai menu [4])${NC}"
-    return
-  fi
-
-  echo -e "${YELLOW}📦 Stage semua perubahan...${NC}"
-  git add -A
-
-  read -p "📝 Ketik pesan commit yang kamu mau (kosongkan untuk batal): " msg
-  if [ -z "$msg" ]; then
-    echo -e "${YELLOW}⏸️  Dibatalkan.${NC}"
-    git reset > /dev/null
-    return
-  fi
-
-  if git commit -m "$msg"; then
-    echo -e "${GREEN}✅ Commit berhasil.${NC}"
-    echo ""
-    echo -e "${BLUE}ℹ️  Langkah berikutnya:${NC}"
-    echo "   - Push ke dev: jalankan menu [4]"
-    echo "   - Atau cek status: menu [1]"
-    echo ""
+pull_prod() {
+  echo -e "${YELLOW}📥 Tarik update dari prod (prod/main)...${NC}"
+  git checkout main 2>/dev/null || { echo -e "${RED}❌ Gagal checkout main.${NC}"; return 1; }
+  if git pull prod main; then
+    echo -e "${GREEN}✅ Sinkron dengan prod.${NC}"
   else
-    echo -e "${RED}❌ Commit gagal.${NC}"
+    echo -e "${RED}❌ Gagal pull dari prod. Cek konflik.${NC}"
+    return 1
   fi
+  echo ""
 }
 
 # ─────────────────────────────────────────────
-# Fungsi: push ke dev saja (TANPA commit)
+# Fungsi: push ke dev (auto-pull dev dulu)
 # ─────────────────────────────────────────────
 push_dev() {
   echo ""
-  local to_dev=$(git log origin/main..main --oneline 2>/dev/null)
-  if [ -z "$to_dev" ]; then
-    echo -e "${YELLOW}⚠️  Tidak ada commit untuk di-push ke dev.${NC}"
-    echo -e "${YELLOW}   (mungkin belum commit — pakai menu [3])${NC}"
-    return
+  echo -e "${BLUE}🔄 Langkah 1/3: Sinkron dengan dev...${NC}"
+  if ! git pull origin main; then
+    echo ""
+    echo -e "${RED}❌ Gagal sinkron dengan dev. Proses dihentikan.${NC}"
+    echo -e "${YELLOW}Selesaikan konflik dulu, lalu jalankan ulang.${NC}"
+    return 1
   fi
-
-  echo -e "${BLUE}📋 Commit yang akan di-push ke dev:${NC}"
-  echo "$to_dev" | sed 's/^/   /'
   echo ""
 
+  echo -e "${BLUE}🔄 Langkah 2/3: Cek commit yang akan dikirim...${NC}"
+  local commits=$(git log origin/main..main --oneline 2>/dev/null)
+  if [ -z "$commits" ]; then
+    echo -e "${YELLOW}⚠️  Tidak ada commit baru untuk dikirim ke dev.${NC}"
+    echo "   Lokal dan dev sudah sinkron."
+    echo ""
+    echo -e "${YELLOW}   Kemungkinan:${NC}"
+    echo "   - Belum commit perubahan → jalankan menu [2]"
+    echo "   - Commit sudah ada di dev"
+    return 0
+  fi
+
+  echo "$commits" | sed 's/^/   /'
+  echo ""
+
+  echo -e "${BLUE}🔄 Langkah 3/3: Push ke dev${NC}"
   echo -e "${YELLOW}⬆️  Push ke dev (origin/main)...${NC}"
   if git push origin main; then
     echo -e "${GREEN}✅ Berhasil push ke DEV.${NC}"
@@ -181,14 +209,11 @@ push_dev() {
     echo ""
   else
     echo -e "${RED}❌ Push ke dev gagal.${NC}"
-    echo -e "${YELLOW}   Kemungkinan dev punya commit baru yang belum di lokal.${NC}"
-    echo -e "${YELLOW}   Coba: menu [2] (tarik dari dev) → lalu menu [4] lagi.${NC}"
-    echo ""
   fi
 }
 
 # ─────────────────────────────────────────────
-# Fungsi: push ke prod (dengan pull otomatis)
+# Fungsi: push ke prod (auto-pull prod dulu)
 # ─────────────────────────────────────────────
 push_prod() {
   echo ""
@@ -214,7 +239,7 @@ push_prod() {
     echo "   Dev dan prod sudah sinkron, atau lokal ketinggalan."
     echo ""
     echo -e "${YELLOW}   Kemungkinan:${NC}"
-    echo "   - Kamu lupa tarik dari dev dulu → jalankan menu [2]"
+    echo "   - Kamu lupa tarik dari dev dulu → jalankan menu [3]"
     echo "   - Commit sudah ada di prod"
     return 0
   fi
@@ -224,8 +249,8 @@ push_prod() {
 
   # STEP 3: Konfirmasi & push
   echo -e "${BLUE}🔄 Langkah 3/3: Konfirmasi & push${NC}"
-  read -p "❓ Sudah tes di dev & yakin mau ke PROD? (ketik 'ya'): " konfirmasi
-  if [ "$konfirmasi" != "ya" ]; then
+  read -p "❓ Sudah tes di dev & yakin mau ke PROD? (ketik 'YA'): " konfirmasi
+  if [ "$konfirmasi" != "YA" ]; then
     echo -e "${YELLOW}⏸️  Dibatalkan. Tidak ada yang di-push ke prod.${NC}"
     return
   fi
@@ -248,22 +273,24 @@ push_prod() {
 while true; do
   echo -e "${BLUE}Pilih aksi:${NC}"
   echo "  [1] 📊 Cek status"
-  echo "  [2] 📥 Tarik update dari dev"
-  echo "  [3] 📝 Commit lokal (tanpa push)"
-  echo "  [4] ⬆️ Push ke DEV (tanpa commit)"
-  echo "  [5] 🚀 Push ke PROD (auto-pull prod dulu)"
-  echo "  [6] ❌ Keluar"
+  echo "  [2] 📝 Commit lokal (tanpa push)"
+  echo "  [3] 📥 Tarik update dari dev"
+  echo "  [4] 📥 Tarik update dari prod"
+  echo "  [5] ⬆️  Push ke dev (auto-pull dev dulu)"
+  echo "  [6] ⬆️  Push ke prod (auto-pull prod dulu)"
+  echo "  [7] ❌ Keluar"
   echo ""
-  read -p "Pilihan [1-6]: " pilihan
+  read -p "Pilihan [1-7]: " pilihan
   echo ""
 
   case $pilihan in
     1) show_status ;;
-    2) pull_dev ;;
-    3) commit_local ;;
-    4) push_dev ;;
-    5) push_prod ;;
-    6) echo -e "${GREEN}👋 Selesai.${NC}"; exit 0 ;;
+    2) commit_local ;;
+    3) pull_dev ;;
+    4) pull_prod ;;
+    5) push_dev ;;
+    6) push_prod ;;
+    7) echo -e "${GREEN}👋 Selesai.${NC}"; exit 0 ;;
     *) echo -e "${RED}❌ Pilihan tidak valid.${NC}" ;;
   esac
 
