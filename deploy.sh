@@ -137,7 +137,7 @@ commit_local() {
   echo -e "${YELLOW}📦 Stage semua perubahan...${NC}"
   git add -A
 
-  read -p "📝 Pesan commit (kosongkan untuk batal): " msg
+  read -p "📝 Yakin mau ke commit? (ketik 'ya' atau kosongkan untuk batal): " msg
   if [ -z "$msg" ]; then
     echo -e "${YELLOW}⏸️  Dibatalkan.${NC}"
     git reset > /dev/null
@@ -224,8 +224,8 @@ push_prod() {
 
   # STEP 3: Konfirmasi & push
   echo -e "${BLUE}🔄 Langkah 3/3: Konfirmasi & push${NC}"
-  read -p "❓ Sudah tes di dev & yakin mau ke PROD? (ketik 'YA'): " konfirmasi
-  if [ "$konfirmasi" != "YA" ]; then
+  read -p "❓ Sudah tes di dev & yakin mau ke PROD? (ketik 'ya'): " konfirmasi
+  if [ "$konfirmasi" != "ya" ]; then
     echo -e "${YELLOW}⏸️  Dibatalkan. Tidak ada yang di-push ke prod.${NC}"
     return
   fi
@@ -250,7 +250,7 @@ while true; do
   echo "  [1] 📊 Cek status"
   echo "  [2] 📥 Tarik update dari dev"
   echo "  [3] 📝 Commit lokal (tanpa push)"
-  echo "  [4] ⬆️  Push ke DEV (tanpa commit)"
+  echo "  [4] ⬆️ Push ke DEV (tanpa commit)"
   echo "  [5] 🚀 Push ke PROD (auto-pull prod dulu)"
   echo "  [6] ❌ Keluar"
   echo ""
