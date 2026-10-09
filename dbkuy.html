@@ -480,12 +480,12 @@
     </div>
   </div>
 
-  <!-- TABS -->
-  <div class="tabs">
-    <button class="tab active" data-tab="database">🗄️ Database</button>
-    <button class="tab" data-tab="backup">💾 Backup</button>
-  </div>
 
+   <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="backup">💾 Backup</button>
+    <button class="tab" data-tab="database">🗄️ Database</button>
+  </div>
 
   <!-- TAB: BACKUP -->
   <div class="tab-content active" id="tab-backup">
@@ -511,7 +511,7 @@
       </ul>
     </div>
   </div>
- </div>
+
 
    <!-- TAB: DATABASE -->
   <div class="tab-content" id="tab-database">
@@ -545,8 +545,8 @@
    <div class="back-link">
     <a href="ngadmin.html">← Kembali ke Halaman Admin</a>
   </div>
-
-
+ </div>
+ 
 <!-- MODAL: Edit / Tambah Baris -->
 <div class="modal" id="modal-row">
   <div class="modal-card">
@@ -1126,7 +1126,7 @@ document.getElementById('modal-row').addEventListener('click', function(e) {
 // ═══════════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════════
-loadTables();
+loadBackups();
 </script>
 
 </body>
