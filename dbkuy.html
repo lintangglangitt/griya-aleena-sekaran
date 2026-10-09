@@ -486,7 +486,39 @@
     <button class="tab" data-tab="backup">💾 Backup</button>
   </div>
 
-  <!-- TAB: DATABASE -->
+
+  <!-- TAB: BACKUP -->
+  <div class="tab-content" id="tab-backup">
+    <div class="card">
+      <div class="card-title">
+        <span>📋 History Backup</span>
+        <button class="btn btn-ghost btn-sm" id="btn-refresh-backup">🔄 Refresh</button>
+      </div>
+      <div id="backup-list">
+        <div class="loading-state">⏳ Memuat data backup...</div>
+      </div>
+      <div class="log-box" id="backup-log" style="display:none;"></div>
+    </div>
+
+    <div class="info-section">
+      <h2>ℹ️ Informasi</h2>
+      <ul>
+        <li>Backup berjalan otomatis via <strong>cron-job.org</strong> 1 hari sekali (00:01 WIB)</li>
+        <li>File disimpan di <strong>R2 bucket</strong> <code>griya-aleena-backup</code></li>
+        <li>File lebih dari 30 hari otomatis terhapus (Lifecycle Rule)</li>
+        <li>Klik <strong>⬇ Download</strong> untuk unduh file <code>.sql</code></li>
+        <li>Klik <strong>🔄 Restore</strong> untuk restore database ke kondisi backup</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="back-link">
+    <a href="ngadmin.html">← Kembali ke Halaman Admin</a>
+  </div>
+
+</div>
+
+   <!-- TAB: DATABASE -->
   <div class="tab-content active" id="tab-database">
     <div class="card">
       <div class="card-title">
@@ -515,37 +547,7 @@
     </div>
   </div>
 
-  <!-- TAB: BACKUP -->
-  <div class="tab-content" id="tab-backup">
-    <div class="card">
-      <div class="card-title">
-        <span>📋 History Backup</span>
-        <button class="btn btn-ghost btn-sm" id="btn-refresh-backup">🔄 Refresh</button>
-      </div>
-      <div id="backup-list">
-        <div class="loading-state">⏳ Memuat data backup...</div>
-      </div>
-      <div class="log-box" id="backup-log" style="display:none;"></div>
-    </div>
-
-    <div class="info-section">
-      <h2>ℹ️ Informasi</h2>
-      <ul>
-        <li>Backup berjalan otomatis via <strong>cron-job.org</strong> 1 hari sekali (12:01 WIB)</li>
-        <li>File disimpan di <strong>R2 bucket</strong> <code>griya-aleena-backup</code></li>
-        <li>File lebih dari 30 hari otomatis terhapus (Lifecycle Rule)</li>
-        <li>Klik <strong>⬇ Download</strong> untuk unduh file <code>.sql</code></li>
-        <li>Klik <strong>🔄 Restore</strong> untuk restore database ke kondisi backup</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="back-link">
-    <a href="ngadmin.html">← Kembali ke Halaman Admin</a>
-  </div>
-
-</div>
-
+ 
 <!-- MODAL: Edit / Tambah Baris -->
 <div class="modal" id="modal-row">
   <div class="modal-card">
