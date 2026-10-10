@@ -714,7 +714,7 @@ function renderRooms() {
 
           if (sudahPerpanjang) {
             statusClass = 'status-habis-perpanjangan';
-            statusLabel = `⚠️ Habis dalam<br>${sisa} hari<br>(SUDAH PERPANJANGAN)`;
+            statusLabel = `⚠️ Habis dalam<br>${sisa} hari & <br>SUDAH PERPANJANGAN`;
           } else {
             statusClass = 'status-habis';
             statusLabel = `⚠️ Habis dalam<br>${sisa} hari`;
