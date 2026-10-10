@@ -700,9 +700,29 @@ function renderRooms() {
       penyewa = active.nama_penyewa;
       tanggal = `${fmtDate(active.tanggal_mulai)} — ${fmtDate(active.tanggal_selesai)}`;
       const sisa = daysBetween(today, active.tanggal_selesai);
+
       if (active.status_bayar === 'lunas') {
-        statusClass = sisa <= 10 ? 'status-habis' : 'status-terisi';
-        statusLabel = sisa <= 10 ? `⚠️ Habis dalam<br>${sisa} hari` : 'Terisi';
+        if (sisa <= 10) {
+          // Cek apakah sudah ada perpanjangan (nama sama persis, kamar sama, mulai setelah kontrak ini)
+          const sudahPerpanjang = OCCS.some(o =>
+            o.id !== active.id &&
+            String(o.room_id) === String(active.room_id) &&
+            String(o.nama_penyewa || '').trim().toUpperCase() ===
+              String(active.nama_penyewa || '').trim().toUpperCase() &&
+            o.tanggal_mulai > active.tanggal_selesai
+          );
+
+          if (sudahPerpanjang) {
+            statusClass = 'status-habis-perpanjangan';
+            statusLabel = `⚠️ Habis dalam<br>${sisa} hari<br>SUDAH PERPANJANGAN`;
+          } else {
+            statusClass = 'status-habis';
+            statusLabel = `⚠️ Habis dalam<br>${sisa} hari`;
+          }
+        } else {
+          statusClass = 'status-terisi';
+          statusLabel = 'Terisi';
+        }
       } else {
         statusClass = 'status-dp';
         statusLabel = active.status_bayar === 'dp' ? 'DP' : 'Belum Bayar';
@@ -722,7 +742,7 @@ function renderRooms() {
     `;
   }).join('');
 
-  // ⬇️ UBAH: roomCards dulu, baru allCard di akhir
+  // Room cards dulu, ALL di akhir
   grid.innerHTML = roomCards + allCard;
 
   grid.querySelectorAll('.room-card').forEach(el => {
