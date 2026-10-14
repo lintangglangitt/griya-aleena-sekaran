@@ -455,13 +455,22 @@ async function init() {
     renderRiwayatKamar();        // ⬅️ TAMBAH
   } catch (e) { console.error('[Init] Render error:', e); }
 
-    //reset ketersediaan kamar jika tanggal mulai diubah
+  // Reset ketersediaan kamar jika tanggal mulai / selesai diubah
   const mulaiInput = document.getElementById('f-mulai');
+  const selesaiInput = document.getElementById('f-selesai');
+
   if (mulaiInput && !mulaiInput.dataset.roomDateBound) {
     mulaiInput.addEventListener('change', () => {
       fillRoomSelect(EDITING_ID);
     });
     mulaiInput.dataset.roomDateBound = 'true';
+  }
+
+  if (selesaiInput && !selesaiInput.dataset.roomDateBound) {
+    selesaiInput.addEventListener('change', () => {
+      fillRoomSelect(EDITING_ID);
+    });
+    selesaiInput.dataset.roomDateBound = 'true';
   }
   // Hide users button kalau bukan owner
   if (USER.role !== 'owner') {
@@ -1418,15 +1427,22 @@ async function cancelModal() {
   closeModal(document.getElementById('modal-occ'));
 }
 
+
 function fillRoomSelect(currentEditingId = null) {
   const fr = document.getElementById('f-room');
   if (!fr) return;
 
   const tanggalMulai = document.getElementById('f-mulai')?.value || '';
+  const tanggalSelesai = document.getElementById('f-selesai')?.value || '';
   const selectedRoom = fr.value;
 
+  // Kalau tanggal selesai kosong, pakai tanggal mulai sebagai fallback
+  // (anggap cek untuk 1 hari saja) supaya kamar yang sedang terisi
+  // di tanggal mulai tetap terdeteksi.
+  const cekSelesai = tanggalSelesai || tanggalMulai;
+
   const roomOptions = ROOMS.map(r => {
-    const sudahTersewa = tanggalMulai && OCCS.some(o => {
+    const sudahTersewa = tanggalMulai && cekSelesai && OCCS.some(o => {
       // Saat edit, abaikan kontrak yang sedang diedit
       if (
         currentEditingId != null &&
@@ -1435,10 +1451,12 @@ function fillRoomSelect(currentEditingId = null) {
 
       if (String(o.room_id) !== String(r.id)) return false;
 
-      // Cek apakah tanggal mulai berada dalam periode sewa
+      // Cek OVERLAP dua rentang tanggal:
+      // [tanggalMulai, cekSelesai] vs [o.tanggal_mulai, o.tanggal_selesai]
+      // Overlap jika: A1 <= B2 && A2 >= B1
       return (
-        tanggalMulai >= String(o.tanggal_mulai) &&
-        tanggalMulai <= String(o.tanggal_selesai)
+        tanggalMulai <= String(o.tanggal_selesai) &&
+        cekSelesai >= String(o.tanggal_mulai)
       );
     });
 
@@ -1468,6 +1486,7 @@ function fillRoomSelect(currentEditingId = null) {
     fr.value = firstAvailable?.value || '';
   }
 }
+
 
 function openModal(id) {
   console.log('[openModal] id:', id);
@@ -1505,19 +1524,18 @@ fillRoomSelect(id);
   if (id) {
     const o = OCCS.find(x => x.id === id);
     if (!o) { console.error('[openModal] occ not found', id); return; }
-    document.getElementById('modal-title').textContent = 'Edit Penyewa';
+
+  document.getElementById('modal-title').textContent = 'Edit Penyewa';
   safeSet('f-id', o.id);
   safeSet('f-tipe', o.tipe_sewa);
-  safeSet('f-mulai', o.tanggal_mulai);
 
-  // Isi opsi kamar dengan pengecekan berdasarkan tanggal mulai saja.
-  // ID kontrak yang sedang diedit dikecualikan dari pengecekan.
+  // Isi kedua tanggal DULU, karena fillRoomSelect butuh keduanya
+  // untuk cek overlap. ID kontrak yang sedang diedit dikecualikan.
+  safeSet('f-mulai', o.tanggal_mulai);
+  safeSet('f-selesai', o.tanggal_selesai);
+
   fillRoomSelect(o.id);
   safeSet('f-room', o.room_id);
-
-  // Tetap isi tanggal selesai untuk data kontrak,
-  // tetapi tanggal tersebut tidak dipakai untuk cek ketersediaan.
-  safeSet('f-selesai', o.tanggal_selesai);
     
     safeSet('f-harga', o.harga_total);
     safeSet('f-status', o.status_bayar);
