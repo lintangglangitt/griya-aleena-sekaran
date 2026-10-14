@@ -1189,15 +1189,69 @@ async function handleUpdateOccupancy(id, request, env, user) {
 __name(handleUpdateOccupancy, "handleUpdateOccupancy");
 
 async function handleDeleteOccupancy(id, env, user) {
+  // ─── Ambil data lengkap termasuk URL file SEBELUM hapus ───
   const row = await env.DB.prepare(
-    "SELECT nama_penyewa FROM occupancies WHERE id = ?"
+    `SELECT nama_penyewa, file_ktp_penyewa, file_ktp_ortu, file_ktm, file_perjanjian
+     FROM occupancies WHERE id = ?`
   ).bind(id).first();
 
+  if (!row) {
+    return json({ error: "Data tidak ditemukan" }, 404);
+  }
+
+  // ─── Hapus baris dari DB ───
   await env.DB.prepare("DELETE FROM occupancies WHERE id = ?").bind(id).run();
 
+  // ─── Hapus file-file dari R2 ───
+  const fileUrls = [
+    row.file_ktp_penyewa,
+    row.file_ktp_ortu,
+    row.file_ktm,
+    row.file_perjanjian,
+  ].filter(Boolean);
+
+  const deletedFiles = [];
+  const failedFiles = [];
+
+  if (env.BUCKET && fileUrls.length > 0) {
+    for (const url of fileUrls) {
+      try {
+        const urlObj = new URL(url);
+        const filename = urlObj.pathname.substring(1);
+        if (!filename) continue;
+
+        const existing = await env.BUCKET.head(filename);
+        if (existing) {
+          await env.BUCKET.delete(filename);
+          deletedFiles.push(filename);
+        }
+      } catch (err) {
+        console.warn(`Gagal hapus file ${url}:`, err.message);
+        failedFiles.push({ url, error: err.message });
+      }
+    }
+  }
+
+  // ─── Catat aktivitas ───
   await logActivity(env, user, "delete", "occupancy", id, row?.nama_penyewa || `ID ${id}`);
 
-  return json({ ok: true });
+  // ─── Log hapus file (kalau ada) ───
+  if (deletedFiles.length > 0) {
+    await logActivity(
+      env,
+      user,
+      "delete",
+      "file",
+      "",
+      `${deletedFiles.length} file (hapus kontrak)`
+    );
+  }
+
+  return json({
+    ok: true,
+    deleted_files: deletedFiles,
+    failed_files: failedFiles,
+  });
 }
 __name(handleDeleteOccupancy, "handleDeleteOccupancy");
 
