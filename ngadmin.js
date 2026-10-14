@@ -179,23 +179,19 @@ function openModalExclusive(modalEl) {
     console.error('[openModalExclusive] modalEl null');
     return;
   }
-  // Tutup semua modal lain
   document.querySelectorAll('.modal.open, .invoice-modal.open').forEach(m => {
     if (m !== modalEl) m.classList.remove('open');
   });
-  // Buka modal ini
   modalEl.classList.add('open');
   console.log('[Modal] Opened:', modalEl.id);
 }
 
-/** Tutup satu modal */
 function closeModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.remove('open');
   console.log('[Modal] Closed:', modalEl.id);
 }
 
-/** Tutup semua modal */
 function closeAllModals() {
   document.querySelectorAll('.modal.open, .invoice-modal.open').forEach(m => {
     m.classList.remove('open');
@@ -204,7 +200,7 @@ function closeAllModals() {
 
 // ─── Riwayat Okupansi Per Kamar (dihitung otomatis dari OCCS) ──
 let ACTIVE_RK_ROOM = null;
-const RK_START_DATE = '2025-01-01'; // data mulai dihitung dari tanggal ini
+const RK_START_DATE = '2025-01-01';
 
 function addDaysISO(dateStr, n) {
   const d = new Date(dateStr);
@@ -212,8 +208,6 @@ function addDaysISO(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 
-// Rangkai timeline lengkap satu kamar.
-// Celah antar kontrak ditampilkan sebagai periode "Kosong".
 function buildRiwayatKamar(roomId) {
   const today = todayISO();
 
@@ -234,8 +228,6 @@ function buildRiwayatKamar(roomId) {
 
     if (!mulai || !selesai) continue;
 
-    // Jangan membuat celah kosong jika kontrak bertumpang tindih
-    // atau mulai sebelum tanggal awal timeline.
     if (mulai > cursor) {
       rows.push({
         mulai: cursor,
@@ -280,10 +272,7 @@ function buildRiwayatKamar(roomId) {
     });
   }
   return rows;
-    // Ascending dulu (biar akumulasi benar), baru dibalik untuk tampilan
-  //return rows.reverse();
 }
-
 
 function renderRiwayatKamarTabs() {
   const wrap = document.getElementById('riwayat-kamar-tabs');
@@ -298,12 +287,10 @@ function renderRiwayatKamarTabs() {
     return;
   }
 
-  // Pastikan kamar aktif masih tersedia.
   if (!rooms.some(room => String(room.id) === String(ACTIVE_RK_ROOM))) {
     ACTIVE_RK_ROOM = rooms[0].id;
   }
 
-  // Render kartu kamar
   const roomCards = rooms.map(room => {
     const totalSewa = OCCS
       .filter(o => String(o.room_id) === String(room.id))
@@ -331,7 +318,6 @@ function renderRiwayatKamarTabs() {
     `;
   }).join('');
 
-  // Kartu "Tambah Kamar Baru"
   const addCard = `
     <button
       type="button"
@@ -346,7 +332,6 @@ function renderRiwayatKamarTabs() {
 
   wrap.innerHTML = roomCards + addCard;
 
-  // Event listener kamar
   wrap.querySelectorAll('[data-rk-room]').forEach(button => {
     button.addEventListener('click', () => {
       ACTIVE_RK_ROOM = button.dataset.rkRoom;
@@ -355,13 +340,13 @@ function renderRiwayatKamarTabs() {
     });
   });
 
-  // Event listener tambah kamar
   wrap.querySelectorAll('[data-rk-add]').forEach(button => {
     button.addEventListener('click', () => {
       openAddRoomModal();
     });
   });
 }
+
 function renderRiwayatKamar() {
   const tbody = document.getElementById('riwayat-kamar-body');
   if (!tbody) return;
@@ -422,18 +407,13 @@ function renderRiwayatKamar() {
 async function init() {
   console.log('[Init] Starting...');
 
-
-
-  // Reset semua modal
   closeAllModals();
 
-  // Set user info
   try {
     document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
     document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
   } catch (e) { console.error('[Init] User info error:', e); }
 
-  // Load data
   try {
     await Promise.all([loadRooms(), loadOccs(), loadStats()]);
     console.log('[Init] Data loaded. Rooms:', ROOMS.length, 'Occs:', OCCS.length);
@@ -443,19 +423,17 @@ async function init() {
     return;
   }
 
-  // Render
   try {
     fillYearFilter();
     renderRooms();
     renderTable();
     renderMonthlyIncome();
-    setupIncomeCardKeyboard();   // ⬅️ nama baru
+    setupIncomeCardKeyboard();
     setupAutoHarga();
-    renderRiwayatKamarTabs();   // ⬅️ TAMBAH
-    renderRiwayatKamar();        // ⬅️ TAMBAH
+    renderRiwayatKamarTabs();
+    renderRiwayatKamar();
   } catch (e) { console.error('[Init] Render error:', e); }
 
-  // Reset ketersediaan kamar jika tanggal mulai / selesai diubah
   const mulaiInput = document.getElementById('f-mulai');
   const selesaiInput = document.getElementById('f-selesai');
 
@@ -472,17 +450,15 @@ async function init() {
     });
     selesaiInput.dataset.roomDateBound = 'true';
   }
-  // Hide users button kalau bukan owner
+
   if (USER.role !== 'owner') {
     const btnUsers = document.getElementById('btn-users');
     if (btnUsers) btnUsers.style.display = 'none';
   }
 
-  // Badge analytics
   updateAnalyticsBadge();
   setInterval(updateAnalyticsBadge, 5 * 60 * 1000);
 
-  // Bind form tambah kamar
   const formAddRoom = document.getElementById('form-add-room');
   if (formAddRoom) {
     formAddRoom.addEventListener('submit', handleSaveRoom);
@@ -524,7 +500,6 @@ function renderMonthlyIncome() {
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
 
-  // Tahun mulai dari 2025 sampai tahun terbaru di data.
   const yearsInData = OCCS
     .map(o => String(o.tanggal_mulai || '').match(/^(\d{4})-\d{2}-\d{2}$/))
     .filter(Boolean)
@@ -541,7 +516,6 @@ function renderMonthlyIncome() {
   );
 
   OCCS.forEach(o => {
-    // Hanya hitung yang sudah lunas
     if (o.status_bayar !== 'lunas') return;
 
     const match = String(o.tanggal_mulai || '').match(/^(\d{4})-(\d{2})-\d{2}$/);
@@ -582,7 +556,6 @@ function renderMonthlyIncome() {
     </tr>
   `).join('');
 
-  // Baris total: kolom Bulan = total keseluruhan semua tahun
   const yearTotals = years.map(year =>
     totals[year].reduce((sum, amount) => sum + amount, 0)
   );
@@ -623,7 +596,6 @@ async function updateAnalyticsBadge() {
 // ═══════════════════════════════════════════════════════════
 function setupIncomeCardKeyboard() {
   document.querySelectorAll('.stat-card.clickable').forEach(card => {
-    // Hanya keyboard — klik sudah di-handle event delegation global
     card.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -646,7 +618,7 @@ function toggleIncomeFilter(filter) {
   updateIncomeCardUI();
   renderRooms();
   renderTable();
-  renderRiwayatKamar();   // ⬅️ TAMBAH
+  renderRiwayatKamar();
 }
 
 function updateIncomeCardUI() {
@@ -712,7 +684,6 @@ function renderRooms() {
 
       if (active.status_bayar === 'lunas') {
         if (sisa <= 10) {
-          // Cek apakah sudah ada perpanjangan (nama sama persis, kamar sama, mulai setelah kontrak ini)
           const sudahPerpanjang = OCCS.some(o =>
             o.id !== active.id &&
             String(o.room_id) === String(active.room_id) &&
@@ -751,7 +722,6 @@ function renderRooms() {
     `;
   }).join('');
 
-  // Room cards dulu, ALL di akhir
   grid.innerHTML = roomCards + allCard;
 
   grid.querySelectorAll('.room-card').forEach(el => {
@@ -841,14 +811,12 @@ function renderTable() {
         <td><span class="badge ${badgeClass}">${escapeHtml(o.status_bayar)}</span></td>
         <td>
           <div class="btn-row">
-            <div class="btn-row">
-              <button class="btn-icon" data-invoice="${o.id}" title="Print Invoice">🧾</button>
-              <button class="btn-icon" data-kuitansi="${o.id}" title="Print Kuitansi">💵</button>
-              <button class="btn-icon" data-perjanjian="${o.id}" title="Print Perjanjian">🤝</button>
-              <button class="btn-icon" data-duplicate="${o.id}" title="Duplikasi/Perpanjang">♻️</button>
-              <button class="btn-icon" data-edit="${o.id}" title="Edit">✏️</button>
-              <button class="btn-icon danger" data-del="${o.id}" title="Hapus">🗑️</button>
-            </div>
+            <button class="btn-icon" data-invoice="${o.id}" title="Print Invoice">🧾</button>
+            <button class="btn-icon" data-kuitansi="${o.id}" title="Print Kuitansi">💵</button>
+            <button class="btn-icon" data-perjanjian="${o.id}" title="Print Perjanjian">🤝</button>
+            <button class="btn-icon" data-duplicate="${o.id}" title="Duplikasi/Perpanjang">♻️</button>
+            <button class="btn-icon" data-edit="${o.id}" title="Edit">✏️</button>
+            <button class="btn-icon danger" data-del="${o.id}" title="Hapus">🗑️</button>
           </div>
         </td>
       </tr>
@@ -857,7 +825,7 @@ function renderTable() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// DOC HEADER (untuk Invoice / Kuitansi)
+// DOC HEADER
 // ═══════════════════════════════════════════════════════════
 function buildDocHeader(title, no) {
   return `
@@ -1034,9 +1002,8 @@ function openKuitansi(id) {
 
 
 // ═══════════════════════════════════════════════════════════
-// HALAMAN LAMPIRAN KTP / KTM (untuk Perjanjian)
+// HALAMAN LAMPIRAN KTP / KTM
 // ═══════════════════════════════════════════════════════════
-// Dicoba berurutan sampai ada yang berhasil dimuat
 const KTP_PEMILIK_CANDIDATES = [
   'foto/ktp_pemilik.jpg',
   'foto/ktp_pemilik.jpeg',
@@ -1051,14 +1018,12 @@ function isPdfUrl(url) {
   return /\.pdf(\?|#|$)/i.test(String(url || ''));
 }
 
-// Dipanggil inline oleh <img onload>: deteksi landscape / portrait
 function lampiranImgLoaded(img) {
   const portrait = img.naturalHeight > img.naturalWidth;
   img.classList.toggle('portrait', portrait);
   img.classList.toggle('landscape', !portrait);
 }
 
-// Dipanggil inline oleh <img onerror>: coba alternatif, kalau habis tampilkan pesan
 function lampiranImgError(img) {
   img.dataset.tried = (img.dataset.tried ? img.dataset.tried + ' | ' : '') + img.getAttribute('src');
   const alts = (img.dataset.alts || '').split('|').filter(Boolean);
@@ -1100,7 +1065,6 @@ function lampiranItem(no, label, url, alts = []) {
 function buildLampiranPage(o) {
   const [ktpPemilik, ...ktpPemilikAlts] = KTP_PEMILIK_CANDIDATES;
   return `
-
   <div class="lampiran-page" style="break-before:page;page-break-before:always;">
       <h2>Lampiran Dokumen</h2>
       <div class="lampiran-grid">
@@ -1112,7 +1076,6 @@ function buildLampiranPage(o) {
       <div class="inv-footer">
         Perjanjian ini dicetak otomatis dari sistem Griya Aleena. Wajib ditandatangani oleh kedua pihak.
       </div>
-      
     </div>
   `;
 }
@@ -1331,9 +1294,7 @@ function openPerjanjian(id) {
       Perjanjian ini dicetak otomatis dari sistem Griya Aleena. Wajib ditandatangani oleh kedua pihak.
     </div>
 
-
-${buildLampiranPage(o)}   <!-- ⬅️ TAMBAH -->
-
+    ${buildLampiranPage(o)}
 
     <div class="invoice-actions">
       <button class="inv-btn-close" data-close-modal>Tutup</button>
@@ -1345,11 +1306,163 @@ ${buildLampiranPage(o)}   <!-- ⬅️ TAMBAH -->
   openModalExclusive(document.getElementById('perjanjian-modal'));
 }
 
-function duplicateOcc(id) {
+// ═══════════════════════════════════════════════════════════
+// UPLOAD HELPERS (nama file, copy file)
+// ═══════════════════════════════════════════════════════════
+
+// ─── Bangun nama file upload: kamar1_ktp-penyewa_20261123.jpg ───
+function buildUploadFilename(cfg, roomId, tanggalMulai, originalName) {
+  const room = ROOMS.find(r => String(r.id) === String(roomId));
+  const namaKamar = room?.nama_kamar || '';
+  const match = namaKamar.match(/\d+/);
+  const nomorKamar = match ? match[0] : String(roomId || 'x');
+
+  const jenis = (cfg?.field || cfg || '')
+    .replace(/^file_/, '')
+    .replace(/_/g, '-');
+
+  const tgl = String(tanggalMulai || todayISO()).replace(/-/g, '');
+
+  const srcName = String(originalName || '');
+  const extMatch = srcName.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
+  const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
+
+  return `kamar${nomorKamar}_${jenis}_${tgl}.${ext}`;
+}
+
+// ─── Copy file dari R2 → upload ulang sebagai file baru ───
+async function copyUploadedFile(sourceUrl, cfg, roomId, tanggalMulai) {
+  const res = await fetch(sourceUrl);
+  if (!res.ok) throw new Error(`Gagal fetch file lama (HTTP ${res.status})`);
+  const blob = await res.blob();
+
+  const newName = buildUploadFilename(cfg, roomId, tanggalMulai, sourceUrl);
+
+  const file = new File([blob], newName, {
+    type: blob.type || 'application/octet-stream',
+  });
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('room_id', roomId || '');
+  formData.append('tanggal', tanggalMulai || '');
+  formData.append('jenis', (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-'));
+
+  const result = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+    xhr.setRequestHeader('Authorization', `Bearer ${TOKEN}`);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch { reject(new Error('Response tidak valid')); }
+      } else {
+        try {
+          const err = JSON.parse(xhr.responseText);
+          reject(new Error(err.error || `HTTP ${xhr.status}`));
+        } catch { reject(new Error(`HTTP ${xhr.status}`)); }
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(formData);
+  });
+
+  return result.url;
+}
+
+// ─── Upload file sebagai "pending" (belum di-link ke kontrak) ───
+async function uploadFileAsNew(sourceBlob, originalName, cfg, roomId, tanggalMulai) {
+  const newName = buildUploadFilename(cfg, roomId, tanggalMulai, originalName);
+  const file = new File([sourceBlob], newName, {
+    type: sourceBlob.type || 'application/octet-stream',
+  });
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('room_id', roomId || '');
+  formData.append('tanggal', tanggalMulai || '');
+  formData.append('jenis', (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-'));
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+    xhr.setRequestHeader('Authorization', `Bearer ${TOKEN}`);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch { reject(new Error('Response tidak valid')); }
+      } else {
+        try { reject(new Error(JSON.parse(xhr.responseText).error || `HTTP ${xhr.status}`)); }
+        catch { reject(new Error(`HTTP ${xhr.status}`)); }
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(formData);
+  });
+}
+
+// ─── Rename satu file di R2 (fetch lama → upload baru dengan nama baru) ───
+async function renameOneFile(cfg, tanggalBaru) {
+  const linkEl = document.getElementById(cfg.linkId);
+  if (!linkEl) return { newUrl: null, oldUrl: null };
+
+  const oldUrl = linkEl.value.trim();
+  if (!oldUrl) return { newUrl: null, oldUrl: null };
+
+  const roomId = document.getElementById('f-room')?.value || '';
+  const newName = buildUploadFilename(cfg, roomId, tanggalBaru, oldUrl);
+
+  let blob;
+  try {
+    const res = await fetch(oldUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    blob = await res.blob();
+  } catch (err) {
+    console.warn(`[Rename] Gagal fetch ${oldUrl}:`, err.message);
+    return { newUrl: null, oldUrl: null };
+  }
+
+  try {
+    const result = await uploadFileAsNew(blob, newName, cfg, roomId, tanggalBaru);
+    linkEl.value = result.url;
+    return { newUrl: result.url, oldUrl };
+  } catch (err) {
+    console.warn(`[Rename] Gagal upload ulang:`, err.message);
+    return { newUrl: null, oldUrl: null };
+  }
+}
+
+// ─── Rename SEMUA file kontrak yang tanggalnya berubah ───
+async function renameFilesForNewDate(tanggalBaru) {
+  const updatedUrls = {};
+  const oldUrlsToDelete = [];
+
+  for (const cfg of UPLOAD_CONFIGS) {
+    const result = await renameOneFile(cfg, tanggalBaru);
+    if (result.newUrl) {
+      updatedUrls[cfg.field] = result.newUrl;
+      oldUrlsToDelete.push(result.oldUrl);
+
+      // Update MODAL_STATE
+      if (MODAL_STATE.pendingUploads[cfg.field] === result.oldUrl) {
+        MODAL_STATE.pendingUploads[cfg.field] = result.newUrl;
+      } else {
+        MODAL_STATE.originalUrls[cfg.field] = result.oldUrl;
+      }
+    }
+  }
+
+  return { updatedUrls, oldUrlsToDelete };
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// DUPLIKASI OKUPANSI
+// ═══════════════════════════════════════════════════════════
+async function duplicateOcc(id) {
   const o = OCCS.find(x => Number(x.id) === Number(id));
   if (!o) return;
 
-  // Mulai sehari setelah tanggal selesai kontrak yang dipilih
   const mulai = addDaysISO(o.tanggal_selesai, 1);
   const selesai = addDaysISO(mulai, 30);
 
@@ -1360,7 +1473,6 @@ function duplicateOcc(id) {
     if (el) el.value = value ?? '';
   };
 
-  set('f-room', o.room_id);
   set('f-tipe', 'bulanan');
   set('f-mulai', mulai);
   set('f-selesai', selesai);
@@ -1380,10 +1492,68 @@ function duplicateOcc(id) {
   set('f-catatan', o.catatan);
 
   document.getElementById('modal-title').textContent = 'Duplikasi Okupansi';
+
   fillRoomSelect(null);
   set('f-room', o.room_id);
-}
 
+  const FILE_MAP = [
+    { srcUrl: o.file_ktp_penyewa, cfgKey: 'f-file-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', statusId: 'upload-status-ktp-penyewa' },
+    { srcUrl: o.file_ktp_ortu,    cfgKey: 'f-file-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    statusId: 'upload-status-ktp-ortu' },
+    { srcUrl: o.file_ktm,         cfgKey: 'f-file-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         statusId: 'upload-status-ktm' },
+  ];
+
+  const toCopy = FILE_MAP.filter(item => item.srcUrl);
+  if (toCopy.length === 0) return;
+
+  toCopy.forEach(item => {
+    const statusEl = document.getElementById(item.statusId);
+    if (statusEl) {
+      statusEl.innerHTML = '⏳ Menyalin file...';
+      statusEl.className = 'upload-status loading';
+    }
+  });
+
+  const roomId = document.getElementById('f-room')?.value || '';
+  const tglMulai = document.getElementById('f-mulai')?.value || todayISO();
+
+  const results = await Promise.allSettled(
+    toCopy.map(item => {
+      const cfg = UPLOAD_CONFIGS.find(c => c.key === item.cfgKey);
+      return copyUploadedFile(item.srcUrl, cfg, roomId, tglMulai);
+    })
+  );
+
+  results.forEach((res, i) => {
+    const item = toCopy[i];
+    const cfg = UPLOAD_CONFIGS.find(c => c.key === item.cfgKey);
+    const linkEl = document.getElementById(item.linkId);
+    const previewEl = document.getElementById(item.previewId);
+    const statusEl = document.getElementById(item.statusId);
+    const btnDelete = document.querySelector(`[data-delete-file="${item.cfgKey}"]`);
+
+    if (res.status === 'fulfilled') {
+      const newUrl = res.value;
+
+      if (linkEl) linkEl.value = newUrl;
+      if (previewEl) previewEl.innerHTML =
+        `<a href="${escapeHtml(newUrl)}" target="_blank">📄 Lihat file (belum disimpan)</a>`;
+      if (statusEl) {
+        statusEl.innerHTML = '✅ File disalin (belum disimpan)';
+        statusEl.className = 'upload-status success';
+      }
+
+      MODAL_STATE.pendingUploads[cfg.field] = newUrl;
+
+      if (btnDelete) btnDelete.style.display = 'inline-block';
+    } else {
+      if (statusEl) {
+        statusEl.innerHTML =
+          `❌ Gagal salin: ${escapeHtml(res.reason?.message || 'Unknown')}`;
+        statusEl.className = 'upload-status error';
+      }
+    }
+  });
+}
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1436,14 +1606,10 @@ function fillRoomSelect(currentEditingId = null) {
   const tanggalSelesai = document.getElementById('f-selesai')?.value || '';
   const selectedRoom = fr.value;
 
-  // Kalau tanggal selesai kosong, pakai tanggal mulai sebagai fallback
-  // (anggap cek untuk 1 hari saja) supaya kamar yang sedang terisi
-  // di tanggal mulai tetap terdeteksi.
   const cekSelesai = tanggalSelesai || tanggalMulai;
 
   const roomOptions = ROOMS.map(r => {
     const sudahTersewa = tanggalMulai && cekSelesai && OCCS.some(o => {
-      // Saat edit, abaikan kontrak yang sedang diedit
       if (
         currentEditingId != null &&
         String(o.id) === String(currentEditingId)
@@ -1451,9 +1617,6 @@ function fillRoomSelect(currentEditingId = null) {
 
       if (String(o.room_id) !== String(r.id)) return false;
 
-      // Cek OVERLAP dua rentang tanggal:
-      // [tanggalMulai, cekSelesai] vs [o.tanggal_mulai, o.tanggal_selesai]
-      // Overlap jika: A1 <= B2 && A2 >= B1
       return (
         tanggalMulai <= String(o.tanggal_selesai) &&
         cekSelesai >= String(o.tanggal_mulai)
@@ -1492,15 +1655,15 @@ function openModal(id) {
   console.log('[openModal] id:', id);
   EDITING_ID = id;
   const f = document.getElementById('form-occ');
-f.reset();
+  f.reset();
 
-if (!id) {
-  document.getElementById('f-mulai').value = todayISO();
-}
+  if (!id) {
+    document.getElementById('f-mulai').value = todayISO();
+  }
 
-fillRoomSelect(id);
+  fillRoomSelect(id);
   setupAutoHarga();
-  setupAddRoomListener();   // ⬅️ TAMBAH BARIS INI
+  setupAddRoomListener();
 
   MODAL_STATE.editingId = id;
   MODAL_STATE.pendingUploads = {};
@@ -1525,18 +1688,16 @@ fillRoomSelect(id);
     const o = OCCS.find(x => x.id === id);
     if (!o) { console.error('[openModal] occ not found', id); return; }
 
-  document.getElementById('modal-title').textContent = 'Edit Penyewa';
-  safeSet('f-id', o.id);
-  safeSet('f-tipe', o.tipe_sewa);
+    document.getElementById('modal-title').textContent = 'Edit Penyewa';
+    safeSet('f-id', o.id);
+    safeSet('f-tipe', o.tipe_sewa);
 
-  // Isi kedua tanggal DULU, karena fillRoomSelect butuh keduanya
-  // untuk cek overlap. ID kontrak yang sedang diedit dikecualikan.
-  safeSet('f-mulai', o.tanggal_mulai);
-  safeSet('f-selesai', o.tanggal_selesai);
+    safeSet('f-mulai', o.tanggal_mulai);
+    safeSet('f-selesai', o.tanggal_selesai);
 
-  fillRoomSelect(o.id);
-  safeSet('f-room', o.room_id);
-    
+    fillRoomSelect(o.id);
+    safeSet('f-room', o.room_id);
+
     safeSet('f-harga', o.harga_total);
     safeSet('f-status', o.status_bayar);
     safeSet('f-nama', o.nama_penyewa);
@@ -1638,7 +1799,7 @@ function setupAutoHarga() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// TAMBAH KAMAR BARU — PAKAI MODAL FORM
+// TAMBAH KAMAR BARU
 // ═══════════════════════════════════════════════════════════
 function setupAddRoomListener() {
   const fr = document.getElementById('f-room');
@@ -1646,11 +1807,7 @@ function setupAddRoomListener() {
 
   fr.addEventListener('change', (e) => {
     if (e.target.value !== '__add_new__') return;
-
-    // Reset select dulu
     e.target.value = '';
-
-    // Buka modal
     openAddRoomModal();
   });
 
@@ -1665,11 +1822,8 @@ function openAddRoomModal() {
     return;
   }
 
-  // Reset form
   form.reset();
 
-  // ─── Hitung nomor kamar berikutnya ───
-  // Ambil angka dari nama kamar yang ada (mis. "KAMAR NOMOR 7" → 7)
   let maxNomorKamar = 0;
   ROOMS.forEach(r => {
     const nama = String(r.nama_kamar || '');
@@ -1681,20 +1835,16 @@ function openAddRoomModal() {
   });
   const nextNomorKamar = maxNomorKamar + 1;
 
-  // ─── Hitung urutan berikutnya ───
   const maxUrutan = ROOMS.reduce((max, r) => Math.max(max, Number(r.urutan) || 0), 0);
   const nextUrutan = maxUrutan + 1;
 
-  // ─── Set default values ───
   document.getElementById('ar-nama').value = `KAMAR NOMOR ${nextNomorKamar}`;
   document.getElementById('ar-tipe').value = 'NON-AC';
   document.getElementById('ar-harga').value = 800000;
   document.getElementById('ar-urutan').value = nextUrutan;
 
-  // Buka modal
   openModalExclusive(modal);
 
-  // Focus + select nama kamar (biar langsung bisa ditimpa)
   setTimeout(() => {
     const namaInput = document.getElementById('ar-nama');
     if (namaInput) {
@@ -1704,7 +1854,6 @@ function openAddRoomModal() {
   }, 100);
 }
 
-// Handler submit form tambah kamar
 async function handleSaveRoom(e) {
   e.preventDefault();
 
@@ -1714,7 +1863,6 @@ async function handleSaveRoom(e) {
   const urutanInput = document.getElementById('ar-urutan').value;
   const urutan = urutanInput ? Number(urutanInput) : null;
 
-  // Validasi
   if (!nama_kamar) {
     alert('Nama kamar wajib diisi');
     return;
@@ -1730,7 +1878,6 @@ async function handleSaveRoom(e) {
   btn.textContent = '⏳ Menyimpan...';
 
   try {
-    // Kirim ke API
     const payload = {
       nama_kamar: nama_kamar,
       tipe: tipe,
@@ -1747,19 +1894,15 @@ async function handleSaveRoom(e) {
       throw new Error(result.error || 'Gagal tambah kamar');
     }
 
-    // Reload ROOMS
     await loadRooms();
     await loadStats();
 
-    // Refresh UI
     renderRooms();
     renderTable();
     fillRoomSelect(EDITING_ID);
 
-    // Tutup modal
     closeModal(document.getElementById('modal-add-room'));
 
-    // Pilih kamar baru di dropdown
     setTimeout(() => {
       const newRoomId = result.id;
       if (newRoomId) {
@@ -1785,54 +1928,122 @@ async function handleSaveRoom(e) {
 document.getElementById('form-occ').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // Ambil nilai field, trim, ubah ke huruf kapital; kosong → null
-  const up = (id) =>
-    document.getElementById(id).value.trim().toUpperCase() || null;
-
-  const payload = {
-    room_id: Number(document.getElementById('f-room').value),
-    tipe_sewa: document.getElementById('f-tipe').value,
-    tanggal_mulai: document.getElementById('f-mulai').value,
-    tanggal_selesai: document.getElementById('f-selesai').value,
-    harga_total: Number(document.getElementById('f-harga').value),
-    link_kontrak: null,
-    status_bayar: document.getElementById('f-status').value,
-
-    // Data penyewa (kapital)
-    nama_penyewa: up('f-nama'),
-    no_ktp: up('f-ktp'),
-    alamat_penyewa: up('f-alamat'),
-    no_hp: up('f-hp'),
-    asal_kampus: up('f-kampus'),
-
-    // Data orang tua/wali (kapital)
-    nama_ortu: up('f-nama-ortu'),
-    no_ktp_ortu: up('f-ktp-ortu'),
-    alamat_ortu: up('f-alamat-ortu'),
-    no_hp_ortu: up('f-hp-ortu'),
-    hubungan_keluarga: up('f-hubungan'),
-
-    // Link file (tidak diubah)
-    file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
-    file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
-    file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
-    file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
-
-    // Catatan tetap apa adanya
-    catatan: document.getElementById('f-catatan').value.trim() || null,
-  };
+  const submitBtn = e.target.querySelector('button[type="submit"]')
+    || document.getElementById('btn-save-occ');
+  const originalBtnText = submitBtn?.textContent;
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Menyimpan...'; }
 
   try {
+    const tanggalBaru = document.getElementById('f-mulai').value;
+    const roomBaru = document.getElementById('f-room').value;
+
+    const occLama = EDITING_ID ? OCCS.find(x => x.id === EDITING_ID) : null;
+    const tanggalLama = occLama?.tanggal_mulai || null;
+    const roomLama = occLama?.room_id != null ? String(occLama.room_id) : null;
+
+    const tanggalBerubah = tanggalLama && tanggalLama !== tanggalBaru;
+    const roomBerubah = roomLama && roomLama !== String(roomBaru);
+
+    let oldUrlsToDelete = [];
+
+    // ─── Skenario EDIT + (tanggal berubah ATAU kamar berubah) → rename semua file ───
+    if (tanggalBerubah || roomBerubah) {
+      if (submitBtn) submitBtn.textContent = '⏳ Menyesuaikan file...';
+      const result = await renameFilesForNewDate(tanggalBaru);
+      oldUrlsToDelete = result.oldUrlsToDelete;
+    }
+    // ─── Skenario TAMBAH BARU + ada file pending dengan nama lama ───
+    else if (!EDITING_ID) {
+      // Cek apakah nama file pending sudah sesuai tanggal & kamar baru
+      const roomObj = ROOMS.find(r => String(r.id) === String(roomBaru));
+      const nomorKamarBaru = (() => {
+        const m = String(roomObj?.nama_kamar || '').match(/\d+/);
+        return m ? m[0] : String(roomBaru || 'x');
+      })();
+      const expectedSuffix = tanggalBaru.replace(/-/g, '');
+
+      for (const cfg of UPLOAD_CONFIGS) {
+        const pendingUrl = MODAL_STATE.pendingUploads[cfg.field];
+        if (!pendingUrl) continue;
+
+        // Cek apakah nama file sudah pakai kamar & tanggal yang benar
+        const jenis = cfg.field.replace(/^file_/, '').replace(/_/g, '-');
+        const expectedPattern = `kamar${nomorKamarBaru}_${jenis}_${expectedSuffix}`;
+
+        if (!pendingUrl.includes(expectedPattern)) {
+          const result = await renameOneFile(cfg, tanggalBaru);
+          if (result.newUrl) {
+            oldUrlsToDelete.push(result.oldUrl);
+            MODAL_STATE.pendingUploads[cfg.field] = result.newUrl;
+          }
+        }
+      }
+    }
+
+    // ─── Bangun payload ───
+    const up = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      return el.value.trim().toUpperCase() || null;
+    };
+
+    const payload = {
+      room_id: Number(document.getElementById('f-room').value),
+      tipe_sewa: document.getElementById('f-tipe').value,
+      tanggal_mulai: document.getElementById('f-mulai').value,
+      tanggal_selesai: document.getElementById('f-selesai').value,
+      harga_total: Number(document.getElementById('f-harga').value),
+      link_kontrak: null,
+      status_bayar: document.getElementById('f-status').value,
+
+      nama_penyewa: up('f-nama'),
+      no_ktp: up('f-ktp'),
+      alamat_penyewa: up('f-alamat'),
+      no_hp: up('f-hp'),
+      asal_kampus: up('f-kampus'),
+
+      nama_ortu: up('f-nama-ortu'),
+      no_ktp_ortu: up('f-ktp-ortu'),
+      alamat_ortu: up('f-alamat-ortu'),
+      no_hp_ortu: up('f-hp-ortu'),
+      hubungan_keluarga: up('f-hubungan'),
+
+      file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
+      file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
+      file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
+      file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
+
+      catatan: document.getElementById('f-catatan').value.trim() || null,
+    };
+
+    // ─── Simpan ke DB ───
     if (EDITING_ID) {
       await api(`/occupancies/${EDITING_ID}`, { method: 'PUT', body: JSON.stringify(payload) });
     } else {
       await api('/occupancies', { method: 'POST', body: JSON.stringify(payload) });
     }
 
+    // ─── Hapus file LAMA yang sudah digantikan karena tanggal berubah ───
+    if (oldUrlsToDelete.length > 0) {
+      try {
+        const result = await api('/delete-files', {
+          method: 'POST',
+          body: JSON.stringify({ urls: oldUrlsToDelete }),
+        });
+        if (result.failed && result.failed.length > 0) {
+          console.warn('Beberapa file lama gagal dihapus:', result.failed);
+        }
+      } catch (err) {
+        console.warn('Gagal hapus file lama:', err.message);
+      }
+    }
+
+    // ─── Hapus file existing yang ditandai user ───
     if (EDITING_ID && MODAL_STATE.pendingDeletes.length > 0) {
       const urlsToDelete = MODAL_STATE.pendingDeletes
         .map(f => MODAL_STATE.originalUrls[f])
-        .filter(Boolean);
+        .filter(Boolean)
+        .filter(u => !oldUrlsToDelete.includes(u));
 
       if (urlsToDelete.length > 0) {
         try {
@@ -1859,8 +2070,11 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
     renderRiwayatKamar();
   } catch (err) {
     alert('Gagal simpan: ' + err.message);
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
   }
 });
+
 
 // ═══════════════════════════════════════════════════════════
 // UPLOAD DOKUMEN
@@ -1898,10 +2112,16 @@ async function uploadDokumen(file, cfg) {
   status.className = 'upload-status loading';
 
   try {
-    const formData = new FormData();
-    formData.append('file', file);
     const roomId = document.getElementById('f-room')?.value || '';
+    const tanggalMulai = document.getElementById('f-mulai')?.value || todayISO();
+
+    const newName = buildUploadFilename(cfg, roomId, tanggalMulai, file.name);
+    const renamedFile = new File([file], newName, { type: file.type });
+
+    const formData = new FormData();
+    formData.append('file', renamedFile);
     formData.append('room_id', roomId);
+    formData.append('tanggal', tanggalMulai);
     const jenisDokumen = (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-');
     formData.append('jenis', jenisDokumen);
 
@@ -2038,7 +2258,7 @@ async function deleteOcc(id) {
     fillYearFilter();
     renderRooms();
     renderTable();
-    renderRiwayatKamar();   // ⬅️ TAMBAH
+    renderRiwayatKamar();
   } catch (err) {
     alert('Gagal hapus: ' + err.message);
   }
@@ -2189,7 +2409,7 @@ async function handleImportFile(file) {
     fillYearFilter();
     renderRooms();
     renderTable();
-    renderRiwayatKamar();   // ⬅️ TAMBAH
+    renderRiwayatKamar();
   } catch (err) {
     alert('Gagal import: ' + err.message);
   }
@@ -2456,7 +2676,7 @@ async function exportLogsCsv() {
 // ─── Riwayat user ───
 function fmtWaktuJakarta(s) {
   if (!s) return '—';
-  const d = new Date(String(s).replace(' ', 'T') + 'Z'); // D1 menyimpan UTC
+  const d = new Date(String(s).replace(' ', 'T') + 'Z');
   if (isNaN(d.getTime())) return s;
   return d.toLocaleString('id-ID', {
     day: '2-digit', month: 'short', year: 'numeric',
@@ -2564,6 +2784,7 @@ async function renderUsersList() {
     wrap.innerHTML = `<p style="color:#e74c3c;">${escapeHtml(err.message)}</p>`;
   }
 }
+
 // ═══════════════════════════════════════════════════════════
 // LOGOUT
 // ═══════════════════════════════════════════════════════════
@@ -2595,18 +2816,12 @@ document.getElementById('form-user').addEventListener('submit', async (e) => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// GLOBAL EVENT DELEGATION — SATU HANDLER UNTUK SEMUA KLIK
-// ═══════════════════════════════════════════════════════════
-// Pakai CAPTURE PHASE (argumen ke-3 = true) supaya handler ini
-// dijalankan SEBELUM handler lain, dan tidak bisa "ditelan".
-// Setiap aksi di-try/catch supaya error 1 tombol tidak
-// mematikan tombol lain.
+// GLOBAL EVENT DELEGATION
 // ═══════════════════════════════════════════════════════════
 document.addEventListener('click', (e) => {
   const target = e.target;
 
   try {
-    // ─── HEADER BUTTONS ───
     if (target.closest('#btn-logout')) {
       handleLogout();
       return;
@@ -2626,7 +2841,6 @@ document.addEventListener('click', (e) => {
       return;
     }
 
-    // ─── TABLE ACTION BUTTONS ───
     if (target.closest('#btn-add')) {
       console.log('[Click] Add');
       openModal(null);
@@ -2645,7 +2859,6 @@ document.addEventListener('click', (e) => {
       return;
     }
 
-    // ─── ANALYTICS MODAL INTERNAL ───
     if (target.closest('#btn-view-logs-header')) {
       openLogsModal();
       return;
@@ -2656,17 +2869,14 @@ document.addEventListener('click', (e) => {
       return;
     }
 
-    // ─── INCOME CARDS (clickable) ───
     const incomeCard = target.closest('.stat-card.clickable');
     if (incomeCard && incomeCard.dataset.filter) {
       toggleIncomeFilter(incomeCard.dataset.filter);
       return;
     }
 
-    // ─── DATA ACTION BUTTONS (di tabel) ───
     const btnInvoice = target.closest('[data-invoice]');
     if (btnInvoice) {
-      console.log('[Click] Invoice', btnInvoice.dataset.invoice);
       e.preventDefault();
       e.stopPropagation();
       openInvoice(Number(btnInvoice.dataset.invoice));
@@ -2675,7 +2885,6 @@ document.addEventListener('click', (e) => {
 
     const btnKuitansi = target.closest('[data-kuitansi]');
     if (btnKuitansi) {
-      console.log('[Click] Kuitansi', btnKuitansi.dataset.kuitansi);
       e.preventDefault();
       e.stopPropagation();
       openKuitansi(Number(btnKuitansi.dataset.kuitansi));
@@ -2684,7 +2893,6 @@ document.addEventListener('click', (e) => {
 
     const btnPerjanjian = target.closest('[data-perjanjian]');
     if (btnPerjanjian) {
-      console.log('[Click] Perjanjian', btnPerjanjian.dataset.perjanjian);
       e.preventDefault();
       e.stopPropagation();
       openPerjanjian(Number(btnPerjanjian.dataset.perjanjian));
@@ -2692,16 +2900,18 @@ document.addEventListener('click', (e) => {
     }
 
     const btnDuplicate = target.closest('[data-duplicate]');
-if (btnDuplicate) {
-  e.preventDefault();
-  e.stopPropagation();
-  duplicateOcc(Number(btnDuplicate.dataset.duplicate));
-  return;
-}
-    
+    if (btnDuplicate) {
+      e.preventDefault();
+      e.stopPropagation();
+      duplicateOcc(Number(btnDuplicate.dataset.duplicate)).catch(err => {
+        console.error('[Duplicate Error]', err);
+        alert('Gagal duplikasi: ' + err.message);
+      });
+      return;
+    }
+
     const btnEdit = target.closest('[data-edit]');
     if (btnEdit) {
-      console.log('[Click] Edit', btnEdit.dataset.edit);
       e.preventDefault();
       e.stopPropagation();
       openModal(Number(btnEdit.dataset.edit));
@@ -2710,14 +2920,12 @@ if (btnDuplicate) {
 
     const btnDel = target.closest('[data-del]');
     if (btnDel) {
-      console.log('[Click] Delete', btnDel.dataset.del);
       e.preventDefault();
       e.stopPropagation();
       deleteOcc(Number(btnDel.dataset.del));
       return;
     }
 
-    // ─── MODAL CLOSE (uniform: data-close-modal, .inv-btn-close) ───
     const btnClose = target.closest('[data-close-modal], .inv-btn-close');
     if (btnClose) {
       const modal = btnClose.closest('.modal, .invoice-modal');
@@ -2731,14 +2939,12 @@ if (btnDuplicate) {
       return;
     }
 
-    // ─── PRINT ───
     const btnPrint = target.closest('.inv-btn-print');
     if (btnPrint && btnPrint.dataset.filename) {
       printDoc(btnPrint.dataset.filename);
       return;
     }
 
-    // ─── UPLOAD TRIGGER ───
     const btnUpload = target.closest('[data-upload-trigger]');
     if (btnUpload) {
       const input = document.getElementById(btnUpload.dataset.uploadTrigger);
@@ -2746,7 +2952,6 @@ if (btnDuplicate) {
       return;
     }
 
-    // ─── DELETE FILE ───
     const btnDelete = target.closest('[data-delete-file]');
     if (btnDelete) {
       const cfg = UPLOAD_CONFIGS.find(c => c.key === btnDelete.dataset.deleteFile);
@@ -2754,10 +2959,7 @@ if (btnDuplicate) {
       return;
     }
 
-    // ─── BACKDROP CLOSE ───
-    // Klik langsung di backdrop (bukan anaknya) = close modal
     if (target.classList.contains('modal') || target.classList.contains('invoice-modal')) {
-      // modal-occ hanya bisa close via tombol Batal
       if (target.id === 'modal-occ') return;
       closeModal(target);
       return;
@@ -2767,7 +2969,7 @@ if (btnDuplicate) {
     console.error('[Click Handler Error]', err);
     alert('Terjadi error: ' + err.message);
   }
-}, true);  // ⬅️ CAPTURE PHASE
+}, true);
 
 // ═══════════════════════════════════════════════════════════
 // CHANGE EVENT DELEGATION
@@ -2775,14 +2977,12 @@ if (btnDuplicate) {
 document.addEventListener('change', async (e) => {
   const input = e.target;
 
-  // Filter
   if (input.id === 'filter-tahun') { renderTable(); return; }
   if (input.id === 'filter-status') { renderTable(); return; }
   if (input.id === 'analytics-period') { loadAnalytics(); return; }
 
   if (input.id === 'filter-income-year') { renderMonthlyIncome(); return; }
 
-  // Import file
   if (input.id === 'import-file') {
     const file = input.files[0];
     if (file) await handleImportFile(file);
@@ -2790,7 +2990,6 @@ document.addEventListener('change', async (e) => {
     return;
   }
 
-  // Upload file dokumen
   const cfg = UPLOAD_CONFIGS.find(c => c.key === input.id);
   if (cfg) {
     const file = input.files[0];
@@ -2801,7 +3000,7 @@ document.addEventListener('change', async (e) => {
 
 
 // ═══════════════════════════════════════════════════════════
-// AUTO KAPITAL untuk field data penyewa & orang tua
+// AUTO KAPITAL
 // ═══════════════════════════════════════════════════════════
 const UPPERCASE_FIELDS = [
   'f-nama', 'f-ktp', 'f-alamat', 'f-hp', 'f-kampus',
@@ -2815,22 +3014,18 @@ document.addEventListener('input', (e) => {
   const upper = el.value.toUpperCase();
   if (el.value === upper) return;
 
-  // Pertahankan posisi kursor saat mengetik di tengah teks
   const start = el.selectionStart;
   const end = el.selectionEnd;
   el.value = upper;
   try { el.setSelectionRange(start, end); } catch {}
 });
 
-// ═══════════════════════════════════════════════════════════
-// INPUT EVENT DELEGATION (untuk search)
-// ═══════════════════════════════════════════════════════════
 document.addEventListener('input', (e) => {
   if (e.target.id === 'search') renderTable();
 });
 
 // ═══════════════════════════════════════════════════════════
-// ESC — TIDAK menutup modal (user harus klik tombol)
+// ESC — TIDAK menutup modal
 // ═══════════════════════════════════════════════════════════
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
