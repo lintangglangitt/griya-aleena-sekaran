@@ -1994,6 +1994,7 @@ async function copyUploadedFile(sourceUrl, cfg, roomId, tanggalMulai) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('room_id', roomId || '');
+  formData.append('tanggal', tanggalMulai || '');  // ← TAMBAH
   formData.append('jenis', (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-'));
 
   const result = await new Promise((resolve, reject) => {
@@ -2064,6 +2065,7 @@ async function uploadDokumen(file, cfg) {
     const formData = new FormData();
     formData.append('file', renamedFile);
     formData.append('room_id', roomId);
+    formData.append('tanggal', tanggalMulai);  // ← TAMBAH
     const jenisDokumen = (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-');
     formData.append('jenis', jenisDokumen);
 
