@@ -1935,26 +1935,42 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
 
   try {
     const tanggalBaru = document.getElementById('f-mulai').value;
-    const tanggalLama = EDITING_ID
-      ? (OCCS.find(x => x.id === EDITING_ID)?.tanggal_mulai || null)
-      : null;
+    const roomBaru = document.getElementById('f-room').value;
+
+    const occLama = EDITING_ID ? OCCS.find(x => x.id === EDITING_ID) : null;
+    const tanggalLama = occLama?.tanggal_mulai || null;
+    const roomLama = occLama?.room_id != null ? String(occLama.room_id) : null;
+
+    const tanggalBerubah = tanggalLama && tanggalLama !== tanggalBaru;
+    const roomBerubah = roomLama && roomLama !== String(roomBaru);
 
     let oldUrlsToDelete = [];
 
-    // ─── Skenario EDIT + tanggal berubah → rename semua file ───
-    if (tanggalLama && tanggalLama !== tanggalBaru) {
+    // ─── Skenario EDIT + (tanggal berubah ATAU kamar berubah) → rename semua file ───
+    if (tanggalBerubah || roomBerubah) {
       if (submitBtn) submitBtn.textContent = '⏳ Menyesuaikan file...';
       const result = await renameFilesForNewDate(tanggalBaru);
       oldUrlsToDelete = result.oldUrlsToDelete;
     }
-    // ─── Skenario TAMBAH BARU + ada file pending dengan tanggal lama ───
+    // ─── Skenario TAMBAH BARU + ada file pending dengan nama lama ───
     else if (!EDITING_ID) {
+      // Cek apakah nama file pending sudah sesuai tanggal & kamar baru
+      const roomObj = ROOMS.find(r => String(r.id) === String(roomBaru));
+      const nomorKamarBaru = (() => {
+        const m = String(roomObj?.nama_kamar || '').match(/\d+/);
+        return m ? m[0] : String(roomBaru || 'x');
+      })();
+      const expectedSuffix = tanggalBaru.replace(/-/g, '');
+
       for (const cfg of UPLOAD_CONFIGS) {
         const pendingUrl = MODAL_STATE.pendingUploads[cfg.field];
         if (!pendingUrl) continue;
 
-        const expectedSuffix = tanggalBaru.replace(/-/g, '');
-        if (!pendingUrl.includes(`_${expectedSuffix}_`)) {
+        // Cek apakah nama file sudah pakai kamar & tanggal yang benar
+        const jenis = cfg.field.replace(/^file_/, '').replace(/_/g, '-');
+        const expectedPattern = `kamar${nomorKamarBaru}_${jenis}_${expectedSuffix}`;
+
+        if (!pendingUrl.includes(expectedPattern)) {
           const result = await renameOneFile(cfg, tanggalBaru);
           if (result.newUrl) {
             oldUrlsToDelete.push(result.oldUrl);
