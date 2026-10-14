@@ -1345,7 +1345,7 @@ ${buildLampiranPage(o)}   <!-- ⬅️ TAMBAH -->
   openModalExclusive(document.getElementById('perjanjian-modal'));
 }
 
-function duplicateOcc(id) {
+async function duplicateOcc(id) {
   const o = OCCS.find(x => Number(x.id) === Number(id));
   if (!o) return;
 
@@ -1360,7 +1360,7 @@ function duplicateOcc(id) {
     if (el) el.value = value ?? '';
   };
 
-  set('f-room', o.room_id);
+  // Isi semua field teks dulu
   set('f-tipe', 'bulanan');
   set('f-mulai', mulai);
   set('f-selesai', selesai);
@@ -1380,10 +1380,94 @@ function duplicateOcc(id) {
   set('f-catatan', o.catatan);
 
   document.getElementById('modal-title').textContent = 'Duplikasi Okupansi';
+
+  // Panggil fillRoomSelect SETELAH tanggal di-set
   fillRoomSelect(null);
   set('f-room', o.room_id);
-}
 
+  // ─── COPY FILE FISIK (KTP penyewa, KTP ortu, KTM) ───
+  // Perjanjian TIDAK di-copy (harus dibuat baru).
+  const FILE_MAP = [
+    {
+      srcUrl: o.file_ktp_penyewa,
+      cfgKey: 'f-file-ktp-penyewa',
+      linkId: 'f-link-ktp-penyewa',
+      previewId: 'link-preview-ktp-penyewa',
+      statusId: 'upload-status-ktp-penyewa',
+    },
+    {
+      srcUrl: o.file_ktp_ortu,
+      cfgKey: 'f-file-ktp-ortu',
+      linkId: 'f-link-ktp-ortu',
+      previewId: 'link-preview-ktp-ortu',
+      statusId: 'upload-status-ktp-ortu',
+    },
+    {
+      srcUrl: o.file_ktm,
+      cfgKey: 'f-file-ktm',
+      linkId: 'f-link-ktm',
+      previewId: 'link-preview-ktm',
+      statusId: 'upload-status-ktm',
+    },
+  ];
+
+  const toCopy = FILE_MAP.filter(item => item.srcUrl);
+  if (toCopy.length === 0) return; // tidak ada file untuk di-copy
+
+  // Tampilkan status loading
+  toCopy.forEach(item => {
+    const statusEl = document.getElementById(item.statusId);
+    if (statusEl) {
+      statusEl.innerHTML = '⏳ Menyalin file...';
+      statusEl.className = 'upload-status loading';
+    }
+  });
+
+  // Copy paralel
+  const roomId = document.getElementById('f-room')?.value || '';
+  const tglMulai = document.getElementById('f-mulai')?.value || todayISO();
+
+  const results = await Promise.allSettled(
+    toCopy.map(item => {
+      const cfg = UPLOAD_CONFIGS.find(c => c.key === item.cfgKey);
+      return copyUploadedFile(item.srcUrl, cfg, roomId, tglMulai);
+    })
+  );
+
+  // Pasang hasilnya ke field masing-masing
+  results.forEach((res, i) => {
+    const item = toCopy[i];
+    const cfg = UPLOAD_CONFIGS.find(c => c.key === item.cfgKey);
+    const linkEl = document.getElementById(item.linkId);
+    const previewEl = document.getElementById(item.previewId);
+    const statusEl = document.getElementById(item.statusId);
+    const btnDelete = document.querySelector(`[data-delete-file="${item.cfgKey}"]`);
+
+    if (res.status === 'fulfilled') {
+      const newUrl = res.value;
+
+      if (linkEl) linkEl.value = newUrl;
+      if (previewEl) previewEl.innerHTML =
+        `<a href="${escapeHtml(newUrl)}" target="_blank">📄 Lihat file (belum disimpan)</a>`;
+      if (statusEl) {
+        statusEl.innerHTML = '✅ File disalin (belum disimpan)';
+        statusEl.className = 'upload-status success';
+      }
+
+      // Daftarkan sebagai pendingUploads → otomatis dihapus kalau user klik Batal
+      MODAL_STATE.pendingUploads[cfg.field] = newUrl;
+
+      // Tampilkan tombol Hapus
+      if (btnDelete) btnDelete.style.display = 'inline-block';
+    } else {
+      if (statusEl) {
+        statusEl.innerHTML =
+          `❌ Gagal salin: ${escapeHtml(res.reason?.message || 'Unknown')}`;
+        statusEl.className = 'upload-status error';
+      }
+    }
+  });
+}
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1865,6 +1949,76 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
 // ═══════════════════════════════════════════════════════════
 // UPLOAD DOKUMEN
 // ═══════════════════════════════════════════════════════════
+
+
+// ─── Bangun nama file upload: kamar1_ktp-penyewa_20261123.jpg ───
+function buildUploadFilename(cfg, roomId, tanggalMulai, originalName) {
+  // 1. Nomor kamar (dari "KAMAR NOMOR 1" → "1"; fallback ke room_id)
+  const room = ROOMS.find(r => String(r.id) === String(roomId));
+  const namaKamar = room?.nama_kamar || '';
+  const match = namaKamar.match(/\d+/);
+  const nomorKamar = match ? match[0] : String(roomId || 'x');
+
+  // 2. Jenis dokumen: 'file_ktp_penyewa' → 'ktp-penyewa'
+  const jenis = (cfg?.field || cfg || '')
+    .replace(/^file_/, '')
+    .replace(/_/g, '-');
+
+  // 3. Tanggal → YYYYMMDD
+  const tgl = String(tanggalMulai || todayISO()).replace(/-/g, '');
+
+  // 4. Ekstensi dari nama file asli (atau URL)
+  const srcName = String(originalName || '');
+  const extMatch = srcName.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
+  const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
+
+  return `kamar${nomorKamar}_${jenis}_${tgl}.${ext}`;
+}
+
+// ─── Copy file dari R2 → upload ulang sebagai file baru ───
+async function copyUploadedFile(sourceUrl, cfg, roomId, tanggalMulai) {
+  // 1. Fetch file lama
+  const res = await fetch(sourceUrl);
+  if (!res.ok) throw new Error(`Gagal fetch file lama (HTTP ${res.status})`);
+  const blob = await res.blob();
+
+  // 2. Tentukan nama baru
+  const newName = buildUploadFilename(cfg, roomId, tanggalMulai, sourceUrl);
+
+  // 3. Bungkus jadi File
+  const file = new File([blob], newName, {
+    type: blob.type || 'application/octet-stream',
+  });
+
+  // 4. Upload sebagai file baru
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('room_id', roomId || '');
+  formData.append('jenis', (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-'));
+
+  const result = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/upload`);
+    xhr.setRequestHeader('Authorization', `Bearer ${TOKEN}`);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch { reject(new Error('Response tidak valid')); }
+      } else {
+        try {
+          const err = JSON.parse(xhr.responseText);
+          reject(new Error(err.error || `HTTP ${xhr.status}`));
+        } catch { reject(new Error(`HTTP ${xhr.status}`)); }
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(formData);
+  });
+
+  return result.url;
+}
+
+
 async function uploadDokumen(file, cfg) {
   const status = document.getElementById(cfg.statusId);
   const linkInput = document.getElementById(cfg.linkId);
@@ -1897,15 +2051,24 @@ async function uploadDokumen(file, cfg) {
   status.innerHTML = '⏳ Mengunggah... 0%';
   status.className = 'upload-status loading';
 
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
+ 
+
+    try {
     const roomId = document.getElementById('f-room')?.value || '';
+    const tanggalMulai = document.getElementById('f-mulai')?.value || todayISO();
+
+    // Rename file sebelum upload
+    const newName = buildUploadFilename(cfg, roomId, tanggalMulai, file.name);
+    const renamedFile = new File([file], newName, { type: file.type });
+
+    const formData = new FormData();
+    formData.append('file', renamedFile);
     formData.append('room_id', roomId);
     const jenisDokumen = (cfg.field || '').replace(/^file_/, '').replace(/_/g, '-');
     formData.append('jenis', jenisDokumen);
 
     const result = await new Promise((resolve, reject) => {
+      
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${API}/upload`);
       xhr.setRequestHeader('Authorization', `Bearer ${TOKEN}`);
@@ -2692,12 +2855,15 @@ document.addEventListener('click', (e) => {
     }
 
     const btnDuplicate = target.closest('[data-duplicate]');
-if (btnDuplicate) {
-  e.preventDefault();
-  e.stopPropagation();
-  duplicateOcc(Number(btnDuplicate.dataset.duplicate));
-  return;
-}
+    if (btnDuplicate) {
+      e.preventDefault();
+      e.stopPropagation();
+      duplicateOcc(Number(btnDuplicate.dataset.duplicate)).catch(err => {
+        console.error('[Duplicate Error]', err);
+        alert('Gagal duplikasi: ' + err.message);
+      });
+      return;
+    }
     
     const btnEdit = target.closest('[data-edit]');
     if (btnEdit) {
