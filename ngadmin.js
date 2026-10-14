@@ -1866,52 +1866,224 @@ async function handleSaveRoom(e) {
 // ═══════════════════════════════════════════════════════════
 // SUBMIT FORM OKUPANSI
 // ═══════════════════════════════════════════════════════════
+
+
+// ─── Rename file di R2 kalau tanggal mulai kontrak berubah ───
+// Mengembalikan { updatedUrls: {...}, oldUrlsToDelete: [...] }
+async function renameFilesForNewDate(tanggalBaru) {
+  const updatedUrls = {};
+  const oldUrlsToDelete = [];
+
+  for (const cfg of UPLOAD_CONFIGS) {
+    const linkEl = document.getElementById(cfg.linkId);
+    if (!linkEl) continue;
+
+    const oldUrl = linkEl.value.trim();
+    if (!oldUrl) continue;
+
+    // Bangun URL baru
+    const roomId = document.getElementById('f-room')?.value || '';
+    const newName = buildUploadFilename(cfg, roomId, tanggalBaru, oldUrl);
+
+    // Fetch file lama
+    let blob;
+    try {
+      const res = await fetch(oldUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      blob = await res.blob();
+    } catch (err) {
+      console.warn(`[Rename] Gagal fetch ${oldUrl}:`, err.message);
+      // Biarkan URL lama, jangan block proses
+      continue;
+    }
+
+    // Upload sebagai file baru
+    const newFile = new File([blob], newName, {
+      type: blob.type || 'application/octet-stream',
+    });
+
+    const formData = new FormData();
+    formData.append('file', newFile);
+    formData.append('room_id', roomId);
+    formData.append('tanggal', tanggalBaru);
+    formData.append('jenis', cfg.field.replace(/^file_/, '').replace(/_/g, '-'));
+
+    let newUrl;
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API}/upload`);
+        xhr.setRequestHeader('Authorization', `Bearer ${TOKEN}`);
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try { resolve(JSON.parse(xhr.responseText)); }
+            catch { reject(new Error('Response tidak valid')); }
+          } else {
+            try { reject(new Error(JSON.parse(xhr.responseText).error || `HTTP ${xhr.status}`)); }
+            catch { reject(new Error(`HTTP ${xhr.status}`)); }
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(formData);
+      });
+      newUrl = result.url;
+    } catch (err) {
+      console.warn(`[Rename] Gagal upload ulang:`, err.message);
+      continue; // biarkan URL lama
+    }
+
+    // Update field + kumpulkan URL lama untuk dihapus
+    linkEl.value = newUrl;
+    updatedUrls[cfg.field] = newUrl;
+    oldUrlsToDelete.push(oldUrl);
+
+    // Update MODAL_STATE: 
+    // - Kalau file ini tadinya pending, ganti URL pending
+    // - Kalau file ini existing, tandai yang lama untuk dihapus
+    if (MODAL_STATE.pendingUploads[cfg.field] === oldUrl) {
+      MODAL_STATE.pendingUploads[cfg.field] = newUrl;
+    } else {
+      // Existing → tandai untuk dihapus (di luar pendingDeletes,
+      // karena ini file yang tetap dipakai kontrak ini, hanya nama berubah)
+      MODAL_STATE.originalUrls[cfg.field] = oldUrl; // simpan untuk hapus setelah sukses
+    }
+  }
+
+  return { updatedUrls, oldUrlsToDelete };
+}
+
 document.getElementById('form-occ').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // Ambil nilai field, trim, ubah ke huruf kapital; kosong → null
-  const up = (id) =>
-    document.getElementById(id).value.trim().toUpperCase() || null;
-
-  const payload = {
-    room_id: Number(document.getElementById('f-room').value),
-    tipe_sewa: document.getElementById('f-tipe').value,
-    tanggal_mulai: document.getElementById('f-mulai').value,
-    tanggal_selesai: document.getElementById('f-selesai').value,
-    harga_total: Number(document.getElementById('f-harga').value),
-    link_kontrak: null,
-    status_bayar: document.getElementById('f-status').value,
-
-    // Data penyewa (kapital)
-    nama_penyewa: up('f-nama'),
-    no_ktp: up('f-ktp'),
-    alamat_penyewa: up('f-alamat'),
-    no_hp: up('f-hp'),
-    asal_kampus: up('f-kampus'),
-
-    // Data orang tua/wali (kapital)
-    nama_ortu: up('f-nama-ortu'),
-    no_ktp_ortu: up('f-ktp-ortu'),
-    alamat_ortu: up('f-alamat-ortu'),
-    no_hp_ortu: up('f-hp-ortu'),
-    hubungan_keluarga: up('f-hubungan'),
-
-    // Link file (tidak diubah)
-    file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
-    file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
-    file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
-    file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
-
-    // Catatan tetap apa adanya
-    catatan: document.getElementById('f-catatan').value.trim() || null,
-  };
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalBtnText = submitBtn?.textContent;
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Menyimpan...'; }
 
   try {
+    // ─── CEK: apakah tanggal_mulai berubah? ───
+    const tanggalBaru = document.getElementById('f-mulai').value;
+    const tanggalLama = EDITING_ID
+      ? (OCCS.find(x => x.id === EDITING_ID)?.tanggal_mulai || null)
+      : null;
+
+    let oldUrlsToDelete = [];
+
+    if (tanggalLama && tanggalLama !== tanggalBaru) {
+      // Tanggal berubah → rename semua file yang ada
+      if (submitBtn) submitBtn.textContent = '⏳ Menyesuaikan file...';
+      const result = await renameFilesForNewDate(tanggalBaru);
+      oldUrlsToDelete = result.oldUrlsToDelete;
+    } else if (!EDITING_ID) {
+      // Tambah baru, tapi ada file pending yang di-upload
+      // sebelum user ubah f-mulai (kalau user ubah f-mulai SEBELUM upload, sudah benar dari awal)
+      // Cek apakah ada file pending yang namanya tidak match tanggalBaru
+      for (const cfg of UPLOAD_CONFIGS) {
+        const pendingUrl = MODAL_STATE.pendingUploads[cfg.field];
+        if (!pendingUrl) continue;
+
+        // Cek apakah nama file mengandung tanggal yang salah
+        // Tanggal di URL format: _YYYYMMDD_
+        const expectedSuffix = tanggalBaru.replace(/-/g, '');
+        if (!pendingUrl.includes(`_${expectedSuffix}_`)) {
+          // File ini masih pakai tanggal lama → rename
+          const result = await renameFilesForNewDateForSingle(cfg, tanggalBaru);
+          if (result.newUrl) {
+            oldUrlsToDelete.push(result.oldUrl);
+          }
+        }
+      }
+    }
+
+    // ─── Bangun payload (pakai URL terbaru dari hidden input) ───
+    const up = (id) => document.getElementById(id).value.trim().toUpperCase() || null;
+
+    const payload = {
+      room_id: Number(document.getElementById('f-room').value),
+      tipe_sewa: document.getElementById('f-tipe').value,
+      tanggal_mulai: document.getElementById('f-mulai').value,
+      tanggal_selesai: document.getElementById('f-selesai').value,
+      harga_total: Number(document.getElementById('f-harga').value),
+      link_kontrak: null,
+      status_bayar: document.getElementById('f-status').value,
+
+      nama_penyewa: up('f-nama'),
+      no_ktp: up('f-ktp'),
+      alamat_penyewa: up('f-alamat'),
+      no_hp: up('f-hp'),
+      asal_kampus: up('f-kampus'),
+
+      nama_ortu: up('f-nama-ortu'),
+      no_ktp_ortu: up('f-ktp-ortu'),
+      alamat_ortu: up('f-alamat-ortu'),
+      no_hp_ortu: up('f-hp-ortu'),
+      hubungan_keluarga: up('f-hubungan'),
+
+      file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
+      file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
+      file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
+      file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
+
+      catatan: document.getElementById('f-catatan').value.trim() || null,
+    };
+
+    // ─── Simpan ke DB ───
     if (EDITING_ID) {
       await api(`/occupancies/${EDITING_ID}`, { method: 'PUT', body: JSON.stringify(payload) });
     } else {
       await api('/occupancies', { method: 'POST', body: JSON.stringify(payload) });
     }
+
+    // ─── Hapus file LAMA yang sekarang sudah diganti (karena tanggal berubah) ───
+    if (oldUrlsToDelete.length > 0) {
+      try {
+        const result = await api('/delete-files', {
+          method: 'POST',
+          body: JSON.stringify({ urls: oldUrlsToDelete }),
+        });
+        if (result.failed && result.failed.length > 0) {
+          console.warn('Beberapa file lama gagal dihapus:', result.failed);
+        }
+      } catch (err) {
+        console.warn('Gagal hapus file lama:', err.message);
+      }
+    }
+
+    // ─── Hapus file existing yang ditandai user (skenario: edit + ganti file) ───
+    if (EDITING_ID && MODAL_STATE.pendingDeletes.length > 0) {
+      const urlsToDelete = MODAL_STATE.pendingDeletes
+        .map(f => MODAL_STATE.originalUrls[f])
+        .filter(Boolean)
+        .filter(u => !oldUrlsToDelete.includes(u)); // hindari hapus dobel
+
+      if (urlsToDelete.length > 0) {
+        try {
+          const result = await api('/delete-files', {
+            method: 'POST',
+            body: JSON.stringify({ urls: urlsToDelete }),
+          });
+          if (result.failed && result.failed.length > 0) {
+            alert(`✅ Data tersimpan.\n\n⚠️ ${result.failed.length} file LAMA gagal dihapus.`);
+          }
+        } catch (err) {
+          alert(`✅ Data tersimpan.\n\n⚠️ Gagal hapus file LAMA: ${err.message}`);
+        }
+      }
+    }
+
+    resetModalState();
+    closeModal(document.getElementById('modal-occ'));
+
+    await Promise.all([loadOccs(), loadStats()]);
+    fillYearFilter();
+    renderRooms();
+    renderTable();
+    renderRiwayatKamar();
+  } catch (err) {
+    alert('Gagal simpan: ' + err.message);
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalBtnText; }
+  }
+});
 
     if (EDITING_ID && MODAL_STATE.pendingDeletes.length > 0) {
       const urlsToDelete = MODAL_STATE.pendingDeletes
@@ -1945,6 +2117,66 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
     alert('Gagal simpan: ' + err.message);
   }
 });
+
+
+// ─── Rename satu file di R2 (dipakai untuk skenario tambah baru) ───
+async function renameFilesForNewDateForSingle(cfg, tanggalBaru) {
+  const linkEl = document.getElementById(cfg.linkId);
+  if (!linkEl) return { newUrl: null, oldUrl: null };
+
+  const oldUrl = linkEl.value.trim();
+  if (!oldUrl) return { newUrl: null, oldUrl: null };
+
+  const roomId = document.getElementById('f-room')?.value || '';
+  const newName = buildUploadFilename(cfg, roomId, tanggalBaru, oldUrl);
+
+  // Fetch file lama
+  let blob;
+  try {
+    const res = await fetch(oldUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    blob = await res.blob();
+  } catch (err) {
+    console.warn(`[Rename] Gagal fetch ${oldUrl}:`, err.message);
+    return { newUrl: null, oldUrl: null };
+  }
+
+  const newFile = new File([blob], newName, {
+    type: blob.type || 'application/octet-stream',
+  });
+
+  const formData = new FormData();
+  formData.append('file', newFile);
+  formData.append('room_id', roomId);
+  formData.append('tanggal', tanggalBaru);
+  formData.append('jenis', cfg.field.replace(/^file_/, '').replace(/_/g, '-'));
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API}/upload`);
+      xhr.setRequestHeader('Authorization', `Bearer ${TOKEN}`);
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch { reject(new Error('Response tidak valid')); }
+        } else {
+          try { reject(new Error(JSON.parse(xhr.responseText).error || `HTTP ${xhr.status}`)); }
+          catch { reject(new Error(`HTTP ${xhr.status}`)); }
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.send(formData);
+    });
+
+    linkEl.value = result.url;
+    MODAL_STATE.pendingUploads[cfg.field] = result.url;
+    return { newUrl: result.url, oldUrl };
+  } catch (err) {
+    console.warn(`[Rename] Gagal upload ulang:`, err.message);
+    return { newUrl: null, oldUrl: null };
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // UPLOAD DOKUMEN
