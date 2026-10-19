@@ -1074,7 +1074,7 @@ function buildLampiranPage(o) {
         ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
       </div>
       <div class="inv-footer">
-        Perjanjian ini dicetak otomatis dari sistem Griya Aleena. Wajib ditandatangani oleh kedua pihak.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh kedua belah pihak.
       </div>
     </div>
   `;
@@ -1299,7 +1299,7 @@ function openPerjanjian(id) {
     </div>
 
     <div class="inv-footer">
-      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh Penyewa.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh kedua belah pihak.
     </div>
 
     ${buildLampiranPage(o)}
