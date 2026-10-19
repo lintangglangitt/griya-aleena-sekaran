@@ -491,11 +491,7 @@ section {
 
 
 
-.bulanan-strike { 
-  text-decoration: line-through; 
-  text-decoration-thickness: 2.5px; 
-  text-decoration-color: rgba(255,255,255,0.4); /* Dibuat lebih transparan */
-}
+.bulanan-strike { text-decoration: line-through; text-decoration-thickness: 2.5px; text-decoration-color: rgba(255,255,255,0.8); }
 
 .price-calc-row {
   font-size: 0.88rem; color: rgba(255,255,255,0.6);
