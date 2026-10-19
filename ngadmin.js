@@ -443,12 +443,12 @@ async function init() {
     mulaiInput.addEventListener('change', () => {
       fillRoomSelect(EDITING_ID);
       
-      // TAMBAH INI: Sinkronkan tanggal perjanjian saat tanggal mulai diubah
-      const tglPerjanjianInput = document.getElementById('f-tgl-perjanjian');
-      if (tglPerjanjianInput) {
-        tglPerjanjianInput.value = mulaiInput.value;
-      }
-    });
+      // Sinkronkan ke-3 tanggal jika tanggal mulai diubah
+      ['f-tgl-invoice', 'f-tgl-kuitansi', 'f-tgl-perjanjian'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = mulaiInput.value;
+      });
+      
     mulaiInput.dataset.roomDateBound = 'true';
   }
 
@@ -862,7 +862,10 @@ function openInvoice(id) {
   if (!o) { console.error('openInvoice: occ not found', id); return; }
 
   const invoiceNo = generateInvoiceNo(o.id, o.tanggal_mulai);
-  const today = fmtDateLong(todayISO());
+
+  const tglInvoice = o.tgl_invoice || o.tanggal_mulai;
+  const today = fmtDateLong(tglInvoice); // <-- Ganti todayISO() menjadi tglInvoic
+  
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
   const html = `
@@ -938,7 +941,10 @@ function openKuitansi(id) {
   if (!o) { console.error('openKuitansi: occ not found', id); return; }
 
   const noKuitansi = generateKuitansiNo(o.id, o.tanggal_mulai);
-  const today = fmtDateLong(todayISO());
+
+  const tglKuitansi = o.tgl_kuitansi || o.tanggal_mulai;
+  const today = fmtDateLong(tglKuitansi); // <-- Ganti todayISO() menjadi tglKuitansi
+  
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
   const html = `
@@ -1712,8 +1718,11 @@ function openModal(id) {
 
     safeSet('f-mulai', o.tanggal_mulai);
     safeSet('f-selesai', o.tanggal_selesai);
-    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || ''); // <-- TAMBAH INI
 
+    safeSet('f-tgl-invoice', o.tgl_invoice || o.tanggal_mulai || ''); // <-- TAMBAH
+    safeSet('f-tgl-kuitansi', o.tgl_kuitansi || o.tanggal_mulai || ''); // <-- TAMBAH
+    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || o.tanggal_mulai || ''); // <-- TAMBAH
+    
     fillRoomSelect(o.id);
     safeSet('f-room', o.room_id);
 
@@ -1796,7 +1805,10 @@ function openModal(id) {
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Penyewa';
     // OTOMATIS: Ikuti tanggal mulai kontrak
-    document.getElementById('f-tgl-perjanjian').value = document.getElementById('f-mulai').value;
+    const tglMulai = document.getElementById('f-mulai').value;
+    document.getElementById('f-tgl-invoice').value = tglMulai; // <-- TAMBAH
+    document.getElementById('f-tgl-kuitansi').value = tglMulai; // <-- TAMBAH
+    document.getElementById('f-tgl-perjanjian').value = tglMulai; // <-- TAMBAH
     updateHargaOtomatis();
   }
   openModalExclusive(document.getElementById('modal-occ'));
@@ -2014,8 +2026,10 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       tipe_sewa: document.getElementById('f-tipe').value,
       tanggal_mulai: document.getElementById('f-mulai').value,
       tanggal_selesai: document.getElementById('f-selesai').value,
-      // Fallback: Jika perjanjian kosong, pakai tanggal_mulai
-      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || document.getElementById('f-mulai').value,
+      // Fallback: Jika perjanjian kosong, pakai tanggal_mulai     
+      tgl_invoice: document.getElementById('f-tgl-invoice').value || document.getElementById('f-mulai').value, // <-- TAMBAH
+      tgl_kuitansi: document.getElementById('f-tgl-kuitansi').value || document.getElementById('f-mulai').value, // <-- TAMBAH
+      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || document.getElementById('f-mulai').value, // <-- TAMBAH
       
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
