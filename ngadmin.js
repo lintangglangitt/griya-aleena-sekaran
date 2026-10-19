@@ -448,9 +448,10 @@ async function init() {
         const el = document.getElementById(id);
         if (el) el.value = mulaiInput.value;
       });
-      
+    }); // <-- TUTUP addEventListener
+
     mulaiInput.dataset.roomDateBound = 'true';
-  }
+  } // <-- TUTUP if (mulaiInput)
 
   if (selesaiInput && !selesaiInput.dataset.roomDateBound) {
     selesaiInput.addEventListener('change', () => {
