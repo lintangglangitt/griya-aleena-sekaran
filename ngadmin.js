@@ -1266,7 +1266,7 @@ function openPerjanjian(id) {
 
     <h2>Pasal 9 – Persetujuan Elektronik dan Kekuatan Hukum</h2>
     <ol>
-      <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah menyatakan persetujuan yang sah dan penuh terhadap seluruh aturan dan perjanjian ini.</li>
+      <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah menyatakan persetujuan yang sah dan penuh terhadap seluruh aturan dalam perjanjian ini.</li>
       <li>Perjanjian ini memiliki kekuatan hukum yang mengikat secara penuh karena telah disetujui secara elektronik dan tidak memerlukan tanda tangan basah.</li>
       <li>Apabila Penyewa melanggar perjanjian ini, Pemilik berhak mengambil tindakan sesuai dengan Pasal 8 (Pengakhiran Sewa) dan/atau menempuh jalur hukum yang berlaku.</li>
     </ol>
