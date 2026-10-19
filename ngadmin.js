@@ -148,9 +148,10 @@ function terbilangRupiah(n) {
   if (n === 0) return 'nol rupiah';
   return terbilangAngka(n).replace(/\s+/g, ' ').trim() + ' rupiah';
 }
-function getHariIndonesia() {
+function getHariIndonesia(tanggalStr = null) {
   const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  return hari[new Date().getDay()];
+  const d = tanggalStr ? new Date(tanggalStr) : new Date();
+  return hari[d.getDay()];
 }
 
 async function printDoc(namaFile) {
@@ -1121,8 +1122,8 @@ function openPerjanjian(id) {
     <h1>SURAT PERJANJIAN SEWA KAMAR KOS, TATA TERTIB,<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
 
     <p>
-      Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia())}</span>
-      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(todayISO()))}</span>. 
+      Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(o.tgl_perjanjian))}</span>
+      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(o.tgl_perjanjian || todayISO()))}</span>. 
       Dengan dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi perjanjian dan tata tertib di bawah ini antara:
     </p>
 
@@ -1272,7 +1273,7 @@ function openPerjanjian(id) {
     </p>
 
     <div class="pj-tanggal">
-      Semarang, <span class="pj-fill-inline">${escapeHtml(fmtDateLong(todayISO()))}</span>
+      Semarang, <span class="pj-fill-inline">${escapeHtml(fmtDateLong(o.tgl_perjanjian || todayISO()))}</span>
     </div>
 
     <div class="pj-sign-row">
@@ -1702,6 +1703,7 @@ function openModal(id) {
 
     safeSet('f-mulai', o.tanggal_mulai);
     safeSet('f-selesai', o.tanggal_selesai);
+    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || ''); // <-- TAMBAH INI
 
     fillRoomSelect(o.id);
     safeSet('f-room', o.room_id);
@@ -1783,6 +1785,8 @@ function openModal(id) {
     }
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Penyewa';
+        // TAMBAH INI: default isi hari ini
+    document.getElementById('f-tgl-perjanjian').value = todayISO();
     updateHargaOtomatis();
   }
   openModalExclusive(document.getElementById('modal-occ'));
@@ -2000,6 +2004,7 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       tipe_sewa: document.getElementById('f-tipe').value,
       tanggal_mulai: document.getElementById('f-mulai').value,
       tanggal_selesai: document.getElementById('f-selesai').value,
+      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || null, // <-- TAMBAH INI
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
       status_bayar: document.getElementById('f-status').value,
