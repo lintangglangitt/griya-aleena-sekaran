@@ -1083,7 +1083,7 @@ function buildLampiranPage(o) {
         ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
       </div>
       <div class="inv-footer">
-      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh kedua belah pihak.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh Para Pihak.
       </div>
     </div>
   `;
@@ -1129,12 +1129,12 @@ function openPerjanjian(id) {
       <img src="foto/logo.png" alt="Griya Aleena" onerror="this.style.display='none'">
     </div>
 
-    <h1>SURAT PERJANJIAN SEWA KAMAR KOS, TATA TERTIB,<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
+    <h1>SURAT PERJANJIAN SEWA KAMAR KOS<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
 
     <p>
       Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(tglPerjanjian))}</span>
       tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>. 
-      Dengan dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi perjanjian dan tata tertib di bawah ini antara:
+      Dengan dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi Perjanjian di bawah ini antara:
     </p>
 
     <h2>1. Pemilik Kos</h2>
@@ -1169,7 +1169,7 @@ function openPerjanjian(id) {
     <p>Selanjutnya disebut <strong>Penyewa</strong>.</p>
 
     <p style="margin-top:16px;">
-      Pemilik dan Penyewa sepakat mengikat diri dalam Perjanjian dan Tata Tertib Bersama dengan ketentuan sebagai berikut:
+      Pemilik dan Penyewa sepakat mengikat diri dalam Perjanjian dengan ketentuan sebagai berikut:
     </p>
 
     <h2>Pasal 1 – Objek Sewa</h2>
@@ -1205,7 +1205,7 @@ function openPerjanjian(id) {
     <ol>
       <li>Masa sewa kamar kos dimulai pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong> dan akan berakhir pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_selesai))}</strong>.</li>
       <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 10 (sepuluh) hari sebelum masa sewa berakhir.</li>
-      <li><strong>Ketentuan Perpanjangan:</strong> Seluruh ketentuan dalam Perjanjian dan Tata Tertib ini tetap berlaku secara otomatis untuk seluruh periode perpanjangan sewa berikutnya, meskipun pada dokumen ini hanya dicantumkan periode pertama masa sewa. Penyewa dianggap telah menyetujui seluruh aturan ini untuk setiap perpanjangan.</li>
+      <li><strong>Ketentuan Perpanjangan:</strong> Seluruh ketentuan dalam Perjanjian ini tetap berlaku secara otomatis untuk seluruh periode perpanjangan sewa berikutnya, meskipun pada dokumen ini hanya dicantumkan periode pertama masa sewa. Penyewa dianggap telah menyetujui seluruh isi Perjanjian ini untuk setiap perpanjangan.</li>
     </ol>
 
     <h2>Pasal 3 – Biaya Sewa dan Pembayaran</h2>
@@ -1245,15 +1245,15 @@ function openPerjanjian(id) {
 
     <h2>Pasal 6 – Keamanan dan Keselamatan</h2>
     <ol>
-      <li>Penyewa wajib menjaga kunci kamar dan/atau kunci gerbang, serta segera melaporkan kepada pemilik kos apabila terjadi kehilangan.</li>
-      <li>Penyewa bertanggung jawab menjaga keamanan barang pribadinya masing-masing. Pemilik Kos tidak bertanggung jawab atas kehilangan akibat kelalaian Penyewa.</li>
-      <li>Penyewa dilarang meminjamkan kunci kamar dan/atau gerbang kepada orang lain tanpa seizin Pemilik Kos.</li>
+      <li>Penyewa wajib menjaga kunci kamar dan/atau kunci gerbang, serta segera melaporkan kepada Pemilik apabila terjadi kehilangan.</li>
+      <li>Penyewa bertanggung jawab menjaga keamanan barang pribadinya masing-masing. Pemilik tidak bertanggung jawab atas kehilangan akibat kelalaian Penyewa.</li>
+      <li>Penyewa dilarang meminjamkan kunci kamar dan/atau gerbang kepada orang lain tanpa seizin Pemilik.</li>
     </ol>
 
     <h2>Pasal 7 – Kerusakan dan Perbaikan</h2>
     <ol>
       <li>Penyewa bertanggung jawab atas kerusakan yang diakibatkan oleh kelalaian Penyewa.</li>
-      <li>Jika ditemukan kerusakan pada properti, Penyewa wajib melaporkannya kepada pemilik kos secepatnya untuk dapat diperbaiki.</li>
+      <li>Jika ditemukan kerusakan pada properti, Penyewa wajib melaporkannya kepada Pemilik secepatnya untuk dapat diperbaiki.</li>
     </ol>
 
     <h2>Pasal 8 – Pengakhiran Sewa</h2>
@@ -1266,16 +1266,16 @@ function openPerjanjian(id) {
 
     <h2>Pasal 9 – Persetujuan Elektronik dan Kekuatan Hukum</h2>
     <ol>
-      <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah menyatakan persetujuan yang sah dan penuh terhadap seluruh aturan dalam perjanjian ini.</li>
-      <li>Perjanjian ini memiliki kekuatan hukum yang mengikat secara penuh karena telah disetujui secara elektronik dan tidak memerlukan tanda tangan basah.</li>
-      <li>Apabila Penyewa melanggar perjanjian ini, Pemilik berhak mengambil tindakan sesuai dengan Pasal 8 (Pengakhiran Sewa) dan/atau menempuh jalur hukum yang berlaku.</li>
+      <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah memberikan persetujuan yang sah dan penuh terhadap seluruh isi perjanjian ini.</li>
+      <li>Perjanjian ini memiliki kekuatan hukum yang mengikat secara penuh karena telah disetujui secara elektronik dan oleh karenanya tidak memerlukan tanda tangan basah Pemilik dan Penyewa.</li>
+      <li>Apabila Penyewa melanggar Perjanjian ini, Pemilik berhak mengambil tindakan sesuai dengan Pasal 8 (Pengakhiran Sewa) dan/atau menempuh jalur hukum yang berlaku.</li>
     </ol>
 
     <h2>Pasal 10 – Lain-lain</h2>
     <ol>
-      <li>Segala hal yang belum diatur dalam Perjanjian ini akan dibahas bersama antara kedua pihak.</li>
+      <li>Segala hal yang belum diatur dalam Perjanjian ini akan dibahas bersama antara Para Pihak.</li>
       <li>Setiap sengketa yang timbul dari Perjanjian ini akan diselesaikan terlebih dahulu secara kekeluargaan melalui musyawarah untuk mencapai mufakat, sebelum menempuh jalur hukum.</li>
-      <li>Perjanjian ini dibuat secara elektronik dan salinannya disampaikan kepada Penyewa.</li>
+      <li>Perjanjian ini dibuat secara elektronik dan wajib disimpan oleh Para Pihak.</li>
     </ol>
 
     <p style="margin-top:20px;">
@@ -1310,7 +1310,7 @@ function openPerjanjian(id) {
     </div>
 
     <div class="inv-footer">
-      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh kedua belah pihak.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh Para Pihak.
     </div>
 
     ${buildLampiranPage(o)}
