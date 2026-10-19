@@ -1132,9 +1132,8 @@ function openPerjanjian(id) {
     <h1>SURAT PERJANJIAN SEWA KAMAR KOS<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
 
     <p>
-      Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(tglPerjanjian))}</span>
-      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>. 
-      Dengan dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi Perjanjian di bawah ini antara:
+      Pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(tglPerjanjian))}</span>
+      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>, telah disepakati dan diterbitkan Surat Perjanjian secara elektronik antara:
     </p>
 
     <h2>1. Pemilik Kos</h2>
@@ -1169,7 +1168,7 @@ function openPerjanjian(id) {
     <p>Selanjutnya disebut <strong>Penyewa</strong>.</p>
 
     <p style="margin-top:16px;">
-      Pemilik dan Penyewa sepakat mengikat diri dalam Perjanjian dengan ketentuan sebagai berikut:
+    Dengan telah dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) Penyewa kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi Perjanjian ketentuan sebagai berikut:
     </p>
 
     <h2>Pasal 1 – Objek Sewa</h2>
