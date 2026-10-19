@@ -357,7 +357,7 @@ function buildPriceCard(data, type, emoji, badgeClass, version = 1) {
         <div class="price-segment">
           <div class="harga-durasi">Bulanan</div>
           <div class="harga-price-row">
-            <span class="harga-normal">${formatRupiah(monthly)}</span>
+            <span class="harga-normal ${data.strikeMonthly ? 'bulanan-strike' : ''}">${formatRupiah(monthly)}</span>
             <span class="harga-period">/ bulan</span>
           </div>
         </div>
@@ -387,7 +387,7 @@ function buildPriceCard(data, type, emoji, badgeClass, version = 1) {
         <div class="price-segment">
           <div class="harga-durasi">Bulanan</div>
           <div class="harga-price-row">
-            <span class="harga-normal">${formatRupiah(monthly)}</span>
+            <span class="harga-normal ${data.strikeMonthly ? 'bulanan-strike' : ''}">${formatRupiah(monthly)}</span>
             <span class="harga-period">/ bulan</span>
           </div>
         </div>
