@@ -1205,7 +1205,7 @@ function openPerjanjian(id) {
     <ol>
       <li>Masa sewa kamar kos dimulai pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong> dan akan berakhir pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_selesai))}</strong>.</li>
       <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 10 (sepuluh) hari sebelum masa sewa berakhir.</li>
-      <li><strong>Ketentuan Perpanjangan:</strong> Seluruh ketentuan dalam Perjanjian dan Tata Tertib ini (termasuk namun tidak terbatas pada aturan denda, larangan, dan tanggung jawab) tetap berlaku secara otomatis untuk seluruh periode perpanjangan sewa berikutnya, meskipun pada dokumen ini hanya dicantumkan periode bulan pertama. Penyewa dianggap telah menyetujui seluruh aturan ini untuk setiap perpanjangan.</li>
+      <li><strong>Ketentuan Perpanjangan:</strong> Seluruh ketentuan dalam Perjanjian dan Tata Tertib ini tetap berlaku secara otomatis untuk seluruh periode perpanjangan sewa berikutnya, meskipun pada dokumen ini hanya dicantumkan periode pertama masa sewa. Penyewa dianggap telah menyetujui seluruh aturan ini untuk setiap perpanjangan.</li>
     </ol>
 
     <h2>Pasal 3 – Biaya Sewa dan Pembayaran</h2>
@@ -1267,7 +1267,7 @@ function openPerjanjian(id) {
     <h2>Pasal 9 – Persetujuan Elektronik dan Kekuatan Hukum</h2>
     <ol>
       <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah menyatakan persetujuan yang sah dan penuh terhadap seluruh aturan dan perjanjian ini.</li>
-      <li>Kesepakatan ini memiliki kekuatan hukum yang mengikat secara penuh. Penyewa tidak dapat mengelak dari tanggung jawab hukum atas pelanggaran yang dilakukan dengan alasan tidak dilakukannya tanda tangan basah.</li>
+      <li>Perjanjian ini memiliki kekuatan hukum yang mengikat secara penuh karena telah disetujui secara elektronik dan tidak memerlukan tanda tangan basah.</li>
       <li>Apabila Penyewa melanggar perjanjian ini, Pemilik berhak mengambil tindakan sesuai dengan Pasal 8 (Pengakhiran Sewa) dan/atau menempuh jalur hukum yang berlaku.</li>
     </ol>
 
