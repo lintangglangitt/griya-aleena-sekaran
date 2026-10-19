@@ -1133,7 +1133,7 @@ function openPerjanjian(id) {
 
     <p>
       Pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(tglPerjanjian))}</span>
-      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>, telah disepakati dan diterbitkan Surat Perjanjian secara elektronik antara:
+      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>, telah diterbitkan secara elektronik dan disepakati Surat Perjanjian Sewa Kamar Kos, selanjutnya disebut <strong>Perjanjian</strong>, antara:
     </p>
 
     <h2>1. Pemilik Kos</h2>
