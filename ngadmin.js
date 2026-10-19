@@ -1264,7 +1264,7 @@ function openPerjanjian(id) {
     <ol>
       <li>Segala hal yang belum diatur dalam Perjanjian ini akan dibahas bersama antara kedua pihak.</li>
       <li>Setiap sengketa yang timbul dari Perjanjian ini akan diselesaikan terlebih dahulu secara kekeluargaan melalui musyawarah untuk mencapai mufakat, sebelum menempuh jalur hukum.</li>
-      <li>Perjanjian ini dibuat secara elektronik dan salinannya dapat diakses serta dicetak oleh Penyewa melalui dashboard sistem Griya Aleena.</li>
+      <li>Perjanjian ini dibuat secara elektronik dan salinannya disampaikan kepada Penyewa.</li>
     </ol>
 
     <p style="margin-top:20px;">
@@ -1277,15 +1277,13 @@ function openPerjanjian(id) {
 
     <div class="pj-sign-row">
       <div class="pj-sign-col">
-        <div class="pj-sign-label">Pemilik,</div>
-        <div class="pj-sign-space"></div>
+        <div style="font-size:0.9rem; margin-bottom:4px;">Pemilik</div>
+        <div style="font-size:0.85rem; font-style:italic; color:#8b9494; margin-bottom:40px;">(Telah disetujui secara elektronik)</div>
         <div class="pj-sign-name-line">${escapeHtml(String(PEMILIK.nama || '').toUpperCase())}</div>
       </div>
       <div class="pj-sign-col">
-        <div class="pj-sign-label">Penyewa,</div>
-        <div class="pj-sign-space" style="display:flex; align-items:center; justify-content:center; height:50px; font-style:italic; color:#8b9494; font-size:0.8rem; text-align:center;">
-          (Telah disetujui secara elektronik)
-        </div>
+        <div style="font-size:0.9rem; margin-bottom:4px;">Penyewa</div>
+        <div style="font-size:0.85rem; font-style:italic; color:#8b9494; margin-bottom:40px;">(Telah disetujui secara elektronik)</div>
         <div class="pj-sign-name-line">${escapeHtml(String(o.nama_penyewa || '').toUpperCase())}</div>
       </div>
     </div>
