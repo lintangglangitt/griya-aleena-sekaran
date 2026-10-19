@@ -1012,12 +1012,12 @@ async function handleCreateOccupancy(request, env, user) {
   await env.DB.prepare(
     `INSERT INTO occupancies
       (id, room_id, nama_penyewa, no_hp, asal_kampus, tipe_sewa,
-       tanggal_mulai, tanggal_selesai, tgl_perjanjian, harga_total, status_bayar,
+       tanggal_mulai, tanggal_selesai, tgl_perjanjian, tgl_invoice, tgl_kuitansi, harga_total, status_bayar,
        link_kontrak, catatan,
        no_ktp, alamat_penyewa,
        no_ktp_ortu, nama_ortu, no_hp_ortu, alamat_ortu, hubungan_keluarga,
        file_ktp_penyewa, file_ktp_ortu, file_ktm, file_perjanjian)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     newId,
     b.room_id,
@@ -1027,7 +1027,9 @@ async function handleCreateOccupancy(request, env, user) {
     b.tipe_sewa,
     b.tanggal_mulai,
     b.tanggal_selesai,
-    b.tgl_perjanjian || null, // <-- TAMBAHAN
+    b.tgl_perjanjian || null,
+    b.tgl_invoice || null,
+    b.tgl_kuitansi || null,
     b.harga_total,
     b.status_bayar || "belum",
     b.link_kontrak || null,
@@ -1057,6 +1059,7 @@ async function handleCreateOccupancy(request, env, user) {
   return json({ id: newId, ok: true });
 }
 __name(handleCreateOccupancy, "handleCreateOccupancy");
+
 
 async function handleBulkImport(request, env, user) {
   const { rows } = await request.json();
@@ -1092,12 +1095,12 @@ async function handleBulkImport(request, env, user) {
       await env.DB.prepare(
         `INSERT INTO occupancies
           (room_id, nama_penyewa, no_hp, asal_kampus, tipe_sewa,
-           tanggal_mulai, tanggal_selesai, tgl_perjanjian, harga_total, status_bayar,
+           tanggal_mulai, tanggal_selesai, tgl_perjanjian, tgl_invoice, tgl_kuitansi, harga_total, status_bayar,
            link_kontrak, catatan,
            no_ktp, alamat_penyewa,
            no_ktp_ortu, nama_ortu, no_hp_ortu, alamat_ortu, hubungan_keluarga,
            file_ktp_penyewa, file_ktp_ortu, file_ktm, file_perjanjian)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(
         roomId,
         b.nama_penyewa,
@@ -1106,7 +1109,9 @@ async function handleBulkImport(request, env, user) {
         b.tipe_sewa,
         b.tanggal_mulai,
         b.tanggal_selesai,
-        b.tgl_perjanjian || null, // <-- TAMBAHAN
+        b.tgl_perjanjian || null,
+        b.tgl_invoice || null,
+        b.tgl_kuitansi || null,
         Number(b.harga_total),
         b.status_bayar || "belum",
         b.link_kontrak || null,
@@ -1145,12 +1150,14 @@ async function handleBulkImport(request, env, user) {
 }
 __name(handleBulkImport, "handleBulkImport");
 
+
 async function handleUpdateOccupancy(id, request, env, user) {
   const b = await request.json();
   await env.DB.prepare(
     `UPDATE occupancies SET
       room_id = ?, nama_penyewa = ?, no_hp = ?, asal_kampus = ?,
-      tipe_sewa = ?, tanggal_mulai = ?, tanggal_selesai = ?, tgl_perjanjian = ?,
+      tipe_sewa = ?, tanggal_mulai = ?, tanggal_selesai = ?, 
+      tgl_perjanjian = ?, tgl_invoice = ?, tgl_kuitansi = ?,
       harga_total = ?, status_bayar = ?, link_kontrak = ?, catatan = ?,
       no_ktp = ?, alamat_penyewa = ?,
       no_ktp_ortu = ?, nama_ortu = ?, no_hp_ortu = ?, alamat_ortu = ?,
@@ -1166,7 +1173,9 @@ async function handleUpdateOccupancy(id, request, env, user) {
     b.tipe_sewa,
     b.tanggal_mulai,
     b.tanggal_selesai,
-    b.tgl_perjanjian || null, // <-- TAMBAHAN
+    b.tgl_perjanjian || null,
+    b.tgl_invoice || null,
+    b.tgl_kuitansi || null,
     b.harga_total,
     b.status_bayar,
     b.link_kontrak || null,
