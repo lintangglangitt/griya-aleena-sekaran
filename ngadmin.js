@@ -1118,12 +1118,12 @@ function openPerjanjian(id) {
       <img src="foto/logo.png" alt="Griya Aleena" onerror="this.style.display='none'">
     </div>
 
-    <h1>PERJANJIAN DAN TATA TERTIB BERSAMA<br>GRIYA ALEENA</h1>
+    <h1>SURAT PERJANJIAN SEWA KAMAR KOS, TATA TERTIB,<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
 
     <p>
-      Pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia())}</span>
-      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(todayISO()))}</span>
-      telah disepakati Perjanjian dan Tata Tertib Bersama terkait sewa-menyewa kamar kos antara:
+      Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia())}</span>
+      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(todayISO()))}</span>. 
+      Dengan dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi perjanjian dan tata tertib di bawah ini antara:
     </p>
 
     <h2>1. Pemilik Kos</h2>
@@ -1194,6 +1194,7 @@ function openPerjanjian(id) {
     <ol>
       <li>Masa sewa kamar kos dimulai pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong> dan akan berakhir pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_selesai))}</strong>.</li>
       <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 10 (sepuluh) hari sebelum masa sewa berakhir.</li>
+      <li><strong>Ketentuan Perpanjangan:</strong> Seluruh ketentuan dalam Perjanjian dan Tata Tertib ini (termasuk namun tidak terbatas pada aturan denda, larangan, dan tanggung jawab) tetap berlaku secara otomatis untuk seluruh periode perpanjangan sewa berikutnya, meskipun pada dokumen ini hanya dicantumkan periode bulan pertama. Penyewa dianggap telah menyetujui seluruh aturan ini untuk setiap perpanjangan.</li>
     </ol>
 
     <h2>Pasal 3 – Biaya Sewa dan Pembayaran</h2>
@@ -1252,15 +1253,22 @@ function openPerjanjian(id) {
       <li>Pemilik berhak memutus perjanjian jika Penyewa melanggar perjanjian dan tata tertib yang telah disepakati tanpa mengembalikan uang sewa yang telah dibayarkan.</li>
     </ol>
 
-    <h2>Pasal 9 – Lain-lain</h2>
+    <h2>Pasal 9 – Persetujuan Elektronik dan Kekuatan Hukum</h2>
+    <ol>
+      <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah menyatakan persetujuan yang sah dan penuh terhadap seluruh aturan dan perjanjian ini.</li>
+      <li>Kesepakatan ini memiliki kekuatan hukum yang mengikat secara penuh. Penyewa tidak dapat mengelak dari tanggung jawab hukum atas pelanggaran yang dilakukan dengan alasan tidak dilakukannya tanda tangan basah.</li>
+      <li>Apabila Penyewa melanggar perjanjian ini, Pemilik berhak mengambil tindakan sesuai dengan Pasal 8 (Pengakhiran Sewa) dan/atau menempuh jalur hukum yang berlaku.</li>
+    </ol>
+
+    <h2>Pasal 10 – Lain-lain</h2>
     <ol>
       <li>Segala hal yang belum diatur dalam Perjanjian ini akan dibahas bersama antara kedua pihak.</li>
       <li>Setiap sengketa yang timbul dari Perjanjian ini akan diselesaikan terlebih dahulu secara kekeluargaan melalui musyawarah untuk mencapai mufakat, sebelum menempuh jalur hukum.</li>
-      <li>Perjanjian ini dibuat dalam dua rangkap, masing-masing untuk Pemilik dan Penyewa, dan memiliki kekuatan hukum yang sama.</li>
+      <li>Perjanjian ini dibuat secara elektronik dan salinannya dapat diakses serta dicetak oleh Penyewa melalui dashboard sistem Griya Aleena.</li>
     </ol>
 
     <p style="margin-top:20px;">
-      Demikian perjanjian ini dibuat dan ditandatangani oleh kedua belah pihak tanpa paksaan dari pihak mana pun.
+      Demikian perjanjian ini diterbitkan secara elektronik dan disetujui oleh Penyewa tanpa paksaan dari pihak mana pun.
     </p>
 
     <div class="pj-tanggal">
@@ -1275,7 +1283,9 @@ function openPerjanjian(id) {
       </div>
       <div class="pj-sign-col">
         <div class="pj-sign-label">Penyewa,</div>
-        <div class="pj-sign-space"></div>
+        <div class="pj-sign-space" style="display:flex; align-items:center; justify-content:center; height:50px; font-style:italic; color:#8b9494; font-size:0.8rem; text-align:center;">
+          (Telah disetujui secara elektronik)
+        </div>
         <div class="pj-sign-name-line">${escapeHtml(String(o.nama_penyewa || '').toUpperCase())}</div>
       </div>
     </div>
@@ -1291,14 +1301,14 @@ function openPerjanjian(id) {
     </div>
 
     <div class="inv-footer">
-      Perjanjian ini dicetak otomatis dari sistem Griya Aleena. Wajib ditandatangani oleh kedua pihak.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh Penyewa.
     </div>
 
     ${buildLampiranPage(o)}
 
     <div class="invoice-actions">
       <button class="inv-btn-close" data-close-modal>Tutup</button>
-      <button class="inv-btn-print" data-filename="Perjanjian & Tata Tertib - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
+      <button class="inv-btn-print" data-filename="Surat Perjanjian & Tata Tertib - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
