@@ -1277,13 +1277,13 @@ function openPerjanjian(id) {
 
     <div class="pj-sign-row">
       <div class="pj-sign-col">
-        <div style="font-size:0.9rem; margin-bottom:4px;">Pemilik</div>
-        <div style="font-size:0.85rem; font-style:italic; color:#8b9494; margin-bottom:40px;">(Telah disetujui secara elektronik)</div>
+        <div style="font-size:0.9rem; margin-bottom:8px;">Pemilik,</div>
+        <div style="font-size:0.85rem; font-style:italic; color:#8b9494; margin-bottom:8px;">(Telah disetujui secara elektronik)</div>
         <div class="pj-sign-name-line">${escapeHtml(String(PEMILIK.nama || '').toUpperCase())}</div>
       </div>
       <div class="pj-sign-col">
-        <div style="font-size:0.9rem; margin-bottom:4px;">Penyewa</div>
-        <div style="font-size:0.85rem; font-style:italic; color:#8b9494; margin-bottom:40px;">(Telah disetujui secara elektronik)</div>
+        <div style="font-size:0.9rem; margin-bottom:8px;">Penyewa,</div>
+        <div style="font-size:0.85rem; font-style:italic; color:#8b9494; margin-bottom:8px;">(Telah disetujui secara elektronik)</div>
         <div class="pj-sign-name-line">${escapeHtml(String(o.nama_penyewa || '').toUpperCase())}</div>
       </div>
     </div>
