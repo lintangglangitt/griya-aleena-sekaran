@@ -49,7 +49,8 @@ const UPLOAD_CONFIGS = [
   { key: 'f-file-ktp-penyewa', statusId: 'upload-status-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', field: 'file_ktp_penyewa' },
   { key: 'f-file-ktp-ortu',    statusId: 'upload-status-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    field: 'file_ktp_ortu' },
   { key: 'f-file-ktm',         statusId: 'upload-status-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         field: 'file_ktm' },
-  { key: 'f-file-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
+ // HAPUS BARIS DI BAWAH INI:
+ // { key: 'f-file-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
 ];
 
 if (!TOKEN) window.location.href = 'ibun.html';
@@ -148,9 +149,10 @@ function terbilangRupiah(n) {
   if (n === 0) return 'nol rupiah';
   return terbilangAngka(n).replace(/\s+/g, ' ').trim() + ' rupiah';
 }
-function getHariIndonesia() {
+function getHariIndonesia(tanggalStr = null) {
   const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  return hari[new Date().getDay()];
+  const d = tanggalStr ? new Date(tanggalStr) : new Date();
+  return hari[d.getDay()];
 }
 
 async function printDoc(namaFile) {
@@ -440,6 +442,12 @@ async function init() {
   if (mulaiInput && !mulaiInput.dataset.roomDateBound) {
     mulaiInput.addEventListener('change', () => {
       fillRoomSelect(EDITING_ID);
+      
+      // TAMBAH INI: Sinkronkan tanggal perjanjian saat tanggal mulai diubah
+      const tglPerjanjianInput = document.getElementById('f-tgl-perjanjian');
+      if (tglPerjanjianInput) {
+        tglPerjanjianInput.value = mulaiInput.value;
+      }
     });
     mulaiInput.dataset.roomDateBound = 'true';
   }
@@ -1074,7 +1082,7 @@ function buildLampiranPage(o) {
         ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
       </div>
       <div class="inv-footer">
-        Perjanjian ini dicetak otomatis dari sistem Griya Aleena. Wajib ditandatangani oleh kedua pihak.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh kedua belah pihak.
       </div>
     </div>
   `;
@@ -1111,6 +1119,8 @@ function openPerjanjian(id) {
   const kamarTipe = o.tipe === 'AC' ? 'AC' : 'NON AC';
   const namaKamar = (o.nama_kamar || 'Kamar').toUpperCase();
   const kamarLabel = `${namaKamar} (${kamarTipe})`;
+    // TAMBAH INI: Fallback ke tanggal_mulai jika tgl_perjanjian kosong
+  const tglPerjanjian = o.tgl_perjanjian || o.tanggal_mulai; 
 
   const html = `
     <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
@@ -1118,12 +1128,12 @@ function openPerjanjian(id) {
       <img src="foto/logo.png" alt="Griya Aleena" onerror="this.style.display='none'">
     </div>
 
-    <h1>PERJANJIAN DAN TATA TERTIB BERSAMA<br>GRIYA ALEENA</h1>
+    <h1>SURAT PERJANJIAN SEWA KAMAR KOS, TATA TERTIB,<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
 
     <p>
-      Pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia())}</span>
-      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(todayISO()))}</span>
-      telah disepakati Perjanjian dan Tata Tertib Bersama terkait sewa-menyewa kamar kos antara:
+      Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(tglPerjanjian))}</span>
+      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>. 
+      Dengan dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi perjanjian dan tata tertib di bawah ini antara:
     </p>
 
     <h2>1. Pemilik Kos</h2>
@@ -1194,6 +1204,7 @@ function openPerjanjian(id) {
     <ol>
       <li>Masa sewa kamar kos dimulai pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong> dan akan berakhir pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_selesai))}</strong>.</li>
       <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 10 (sepuluh) hari sebelum masa sewa berakhir.</li>
+      <li><strong>Ketentuan Perpanjangan:</strong> Seluruh ketentuan dalam Perjanjian dan Tata Tertib ini (termasuk namun tidak terbatas pada aturan denda, larangan, dan tanggung jawab) tetap berlaku secara otomatis untuk seluruh periode perpanjangan sewa berikutnya, meskipun pada dokumen ini hanya dicantumkan periode bulan pertama. Penyewa dianggap telah menyetujui seluruh aturan ini untuk setiap perpanjangan.</li>
     </ol>
 
     <h2>Pasal 3 – Biaya Sewa dan Pembayaran</h2>
@@ -1248,34 +1259,41 @@ function openPerjanjian(id) {
     <ol>
       <li>Jika Penyewa ingin mengakhiri sewa sebelum waktu yang disepakati, maka uang sewa yang sudah dibayarkan tidak dapat dikembalikan.</li>
       <li>Jika Penyewa mengakhiri sewa sebelum waktu yang disepakati, Penyewa diperbolehkan mencari pengganti hak sewa/mengoper sewa ke orang lain hanya jika mendapatkan persetujuan tertulis dari Pemilik.</li>
-      <li>Pemilik berhak menolak calon pengganti yang diajukan oleh Penyewa untuk menggantikan hak sewa/oper sewa atas pertimbangan pribadi Pemilik (misal: atas pertimbangan bahwa calon pengganti terkesan tidak bertanggung jawab, tidak dapat mematuhi tata tertib kos, dan/atau hal lain.)</li>
+      <li>Pemilik berhak menolak calon pengganti yang diajukan oleh Penyewa untuk menggantikan hak sewa/oper sewa atas pertimbangan pribadi Pemilik (misal: atas pertimbangan bahwa calon pengganti terkesan tidak bertanggung jawab, tidak dapat mematuhi tata tertib kos, dan/atau hal lain).</li>
       <li>Pemilik berhak memutus perjanjian jika Penyewa melanggar perjanjian dan tata tertib yang telah disepakati tanpa mengembalikan uang sewa yang telah dibayarkan.</li>
     </ol>
 
-    <h2>Pasal 9 – Lain-lain</h2>
+    <h2>Pasal 9 – Persetujuan Elektronik dan Kekuatan Hukum</h2>
+    <ol>
+      <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah menyatakan persetujuan yang sah dan penuh terhadap seluruh aturan dan perjanjian ini.</li>
+      <li>Kesepakatan ini memiliki kekuatan hukum yang mengikat secara penuh. Penyewa tidak dapat mengelak dari tanggung jawab hukum atas pelanggaran yang dilakukan dengan alasan tidak dilakukannya tanda tangan basah.</li>
+      <li>Apabila Penyewa melanggar perjanjian ini, Pemilik berhak mengambil tindakan sesuai dengan Pasal 8 (Pengakhiran Sewa) dan/atau menempuh jalur hukum yang berlaku.</li>
+    </ol>
+
+    <h2>Pasal 10 – Lain-lain</h2>
     <ol>
       <li>Segala hal yang belum diatur dalam Perjanjian ini akan dibahas bersama antara kedua pihak.</li>
       <li>Setiap sengketa yang timbul dari Perjanjian ini akan diselesaikan terlebih dahulu secara kekeluargaan melalui musyawarah untuk mencapai mufakat, sebelum menempuh jalur hukum.</li>
-      <li>Perjanjian ini dibuat dalam dua rangkap, masing-masing untuk Pemilik dan Penyewa, dan memiliki kekuatan hukum yang sama.</li>
+      <li>Perjanjian ini dibuat secara elektronik dan salinannya disampaikan kepada Penyewa.</li>
     </ol>
 
     <p style="margin-top:20px;">
-      Demikian perjanjian ini dibuat dan ditandatangani oleh kedua belah pihak tanpa paksaan dari pihak mana pun.
+      Demikian perjanjian ini diterbitkan secara elektronik dan disetujui oleh Penyewa tanpa paksaan dari pihak mana pun.
     </p>
 
     <div class="pj-tanggal">
-      Semarang, <span class="pj-fill-inline">${escapeHtml(fmtDateLong(todayISO()))}</span>
+      Semarang, <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>
     </div>
 
     <div class="pj-sign-row">
       <div class="pj-sign-col">
-        <div class="pj-sign-label">Pemilik,</div>
-        <div class="pj-sign-space"></div>
+        <div style="font-size:0.9rem; margin-bottom:8px;">Pemilik,</div>
+        <div style="font-size:0.85rem; font-style:italic; color:#8b9494; margin-bottom:8px;">(Telah disetujui secara elektronik)</div>
         <div class="pj-sign-name-line">${escapeHtml(String(PEMILIK.nama || '').toUpperCase())}</div>
       </div>
       <div class="pj-sign-col">
-        <div class="pj-sign-label">Penyewa,</div>
-        <div class="pj-sign-space"></div>
+        <div style="font-size:0.9rem; margin-bottom:8px;">Penyewa,</div>
+        <div style="font-size:0.85rem; font-style:italic; color:#8b9494; margin-bottom:8px;">(Telah disetujui secara elektronik)</div>
         <div class="pj-sign-name-line">${escapeHtml(String(o.nama_penyewa || '').toUpperCase())}</div>
       </div>
     </div>
@@ -1291,14 +1309,14 @@ function openPerjanjian(id) {
     </div>
 
     <div class="inv-footer">
-      Perjanjian ini dicetak otomatis dari sistem Griya Aleena. Wajib ditandatangani oleh kedua pihak.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh kedua belah pihak.
     </div>
 
     ${buildLampiranPage(o)}
 
     <div class="invoice-actions">
       <button class="inv-btn-close" data-close-modal>Tutup</button>
-      <button class="inv-btn-print" data-filename="Perjanjian & Tata Tertib - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
+      <button class="inv-btn-print" data-filename="Surat Perjanjian & Tata Tertib - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
     </div>
   `;
 
@@ -1694,6 +1712,7 @@ function openModal(id) {
 
     safeSet('f-mulai', o.tanggal_mulai);
     safeSet('f-selesai', o.tanggal_selesai);
+    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || ''); // <-- TAMBAH INI
 
     fillRoomSelect(o.id);
     safeSet('f-room', o.room_id);
@@ -1716,7 +1735,8 @@ function openModal(id) {
       'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa', field: 'file_ktp_penyewa' },
       'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu',    field: 'file_ktp_ortu' },
       'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm',         field: 'file_ktm' },
-      'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
+      // HAPUS BARIS DI BAWAH INI:
+      // 'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
     };
 
     Object.values(fileMap).forEach(item => {
@@ -1775,6 +1795,8 @@ function openModal(id) {
     }
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Penyewa';
+    // OTOMATIS: Ikuti tanggal mulai kontrak
+    document.getElementById('f-tgl-perjanjian').value = document.getElementById('f-mulai').value;
     updateHargaOtomatis();
   }
   openModalExclusive(document.getElementById('modal-occ'));
@@ -1992,6 +2014,9 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       tipe_sewa: document.getElementById('f-tipe').value,
       tanggal_mulai: document.getElementById('f-mulai').value,
       tanggal_selesai: document.getElementById('f-selesai').value,
+      // Fallback: Jika perjanjian kosong, pakai tanggal_mulai
+      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || document.getElementById('f-mulai').value,
+      
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
       status_bayar: document.getElementById('f-status').value,
@@ -2011,7 +2036,7 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
       file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
       file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
-      file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
+      file_perjanjian: document.getElementById('f-link-perjanjian')?.value.trim() || null,
 
       catatan: document.getElementById('f-catatan').value.trim() || null,
     };
