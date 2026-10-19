@@ -1168,7 +1168,7 @@ function openPerjanjian(id) {
     <p>Selanjutnya disebut <strong>Penyewa</strong>.</p>
 
     <p style="margin-top:16px;">
-    Dengan telah dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) Penyewa kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi Perjanjian ketentuan sebagai berikut:
+    Dengan telah dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) Penyewa kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi Perjanjian dengan ketentuan sebagai berikut:
     </p>
 
     <h2>Pasal 1 – Objek Sewa</h2>
