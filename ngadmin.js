@@ -441,6 +441,12 @@ async function init() {
   if (mulaiInput && !mulaiInput.dataset.roomDateBound) {
     mulaiInput.addEventListener('change', () => {
       fillRoomSelect(EDITING_ID);
+      
+      // TAMBAH INI: Sinkronkan tanggal perjanjian saat tanggal mulai diubah
+      const tglPerjanjianInput = document.getElementById('f-tgl-perjanjian');
+      if (tglPerjanjianInput) {
+        tglPerjanjianInput.value = mulaiInput.value;
+      }
     });
     mulaiInput.dataset.roomDateBound = 'true';
   }
@@ -1112,6 +1118,8 @@ function openPerjanjian(id) {
   const kamarTipe = o.tipe === 'AC' ? 'AC' : 'NON AC';
   const namaKamar = (o.nama_kamar || 'Kamar').toUpperCase();
   const kamarLabel = `${namaKamar} (${kamarTipe})`;
+    // TAMBAH INI: Fallback ke tanggal_mulai jika tgl_perjanjian kosong
+  const tglPerjanjian = o.tgl_perjanjian || o.tanggal_mulai; 
 
   const html = `
     <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
@@ -1122,8 +1130,8 @@ function openPerjanjian(id) {
     <h1>SURAT PERJANJIAN SEWA KAMAR KOS, TATA TERTIB,<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
 
     <p>
-      Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(o.tgl_perjanjian))}</span>
-      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(o.tgl_perjanjian || todayISO()))}</span>. 
+      Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(tglPerjanjian))}</span>
+      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>. 
       Dengan dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi perjanjian dan tata tertib di bawah ini antara:
     </p>
 
@@ -1273,7 +1281,7 @@ function openPerjanjian(id) {
     </p>
 
     <div class="pj-tanggal">
-      Semarang, <span class="pj-fill-inline">${escapeHtml(fmtDateLong(o.tgl_perjanjian || todayISO()))}</span>
+      Semarang, <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>
     </div>
 
     <div class="pj-sign-row">
@@ -1785,8 +1793,8 @@ function openModal(id) {
     }
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Penyewa';
-        // TAMBAH INI: default isi hari ini
-    document.getElementById('f-tgl-perjanjian').value = todayISO();
+    // OTOMATIS: Ikuti tanggal mulai kontrak
+    document.getElementById('f-tgl-perjanjian').value = document.getElementById('f-mulai').value;
     updateHargaOtomatis();
   }
   openModalExclusive(document.getElementById('modal-occ'));
@@ -2004,7 +2012,9 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       tipe_sewa: document.getElementById('f-tipe').value,
       tanggal_mulai: document.getElementById('f-mulai').value,
       tanggal_selesai: document.getElementById('f-selesai').value,
-      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || null, // <-- TAMBAH INI
+      // Fallback: Jika perjanjian kosong, pakai tanggal_mulai
+      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || document.getElementById('f-mulai').value,
+      
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
       status_bayar: document.getElementById('f-status').value,
