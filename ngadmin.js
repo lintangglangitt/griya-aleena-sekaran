@@ -2026,11 +2026,12 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       tipe_sewa: document.getElementById('f-tipe').value,
       tanggal_mulai: document.getElementById('f-mulai').value,
       tanggal_selesai: document.getElementById('f-selesai').value,
-      // Fallback: Jika perjanjian kosong, pakai tanggal_mulai     
-      tgl_invoice: document.getElementById('f-tgl-invoice').value || document.getElementById('f-mulai').value, // <-- TAMBAH
-      tgl_kuitansi: document.getElementById('f-tgl-kuitansi').value || document.getElementById('f-mulai').value, // <-- TAMBAH
-      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || document.getElementById('f-mulai').value, // <-- TAMBAH
       
+      // TANGGAL-TANGGAL BARU
+      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || document.getElementById('f-mulai').value,
+      tgl_invoice: document.getElementById('f-tgl-invoice').value || document.getElementById('f-mulai').value,
+      tgl_kuitansi: document.getElementById('f-tgl-kuitansi').value || document.getElementById('f-mulai').value,
+
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
       status_bayar: document.getElementById('f-status').value,
@@ -2047,9 +2048,9 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       no_hp_ortu: up('f-hp-ortu'),
       hubungan_keluarga: up('f-hubungan'),
 
-      file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
-      file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
-      file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
+      file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa')?.value.trim() || null,
+      file_ktp_ortu: document.getElementById('f-link-ktp-ortu')?.value.trim() || null,
+      file_ktm: document.getElementById('f-link-ktm')?.value.trim() || null,
       file_perjanjian: document.getElementById('f-link-perjanjian')?.value.trim() || null,
 
       catatan: document.getElementById('f-catatan').value.trim() || null,
