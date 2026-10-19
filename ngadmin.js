@@ -443,12 +443,12 @@ async function init() {
     mulaiInput.addEventListener('change', () => {
       fillRoomSelect(EDITING_ID);
       
-      // TAMBAH INI: Sinkronkan tanggal perjanjian saat tanggal mulai diubah
-      const tglPerjanjianInput = document.getElementById('f-tgl-perjanjian');
-      if (tglPerjanjianInput) {
-        tglPerjanjianInput.value = mulaiInput.value;
-      }
-    });
+      // Sinkronkan ke-3 tanggal jika tanggal mulai diubah
+      ['f-tgl-invoice', 'f-tgl-kuitansi', 'f-tgl-perjanjian'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = mulaiInput.value;
+      });
+      
     mulaiInput.dataset.roomDateBound = 'true';
   }
 
@@ -862,7 +862,10 @@ function openInvoice(id) {
   if (!o) { console.error('openInvoice: occ not found', id); return; }
 
   const invoiceNo = generateInvoiceNo(o.id, o.tanggal_mulai);
-  const today = fmtDateLong(todayISO());
+
+  const tglInvoice = o.tgl_invoice || o.tanggal_mulai;
+  const today = fmtDateLong(tglInvoice); // <-- Ganti todayISO() menjadi tglInvoic
+  
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
   const html = `
@@ -938,7 +941,10 @@ function openKuitansi(id) {
   if (!o) { console.error('openKuitansi: occ not found', id); return; }
 
   const noKuitansi = generateKuitansiNo(o.id, o.tanggal_mulai);
-  const today = fmtDateLong(todayISO());
+
+  const tglKuitansi = o.tgl_kuitansi || o.tanggal_mulai;
+  const today = fmtDateLong(tglKuitansi); // <-- Ganti todayISO() menjadi tglKuitansi
+  
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
   const html = `
@@ -1083,7 +1089,7 @@ function buildLampiranPage(o) {
         ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
       </div>
       <div class="inv-footer">
-      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh kedua belah pihak.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh Para Pihak.
       </div>
     </div>
   `;
@@ -1129,12 +1135,11 @@ function openPerjanjian(id) {
       <img src="foto/logo.png" alt="Griya Aleena" onerror="this.style.display='none'">
     </div>
 
-    <h1>SURAT PERJANJIAN SEWA KAMAR KOS, TATA TERTIB,<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
+    <h1>SURAT PERJANJIAN SEWA KAMAR KOS<br>DAN KONFIRMASI PERSETUJUAN ELEKTRONIK</h1>
 
     <p>
-      Surat Perjanjian ini diterbitkan secara elektronik pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(tglPerjanjian))}</span>
-      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>. 
-      Dengan dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi perjanjian dan tata tertib di bawah ini antara:
+      Pada hari ini <span class="pj-fill-inline">${escapeHtml(getHariIndonesia(tglPerjanjian))}</span>
+      tanggal <span class="pj-fill-inline">${escapeHtml(fmtDateLong(tglPerjanjian))}</span>, telah diterbitkan secara elektronik dan disepakati Surat Perjanjian Sewa Kamar Kos, selanjutnya disebut <strong>Perjanjian</strong>, antara:
     </p>
 
     <h2>1. Pemilik Kos</h2>
@@ -1169,7 +1174,7 @@ function openPerjanjian(id) {
     <p>Selanjutnya disebut <strong>Penyewa</strong>.</p>
 
     <p style="margin-top:16px;">
-      Pemilik dan Penyewa sepakat mengikat diri dalam Perjanjian dan Tata Tertib Bersama dengan ketentuan sebagai berikut:
+    Dengan telah dilakukannya pembayaran biaya sewa dan penyerahan salinan identitas (KTP/SIM dan KTM) Penyewa kepada Pemilik, Penyewa menyatakan telah membaca, memahami, dan <strong>SETUJU</strong> untuk terikat pada seluruh isi Perjanjian dengan ketentuan sebagai berikut:
     </p>
 
     <h2>Pasal 1 – Objek Sewa</h2>
@@ -1205,7 +1210,7 @@ function openPerjanjian(id) {
     <ol>
       <li>Masa sewa kamar kos dimulai pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong> dan akan berakhir pada tanggal <strong>${escapeHtml(fmtDateLong(o.tanggal_selesai))}</strong>.</li>
       <li>Perpanjangan/pengakhiran sewa harus diinformasikan oleh Penyewa paling lambat 10 (sepuluh) hari sebelum masa sewa berakhir.</li>
-      <li><strong>Ketentuan Perpanjangan:</strong> Seluruh ketentuan dalam Perjanjian dan Tata Tertib ini (termasuk namun tidak terbatas pada aturan denda, larangan, dan tanggung jawab) tetap berlaku secara otomatis untuk seluruh periode perpanjangan sewa berikutnya, meskipun pada dokumen ini hanya dicantumkan periode bulan pertama. Penyewa dianggap telah menyetujui seluruh aturan ini untuk setiap perpanjangan.</li>
+      <li><strong>Ketentuan Perpanjangan:</strong> Seluruh ketentuan dalam Perjanjian ini tetap berlaku secara otomatis untuk seluruh periode perpanjangan sewa berikutnya, meskipun pada dokumen ini hanya dicantumkan periode pertama masa sewa. Penyewa dianggap telah menyetujui seluruh isi Perjanjian ini untuk setiap perpanjangan.</li>
     </ol>
 
     <h2>Pasal 3 – Biaya Sewa dan Pembayaran</h2>
@@ -1245,15 +1250,15 @@ function openPerjanjian(id) {
 
     <h2>Pasal 6 – Keamanan dan Keselamatan</h2>
     <ol>
-      <li>Penyewa wajib menjaga kunci kamar dan/atau kunci gerbang, serta segera melaporkan kepada pemilik kos apabila terjadi kehilangan.</li>
-      <li>Penyewa bertanggung jawab menjaga keamanan barang pribadinya masing-masing. Pemilik Kos tidak bertanggung jawab atas kehilangan akibat kelalaian Penyewa.</li>
-      <li>Penyewa dilarang meminjamkan kunci kamar dan/atau gerbang kepada orang lain tanpa seizin Pemilik Kos.</li>
+      <li>Penyewa wajib menjaga kunci kamar dan/atau kunci gerbang, serta segera melaporkan kepada Pemilik apabila terjadi kehilangan.</li>
+      <li>Penyewa bertanggung jawab menjaga keamanan barang pribadinya masing-masing. Pemilik tidak bertanggung jawab atas kehilangan akibat kelalaian Penyewa.</li>
+      <li>Penyewa dilarang meminjamkan kunci kamar dan/atau gerbang kepada orang lain tanpa seizin Pemilik.</li>
     </ol>
 
     <h2>Pasal 7 – Kerusakan dan Perbaikan</h2>
     <ol>
       <li>Penyewa bertanggung jawab atas kerusakan yang diakibatkan oleh kelalaian Penyewa.</li>
-      <li>Jika ditemukan kerusakan pada properti, Penyewa wajib melaporkannya kepada pemilik kos secepatnya untuk dapat diperbaiki.</li>
+      <li>Jika ditemukan kerusakan pada properti, Penyewa wajib melaporkannya kepada Pemilik secepatnya untuk dapat diperbaiki.</li>
     </ol>
 
     <h2>Pasal 8 – Pengakhiran Sewa</h2>
@@ -1266,16 +1271,16 @@ function openPerjanjian(id) {
 
     <h2>Pasal 9 – Persetujuan Elektronik dan Kekuatan Hukum</h2>
     <ol>
-      <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah menyatakan persetujuan yang sah dan penuh terhadap seluruh aturan dan perjanjian ini.</li>
-      <li>Kesepakatan ini memiliki kekuatan hukum yang mengikat secara penuh. Penyewa tidak dapat mengelak dari tanggung jawab hukum atas pelanggaran yang dilakukan dengan alasan tidak dilakukannya tanda tangan basah.</li>
-      <li>Apabila Penyewa melanggar perjanjian ini, Pemilik berhak mengambil tindakan sesuai dengan Pasal 8 (Pengakhiran Sewa) dan/atau menempuh jalur hukum yang berlaku.</li>
+      <li>Penyewa menyadari sepenuhnya bahwa dengan dilakukannya pembayaran sewa dan diserahkannya salinan identitas diri, maka Penyewa telah memberikan persetujuan yang sah dan penuh terhadap seluruh isi perjanjian ini.</li>
+      <li>Perjanjian ini memiliki kekuatan hukum yang mengikat secara penuh karena telah disetujui secara elektronik dan oleh karenanya tidak memerlukan tanda tangan basah Pemilik dan Penyewa.</li>
+      <li>Apabila Penyewa melanggar Perjanjian ini, Pemilik berhak mengambil tindakan sesuai dengan Pasal 8 (Pengakhiran Sewa) dan/atau menempuh jalur hukum yang berlaku.</li>
     </ol>
 
     <h2>Pasal 10 – Lain-lain</h2>
     <ol>
-      <li>Segala hal yang belum diatur dalam Perjanjian ini akan dibahas bersama antara kedua pihak.</li>
+      <li>Segala hal yang belum diatur dalam Perjanjian ini akan dibahas bersama antara Para Pihak.</li>
       <li>Setiap sengketa yang timbul dari Perjanjian ini akan diselesaikan terlebih dahulu secara kekeluargaan melalui musyawarah untuk mencapai mufakat, sebelum menempuh jalur hukum.</li>
-      <li>Perjanjian ini dibuat secara elektronik dan salinannya disampaikan kepada Penyewa.</li>
+      <li>Perjanjian ini dibuat secara elektronik dan wajib disimpan oleh Para Pihak.</li>
     </ol>
 
     <p style="margin-top:20px;">
@@ -1310,7 +1315,7 @@ function openPerjanjian(id) {
     </div>
 
     <div class="inv-footer">
-      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh kedua belah pihak.
+      Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh Para Pihak.
     </div>
 
     ${buildLampiranPage(o)}
@@ -1713,8 +1718,11 @@ function openModal(id) {
 
     safeSet('f-mulai', o.tanggal_mulai);
     safeSet('f-selesai', o.tanggal_selesai);
-    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || ''); // <-- TAMBAH INI
 
+    safeSet('f-tgl-invoice', o.tgl_invoice || o.tanggal_mulai || ''); // <-- TAMBAH
+    safeSet('f-tgl-kuitansi', o.tgl_kuitansi || o.tanggal_mulai || ''); // <-- TAMBAH
+    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || o.tanggal_mulai || ''); // <-- TAMBAH
+    
     fillRoomSelect(o.id);
     safeSet('f-room', o.room_id);
 
@@ -1797,7 +1805,10 @@ function openModal(id) {
   } else {
     document.getElementById('modal-title').textContent = 'Tambah Penyewa';
     // OTOMATIS: Ikuti tanggal mulai kontrak
-    document.getElementById('f-tgl-perjanjian').value = document.getElementById('f-mulai').value;
+    const tglMulai = document.getElementById('f-mulai').value;
+    document.getElementById('f-tgl-invoice').value = tglMulai; // <-- TAMBAH
+    document.getElementById('f-tgl-kuitansi').value = tglMulai; // <-- TAMBAH
+    document.getElementById('f-tgl-perjanjian').value = tglMulai; // <-- TAMBAH
     updateHargaOtomatis();
   }
   openModalExclusive(document.getElementById('modal-occ'));
@@ -2015,8 +2026,10 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       tipe_sewa: document.getElementById('f-tipe').value,
       tanggal_mulai: document.getElementById('f-mulai').value,
       tanggal_selesai: document.getElementById('f-selesai').value,
-      // Fallback: Jika perjanjian kosong, pakai tanggal_mulai
-      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || document.getElementById('f-mulai').value,
+      // Fallback: Jika perjanjian kosong, pakai tanggal_mulai     
+      tgl_invoice: document.getElementById('f-tgl-invoice').value || document.getElementById('f-mulai').value, // <-- TAMBAH
+      tgl_kuitansi: document.getElementById('f-tgl-kuitansi').value || document.getElementById('f-mulai').value, // <-- TAMBAH
+      tgl_perjanjian: document.getElementById('f-tgl-perjanjian').value || document.getElementById('f-mulai').value, // <-- TAMBAH
       
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
