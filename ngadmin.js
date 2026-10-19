@@ -49,7 +49,8 @@ const UPLOAD_CONFIGS = [
   { key: 'f-file-ktp-penyewa', statusId: 'upload-status-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', field: 'file_ktp_penyewa' },
   { key: 'f-file-ktp-ortu',    statusId: 'upload-status-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    field: 'file_ktp_ortu' },
   { key: 'f-file-ktm',         statusId: 'upload-status-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         field: 'file_ktm' },
-  { key: 'f-file-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
+ // HAPUS BARIS DI BAWAH INI:
+ // { key: 'f-file-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
 ];
 
 if (!TOKEN) window.location.href = 'ibun.html';
@@ -1734,7 +1735,8 @@ function openModal(id) {
       'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa', field: 'file_ktp_penyewa' },
       'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu',    field: 'file_ktp_ortu' },
       'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm',         field: 'file_ktm' },
-      'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
+      // HAPUS BARIS DI BAWAH INI:
+      // 'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
     };
 
     Object.values(fileMap).forEach(item => {
@@ -2034,7 +2036,7 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa').value.trim() || null,
       file_ktp_ortu: document.getElementById('f-link-ktp-ortu').value.trim() || null,
       file_ktm: document.getElementById('f-link-ktm').value.trim() || null,
-      file_perjanjian: document.getElementById('f-link-perjanjian').value.trim() || null,
+      file_perjanjian: document.getElementById('f-link-perjanjian')?.value.trim() || null,
 
       catatan: document.getElementById('f-catatan').value.trim() || null,
     };
