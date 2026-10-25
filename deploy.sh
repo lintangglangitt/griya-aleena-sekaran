@@ -144,7 +144,7 @@ commit_local() {
 # Fungsi: pull dari dev
 # ─────────────────────────────────────────────
 pull_dev() {
-  echo -e "${YELLOW}📥 Tarik update dari dev (origin/main)...${NC}"
+  echo -e "${YELLOW}📥 Pull update dari dev (origin/main)...${NC}"
   git checkout main 2>/dev/null || { echo -e "${RED}❌ Gagal checkout main.${NC}"; return 1; }
   if git pull origin main; then
     echo -e "${GREEN}✅ Sinkron dengan dev.${NC}"
@@ -159,7 +159,7 @@ pull_dev() {
 # Fungsi: pull dari prod
 # ─────────────────────────────────────────────
 pull_prod() {
-  echo -e "${YELLOW}📥 Tarik update dari prod (prod/main)...${NC}"
+  echo -e "${YELLOW}📥 Pull update dari prod (prod/main)...${NC}"
   git checkout main 2>/dev/null || { echo -e "${RED}❌ Gagal checkout main.${NC}"; return 1; }
   if git pull prod main; then
     echo -e "${GREEN}✅ Sinkron dengan prod.${NC}"
@@ -239,7 +239,7 @@ push_prod() {
     echo "   Dev dan prod sudah sinkron, atau lokal ketinggalan."
     echo ""
     echo -e "${YELLOW}   Kemungkinan:${NC}"
-    echo "   - Kamu lupa tarik dari dev dulu → jalankan menu [3]"
+    echo "   - Kamu lupa pull dari dev dulu → jalankan menu [3]"
     echo "   - Commit sudah ada di prod"
     return 0
   fi
@@ -274,8 +274,8 @@ while true; do
   echo -e "${BLUE}Pilih aksi:${NC}"
   echo "  [1] 📊 Cek status"
   echo "  [2] 📝 Commit lokal (tanpa push)"
-  echo "  [3] 📥 Tarik update dari dev"
-  echo "  [4] 📥 Tarik update dari prod"
+  echo "  [3] 📥 Pull update dari dev"
+  echo "  [4] 📥 Pull update dari prod"
   echo "  [5] ⬆️  Push ke dev (auto-pull dev dulu)"
   echo "  [6] ⬆️  Push ke prod (auto-pull prod dulu)"
   echo "  [7] ❌ Keluar"
