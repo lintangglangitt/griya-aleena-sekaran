@@ -674,68 +674,51 @@ tbody tr:hover {
   gap: 5px;
 }
 
+/* ═══════════════════════════════════════════════ */
+/* HIGHLIGHT BARIS TABEL (KONTRAS TINGGI) */
+/* ═══════════════════════════════════════════════ */
+
+/* 1. BARIS AKTIF (MENYALA TERANG) */
 tbody tr.baris-aktif {
-  background: #f0faf4;
+  background: #e6fffa !important; /* Latar hijau mint sangat terang */
+  box-shadow: inset 6px 0 0 0 var(--teal-light); /* Garis kiri teal tebal */
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 tbody tr.baris-aktif td {
-  color: var(--text);
-  font-weight: 600;
-}
-
-tbody tr.baris-aktif td strong {
-  color: var(--teal);
-  font-weight: 800;
+  color: var(--text) !important; /* Teks hitam tegas */
+  font-weight: 600; /* Teks agak tebal */
 }
 
 tbody tr.baris-aktif:hover {
-  background: #e2f5ea;
+  background: #ccfbf1 !important; /* Sedikit lebih gelap saat di-hover */
+  box-shadow: inset 6px 0 0 0 var(--teal);
 }
 
+/* 2. BARIS AKAN HABIS (MERAH TEBAL) */
+tbody tr.akan-habis {
+  background: #ffe4e6 !important; /* Latar merah muda terang */
+  box-shadow: inset 6px 0 0 0 var(--red); /* Garis kiri merah tebal */
+}
+
+tbody tr.akan-habis td {
+  color: #b91c1c !important; /* Warna teks merah tua */
+  font-weight: 700 !important; /* Teks sangat tebal */
+}
+
+tbody tr.akan-habis:hover {
+  background: #fecdd3 !important;
+}
+
+/* 3. BARIS SELESAI (REDUP / MATI) */
 tbody tr.kontrak-selesai {
-  background: #ebebeb !important;
+  background: #f8fafc !important; /* Latar abu-abu sangat terang */
+  opacity: 0.5; /* Dibuat transparan agar tidak menarik perhatian */
 }
 
 tbody tr.kontrak-selesai:hover {
-  background: #e0e0e0 !important;
-}
-
-tbody tr.kontrak-selesai td,
-tbody tr.kontrak-selesai td strong {
-  color: #8b9494 !important;
-  font-weight: 400 !important;
-}
-
-tbody tr.kontrak-selesai .badge {
-  filter: grayscale(0.8);
-  opacity: 0.7;
-}
-
-tbody tr.kontrak-selesai .btn-icon {
-  opacity: 0.7;
-}
-
-tbody tr.kontrak-selesai:hover .btn-icon {
-  opacity: 1;
-}
-
-tbody tr.akan-habis {
-  background: #ffebee !important;
-}
-
-tbody tr.akan-habis {
-  background: #ffebee !important;
-}
-
-tbody tr.akan-habis td,
-tbody tr.akan-habis td strong,
-tbody tr.akan-habis td a {
-  color: #c0392b !important;
-  font-weight: 700;
-}
-
-tbody tr.akan-habis td:first-child {
-  border-left: 4px solid var(--red);
+  background: #f1f5f9 !important;
+  opacity: 0.8;
 }
 
 /* ---------- Badges & Row Buttons ---------- */
@@ -1686,6 +1669,7 @@ tbody tr.akan-habis td:first-child {
     justify-content: center;
   }
 }
+
 .income-total-row td {
   background: #f4f7f7;
   border-top: 2px solid var(--teal);

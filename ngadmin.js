@@ -443,15 +443,6 @@ async function init() {
   console.log('[Init] Starting...');
 
   closeAllModals();
-
-    // Tampilkan input DP jika status = dp
-  const statusSelect = document.getElementById('f-status');
-  const wrapNominalDp = document.getElementById('wrap-nominal-dp');
-  if (statusSelect && wrapNominalDp) {
-    statusSelect.addEventListener('change', () => {
-      wrapNominalDp.style.display = statusSelect.value === 'dp' ? 'block' : 'none';
-    });
-  }
   
 
   try {
@@ -505,6 +496,8 @@ async function init() {
         if (pjjInput) pjjInput.value = tglMulai;
       }
 
+
+      
       fillRoomSelect(EDITING_ID);
       updateHargaOtomatis();
     }); 
@@ -531,6 +524,22 @@ async function init() {
   if (formAddRoom) {
     formAddRoom.addEventListener('submit', handleSaveRoom);
   }
+
+
+    // ─── LOGIKA RESET DP SAAT STATUS BERUBAH ───
+  const statusSelect = document.getElementById('f-status');
+  const inputNominalDp = document.getElementById('f-nominal-dp');
+  
+  if (statusSelect && inputNominalDp && !statusSelect.dataset.dpListenerBound) {
+    statusSelect.addEventListener('change', () => {
+      // Jika status diubah menjadi 'belum', reset DP ke 0
+      if (statusSelect.value === 'belum') {
+        inputNominalDp.value = 0;
+      }
+    });
+    statusSelect.dataset.dpListenerBound = 'true';
+  }
+  // ──────────────────────────────────────────
 
   console.log('[Init] Done.');
 }
@@ -929,6 +938,10 @@ function openInvoice(id) {
   
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
+  // Hitung sisa tagihan
+  const nominalDp = Number(o.nominal_dp) || 0;
+  const totalTagihan = o.harga_total - nominalDp;
+
   const html = `
     <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     ${buildDocHeader('INVOICE', invoiceNo)}
@@ -962,32 +975,35 @@ function openInvoice(id) {
       </tbody>
     </table>
 
-    <!-- KOTAK TAGIHAN (Dinamis untuk semua status) -->
+    <!-- KOTAK TAGIHAN (Format seragam untuk semua status) -->
     <div class="inv-total" style="flex-direction: column; gap: 8px; align-items: stretch; background: #f9fbfb; border: 1px solid #e3ebeb; padding: 20px;">
       
-      ${o.status_bayar !== 'lunas' ? `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="inv-total-label" style="color: #a06800;">Telah Bayar DP</div>
-          <div style="font-size: 1.1rem; font-weight: 700; color: #a06800;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
-        </div>
-      ` : ''}
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="inv-total-label" style="color: #a06800;">Telah Bayar DP</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #a06800;">${escapeHtml(rupiahFull(nominalDp))}</div>
+      </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; ${o.status_bayar !== 'lunas' ? 'padding-top: 8px; border-top: 1px dashed #e3ebeb;' : ''}">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed #e3ebeb;">
         <div class="inv-total-label" style="color: #1a5c5c; font-weight: 800;">Total Tagihan</div>
         <div class="inv-total-value" style="color: #1a5c5c; font-size: 1.6rem;">
-          ${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}
+          ${escapeHtml(rupiahFull(totalTagihan))}
         </div>
       </div>
       
+      <div>
+      <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
+      DP yang sudah dibayarkan tidak dapat ditarik kembali.<br>
+      Mohon pelunasan dilakukan sebelum periode sewa dimulai: <strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.<br>
+      </p>
+      </div>
+         
     </div>
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
-    <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
-      Mohon dibayarkan sebelum periode sewa dimulai:<strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.
-      DP yang sudah dibayarkan tidak dapat ditarik kembali.
-    </p>
+    <div class="inv-footer">
+     Invoice ini dicetak otomatis dari sistem Griya Aleena.
+    </div>
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
@@ -1012,9 +1028,6 @@ function openInvoice(id) {
 // ═══════════════════════════════════════════════════════════
 // KUITANSI
 // ═══════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════
-// KUITANSI
-// ═══════════════════════════════════════════════════════════
 function openKuitansi(id) {
   const o = OCCS.find(x => x.id === id);
   if (!o) { console.error('openKuitansi: occ not found', id); return; }
@@ -1026,25 +1039,8 @@ function openKuitansi(id) {
   
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
-  // ─── LOGIKA STATUS PEMBAYARAN ───
-  let statusLabel = '';
-  let statusClass = '';
-  let nominalDitampilkan = 0;
-
-  if (o.status_bayar === 'lunas') {
-    statusLabel = '✓ LUNAS';
-    statusClass = 'lunas'; // Hijau
-    nominalDitampilkan = o.harga_total;
-  } else if (o.status_bayar === 'dp') {
-    statusLabel = `BARU MEMBAYAR DP`;
-    statusClass = 'belum'; // Merah
-    nominalDitampilkan = o.nominal_dp || 0;
-  } else {
-    statusLabel = 'BELUM MEMBAYAR';
-    statusClass = 'belum'; // Merah
-    nominalDitampilkan = 0;
-  }
-  // ────────────────────────────────
+  // Cek status Lunas
+  const isLunas = o.status_bayar === 'lunas';
 
   const html = `
     <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
@@ -1081,35 +1077,28 @@ function openKuitansi(id) {
       </tbody>
     </table>
 
-    <!-- KOTAK STATUS PEMBAYARAN KUITANSI -->
-    <div class="kuitansi-amount-box ${statusClass}" style="padding: 20px; text-align: left;">
+    <!-- KOTAK KUITANSI DINAMIS -->
+    <div class="kuitansi-amount-box ${isLunas ? '' : 'belum'}" style="padding: 24px; text-align: center;">
       
-      ${o.status_bayar !== 'lunas' ? `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <div class="kuitansi-amount-label" style="margin: 0;">Telah Bayar DP</div>
-          <div style="font-size: 1.2rem; font-weight: 700;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
+      ${isLunas ? `
+        <div class="kuitansi-amount-label">SEJUMLAH</div>
+        <div class="kuitansi-amount-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
+        <div class="kuitansi-amount-text">(${escapeHtml(terbilangRupiah(o.harga_total))})</div>
+        <div style="margin-top: 16px;">
+          <span class="kuitansi-check">✓ LUNAS</span>
         </div>
-      ` : ''}
-
-      <div style="display: flex; justify-content: space-between; align-items: center; ${o.status_bayar !== 'lunas' ? 'padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1);' : ''}">
-        <div class="kuitansi-amount-label" style="margin: 0; font-size: 0.9rem;">Total Tagihan</div>
-        <div class="kuitansi-amount-value" style="font-size: 1.8rem; margin: 0;">
-          ${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}
+      ` : `
+        <div style="color: #c0392b; font-weight: 700; font-size: 1.1rem; line-height: 1.5; padding: 20px 0;">
+          KUITANSI HANYA DAPAT DICETAK<br>JIKA STATUSNYA TELAH LUNAS
         </div>
-      </div>
-
-      ${nominalDitampilkan > 0 ? `<div class="kuitansi-amount-text" style="text-align: right; margin-top: 4px;">(${escapeHtml(terbilangRupiah(nominalDitampilkan))})</div>` : ''}
+      `}
       
-      <div style="text-align: center; margin-top: 16px;">
-        ${statusClass === 'lunas' 
-          ? `<div class="kuitansi-check">${statusLabel}</div>` 
-          : `<div class="kuitansi-check kuitansi-check-red">${statusLabel}</div>`}
-      </div>
     </div>
 
-    <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
-      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. <br>Mohon disimpan dengan baik.
-    </p>
+    <div class="inv-footer">
+    Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah.<br>
+    Mohon disimpan dengan baik.
+    </div>
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
@@ -1118,12 +1107,13 @@ function openKuitansi(id) {
     </div>
 
     <div class="inv-footer">
+
       Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
     <div class="invoice-actions">
       <button class="inv-btn-close" data-close-modal>Tutup</button>
-      <button class="inv-btn-print" data-filename="Kuitansi - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
+      ${isLunas ? `<button class="inv-btn-print" data-filename="Kuitansi - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>` : ''}
     </div>
   `;
 
@@ -1631,8 +1621,8 @@ async function duplicateOcc(id) {
   // ─────────────────────────
   
   set('f-status', 'belum');
-  set('f-nominal-dp', ''); // Reset DP saat perpanjangan
-  document.getElementById('wrap-nominal-dp').style.display = 'none';
+  set('f-nominal-dp', 0); // Reset DP saat perpanjangan
+
 
   set('f-nama', o.nama_penyewa);
   set('f-ktp', o.no_ktp);
@@ -1857,10 +1847,7 @@ function openModal(id) {
     safeSet('f-harga', o.harga_total);
     safeSet('f-status', o.status_bayar);
 
-    safeSet('f-nominal-dp', o.nominal_dp || ''); // <-- TAMBAHKAN
-    
-    // Tampilkan wrapper DP jika statusnya DP
-    document.getElementById('wrap-nominal-dp').style.display = o.status_bayar === 'dp' ? 'block' : 'none';
+    safeSet('f-nominal-dp', o.nominal_dp || 0); // <-- TAMBAHKAN
     
     safeSet('f-nama', o.nama_penyewa);
     safeSet('f-ktp', o.no_ktp || '');
@@ -1953,8 +1940,8 @@ function openModal(id) {
     document.getElementById('f-tgl-perjanjian').value = today;
 
     document.getElementById('f-status').value = 'belum';
-    document.getElementById('f-nominal-dp').value = '';
-    document.getElementById('wrap-nominal-dp').style.display = 'none';
+    document.getElementById('f-nominal-dp').value = 0;
+
   }
 
   fillRoomSelect(id);
@@ -2236,6 +2223,14 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       return el.value.trim().toUpperCase() || null;
     };
 
+    const statusBayar = document.getElementById('f-status').value;
+    let nominalDp = Number(document.getElementById('f-nominal-dp').value) || 0;
+    
+    // Jika status belum, paksa DP jadi 0 saat disimpan
+    if (statusBayar === 'belum') {
+      nominalDp = 0;
+    }
+
     const payload = {
       room_id: Number(document.getElementById('f-room').value),
       tipe_sewa: document.getElementById('f-tipe').value,
@@ -2249,9 +2244,9 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
 
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
-     
-      status_bayar: document.getElementById('f-status').value,
-      nominal_dp: Number(document.getElementById('f-nominal-dp').value) || 0, // <-- TAMBAHKAN
+
+      status_bayar: statusBayar,
+      nominal_dp: nominalDp,
       
       nama_penyewa: up('f-nama'),
       no_ktp: up('f-ktp'),
