@@ -1742,29 +1742,6 @@ function openModal(id) {
   const f = document.getElementById('form-occ');
   f.reset();
 
-  if (!id) {
-    const today = todayISO();
-    document.getElementById('f-mulai').value = today;
-    
-    // Set default tipe ke bulanan untuk memicu perhitungan
-    document.getElementById('f-tipe').value = 'bulanan'; 
-    
-    // Hitung tanggal selesai default
-    const tglSelesai = hitungTanggalSelesai(today, 'bulanan');
-    document.getElementById('f-selesai').value = tglSelesai;
-
-    // Default Tanggal Invoice (H-3)
-    document.getElementById('f-tgl-invoice').value = shiftDate(today, -3);
-    
-    // Default Tanggal Kuitansi & Perjanjian (Tanggal Mulai)
-    document.getElementById('f-tgl-kuitansi').value = today;
-    document.getElementById('f-tgl-perjanjian').value = today;
-  }
-
-  fillRoomSelect(id);
-  setupAutoHarga();
-  setupAddRoomListener();
-
   MODAL_STATE.editingId = id;
   MODAL_STATE.pendingUploads = {};
   MODAL_STATE.pendingDeletes = [];
@@ -1775,6 +1752,7 @@ function openModal(id) {
     if (el) el.value = val !== undefined && val !== null ? val : '';
   };
 
+  // Reset file uploads
   UPLOAD_CONFIGS.forEach(cfg => {
     const status = document.getElementById(cfg.statusId);
     const preview = document.getElementById(cfg.previewId);
@@ -1785,6 +1763,9 @@ function openModal(id) {
   });
 
   if (id) {
+    // ═══════════════════════════════════════════
+    // MODE EDIT
+    // ═══════════════════════════════════════════
     const o = OCCS.find(x => x.id === id);
     if (!o) { console.error('[openModal] occ not found', id); return; }
 
@@ -1795,9 +1776,9 @@ function openModal(id) {
     safeSet('f-mulai', o.tanggal_mulai);
     safeSet('f-selesai', o.tanggal_selesai);
 
-    safeSet('f-tgl-invoice', o.tgl_invoice || o.tanggal_mulai || ''); // <-- TAMBAH
-    safeSet('f-tgl-kuitansi', o.tgl_kuitansi || o.tanggal_mulai || ''); // <-- TAMBAH
-    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || o.tanggal_mulai || ''); // <-- TAMBAH
+    safeSet('f-tgl-invoice', o.tgl_invoice || o.tanggal_mulai || '');
+    safeSet('f-tgl-kuitansi', o.tgl_kuitansi || o.tanggal_mulai || '');
+    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || o.tanggal_mulai || '');
     
     fillRoomSelect(o.id);
     safeSet('f-room', o.room_id);
@@ -1820,8 +1801,6 @@ function openModal(id) {
       'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa', field: 'file_ktp_penyewa' },
       'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu',    field: 'file_ktp_ortu' },
       'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm',         field: 'file_ktm' },
-      // HAPUS BARIS DI BAWAH INI:
-      // 'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
     };
 
     Object.values(fileMap).forEach(item => {
@@ -1869,24 +1848,42 @@ function openModal(id) {
         });
       }).catch(err => {
         console.warn('Gagal validasi file:', err);
-        Object.values(fileMap).forEach(item => {
-          if (!item.link) return;
-          const preview = document.getElementById(item.preview);
-          const hidden = document.getElementById(item.hidden);
-          if (preview) preview.innerHTML = '';
-          if (hidden) hidden.value = '';
-        });
       });
     }
+
   } else {
+    // ═══════════════════════════════════════════
+    // MODE TAMBAH BARU
+    // ═══════════════════════════════════════════
     document.getElementById('modal-title').textContent = 'Tambah Penyewa';
-    // OTOMATIS: Ikuti tanggal mulai kontrak
-    const tglMulai = document.getElementById('f-mulai').value;
-    document.getElementById('f-tgl-invoice').value = tglMulai; // <-- TAMBAH
-    document.getElementById('f-tgl-kuitansi').value = tglMulai; // <-- TAMBAH
-    document.getElementById('f-tgl-perjanjian').value = tglMulai; // <-- TAMBAH
+    
+    // 1. Set Tanggal Mulai
+    const today = todayISO();
+    document.getElementById('f-mulai').value = today;
+    
+    // 2. Set Tipe Sewa Default (Bulanan)
+    document.getElementById('f-tipe').value = 'bulanan';
+
+    // 3. Hitung dan Set Tanggal Selesai
+    const tglSelesai = hitungTanggalSelesai(today, 'bulanan');
+    document.getElementById('f-selesai').value = tglSelesai;
+
+    // 4. Set Tanggal Invoice (H-3 dari tanggal mulai)
+    document.getElementById('f-tgl-invoice').value = shiftDate(today, -3);
+
+    // 5. Set Tanggal Kuitansi & Perjanjian (Sama dengan tanggal mulai)
+    document.getElementById('f-tgl-kuitansi').value = today;
+    document.getElementById('f-tgl-perjanjian').value = today;
+  }
+
+  fillRoomSelect(id);
+  setupAutoHarga();
+  setupAddRoomListener();
+  
+  if (!id) {
     updateHargaOtomatis();
   }
+
   openModalExclusive(document.getElementById('modal-occ'));
 }
 
