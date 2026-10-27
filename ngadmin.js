@@ -443,15 +443,6 @@ async function init() {
   console.log('[Init] Starting...');
 
   closeAllModals();
-
-    // Tampilkan input DP jika status = dp
-  const statusSelect = document.getElementById('f-status');
-  const wrapNominalDp = document.getElementById('wrap-nominal-dp');
-  if (statusSelect && wrapNominalDp) {
-    statusSelect.addEventListener('change', () => {
-      wrapNominalDp.style.display = statusSelect.value === 'dp' ? 'block' : 'none';
-    });
-  }
   
 
   try {
@@ -505,6 +496,21 @@ async function init() {
         if (pjjInput) pjjInput.value = tglMulai;
       }
 
+        // ─── LOGIKA RESET DP SAAT STATUS BERUBAH ───
+  const statusSelect = document.getElementById('f-status');
+  const inputNominalDp = document.getElementById('f-nominal-dp');
+  
+  if (statusSelect && inputNominalDp && !statusSelect.dataset.dpListenerBound) {
+    statusSelect.addEventListener('change', () => {
+      // Jika status diubah menjadi 'belum', reset DP ke 0
+      if (statusSelect.value === 'belum') {
+        inputNominalDp.value = 0;
+      }
+    });
+    statusSelect.dataset.dpListenerBound = 'true';
+  }
+  // ──────────────────────────────────────────
+      
       fillRoomSelect(EDITING_ID);
       updateHargaOtomatis();
     }); 
@@ -1613,7 +1619,7 @@ async function duplicateOcc(id) {
   
   set('f-status', 'belum');
   set('f-nominal-dp', ''); // Reset DP saat perpanjangan
-  document.getElementById('wrap-nominal-dp').style.display = 'none';
+
 
   set('f-nama', o.nama_penyewa);
   set('f-ktp', o.no_ktp);
@@ -1839,9 +1845,6 @@ function openModal(id) {
     safeSet('f-status', o.status_bayar);
 
     safeSet('f-nominal-dp', o.nominal_dp || ''); // <-- TAMBAHKAN
-    
-    // Tampilkan wrapper DP jika statusnya DP
-    document.getElementById('wrap-nominal-dp').style.display = o.status_bayar === 'dp' ? 'block' : 'none';
     
     safeSet('f-nama', o.nama_penyewa);
     safeSet('f-ktp', o.no_ktp || '');
@@ -2217,6 +2220,14 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       return el.value.trim().toUpperCase() || null;
     };
 
+    const statusBayar = document.getElementById('f-status').value;
+    let nominalDp = Number(document.getElementById('f-nominal-dp').value) || 0;
+    
+    // Jika status belum, paksa DP jadi 0 saat disimpan
+    if (statusBayar === 'belum') {
+      nominalDp = 0;
+    }
+
     const payload = {
       room_id: Number(document.getElementById('f-room').value),
       tipe_sewa: document.getElementById('f-tipe').value,
@@ -2230,9 +2241,9 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
 
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
-     
-      status_bayar: document.getElementById('f-status').value,
-      nominal_dp: Number(document.getElementById('f-nominal-dp').value) || 0, // <-- TAMBAHKAN
+
+      status_bayar: statusBayar,
+      nominal_dp: nominalDp,
       
       nama_penyewa: up('f-nama'),
       no_ktp: up('f-ktp'),
