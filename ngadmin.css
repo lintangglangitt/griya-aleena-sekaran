@@ -674,68 +674,35 @@ tbody tr:hover {
   gap: 5px;
 }
 
+/* ---------- HIGHLIGHT BARIS TABEL (STATUS) ---------- */
 tbody tr.baris-aktif {
-  background: #f0faf4;
+  background: #ffffff;
+  box-shadow: inset 4px 0 0 0 var(--teal-light);
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 tbody tr.baris-aktif td {
   color: var(--text);
-  font-weight: 600;
-}
-
-tbody tr.baris-aktif td strong {
-  color: var(--teal);
-  font-weight: 800;
+  font-weight: 500;
 }
 
 tbody tr.baris-aktif:hover {
-  background: #e2f5ea;
+  background: #f0fcfc;
+  box-shadow: inset 4px 0 0 0 var(--teal);
+}
+
+tbody tr.akan-habis {
+  background: #fff5f5;
+  box-shadow: inset 4px 0 0 0 var(--red);
 }
 
 tbody tr.kontrak-selesai {
-  background: #ebebeb !important;
+  background: #f9f9f9;
+  opacity: 0.6;
 }
 
 tbody tr.kontrak-selesai:hover {
-  background: #e0e0e0 !important;
-}
-
-tbody tr.kontrak-selesai td,
-tbody tr.kontrak-selesai td strong {
-  color: #8b9494 !important;
-  font-weight: 400 !important;
-}
-
-tbody tr.kontrak-selesai .badge {
-  filter: grayscale(0.8);
-  opacity: 0.7;
-}
-
-tbody tr.kontrak-selesai .btn-icon {
-  opacity: 0.7;
-}
-
-tbody tr.kontrak-selesai:hover .btn-icon {
-  opacity: 1;
-}
-
-tbody tr.akan-habis {
-  background: #ffebee !important;
-}
-
-tbody tr.akan-habis {
-  background: #ffebee !important;
-}
-
-tbody tr.akan-habis td,
-tbody tr.akan-habis td strong,
-tbody tr.akan-habis td a {
-  color: #c0392b !important;
-  font-weight: 700;
-}
-
-tbody tr.akan-habis td:first-child {
-  border-left: 4px solid var(--red);
+  background: #e0e0e0;
 }
 
 /* ---------- Badges & Row Buttons ---------- */
@@ -1686,6 +1653,7 @@ tbody tr.akan-habis td:first-child {
     justify-content: center;
   }
 }
+
 .income-total-row td {
   background: #f4f7f7;
   border-top: 2px solid var(--teal);
