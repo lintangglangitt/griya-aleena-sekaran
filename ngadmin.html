@@ -143,12 +143,29 @@
         <div class="form-section-title">📋 Data Kontrak</div>
 
           <div class="grid-2">
+
+            <label>Tipe Sewa
+            <select id="f-tipe" required>
+              <option value="harian">Harian</option>
+              <option value="mingguan">Mingguan</option>
+              <option value="bulanan" selected>Bulanan</option>
+              <option value="semesteran">Semesteran</option>
+              <option value="tahunan">Tahunan</option>
+            </select>
+          </label><br>
+            
+          <label> ---
+          </label>
+            
           <label>Tanggal Mulai
             <input type="date" id="f-mulai" required>
           </label>
 
           <label>Tanggal Selesai
             <input type="date" id="f-selesai" required>
+          </label>
+
+           <label> ---
           </label>
 
           <label>Tanggal Invoice
@@ -159,12 +176,18 @@
             <input type="date" id="f-tgl-kuitansi">
           </label>
             
-          <label>Tanggal Penerbitan Perjanjian (Tanggal Awal Kontrak)
+          <label>Tanggal Perjanjian (Tanggal Awal Kontrak)
             <input type="date" id="f-tgl-perjanjian">
           </label><br>
+
+          <label> ---
+          </label>
             
           <label>Kamar
             <select id="f-room" required></select>
+          </label>
+          
+          <label> ---
           </label>
 
           <label>Status Bayar
@@ -172,16 +195,6 @@
               <option value="belum">❌ Belum</option>
               <option value="lunas">✅ Lunas</option>
               <option value="dp">⏳ DP</option>
-            </select>
-          </label>
-
-          <label>Tipe Sewa
-            <select id="f-tipe" required>
-              <option value="harian">Harian</option>
-              <option value="mingguan">Mingguan</option>
-              <option value="bulanan" selected>Bulanan</option>
-              <option value="semesteran">Semesteran</option>
-              <option value="tahunan">Tahunan</option>
             </select>
           </label>
 
