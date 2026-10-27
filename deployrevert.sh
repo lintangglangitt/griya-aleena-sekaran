@@ -55,7 +55,7 @@ show_status() {
   git remote -v | sed 's/^/   /'
   echo ""
 
-  echo -e "${YELLOW}Perubahan lokal belum di-commit:${NC}"
+  echo -e "${YELLOW}Perubahan lokal belum di-commit [2]:${NC}"
   local lokal_changes=$(git status --short)
   if [ -z "$lokal_changes" ]; then
     echo "   (tidak ada)"
@@ -64,25 +64,17 @@ show_status() {
   fi
   echo ""
 
-  echo -e "${YELLOW}Commit lokal belum di-push ke dev:${NC}"
-  local to_dev=$(git log origin/main..main --oneline 2>/dev/null)
-  if [ -z "$to_dev" ]; then
+  echo -e "${YELLOW}Commit dev belum ada di lokal [3]:${NC}"
+  local from_dev=$(git log main..origin/main --oneline 2>/dev/null)
+  if [ -z "$from_dev" ]; then
     echo "   (tidak ada)"
   else
-    echo "$to_dev" | sed 's/^/   /'
+    echo "$from_dev" | sed 's/^/   /'
   fi
   echo ""
 
-  echo -e "${YELLOW}Commit lokal belum di-push ke prod:${NC}"
-  local to_prod=$(git log prod/main..main --oneline 2>/dev/null)
-  if [ -z "$to_prod" ]; then
-    echo "   (tidak ada)"
-  else
-    echo "$to_prod" | sed 's/^/   /'
-  fi
-  echo ""
 
-  echo -e "${YELLOW}Commit prod belum ada di lokal:${NC}"
+   echo -e "${YELLOW}Commit prod belum ada di lokal [4]:${NC}"
   local from_prod=$(git log main..prod/main --oneline 2>/dev/null)
   if [ -z "$from_prod" ]; then
     echo "   (tidak ada)"
@@ -91,12 +83,22 @@ show_status() {
   fi
   echo ""
 
-  echo -e "${YELLOW}Commit dev belum ada di lokal:${NC}"
-  local from_dev=$(git log main..origin/main --oneline 2>/dev/null)
-  if [ -z "$from_dev" ]; then
+
+  echo -e "${YELLOW}Commit lokal belum di-push ke dev [5]:${NC}"
+  local to_dev=$(git log origin/main..main --oneline 2>/dev/null)
+  if [ -z "$to_dev" ]; then
     echo "   (tidak ada)"
   else
-    echo "$from_dev" | sed 's/^/   /'
+    echo "$to_dev" | sed 's/^/   /'
+  fi
+  echo ""
+
+  echo -e "${YELLOW}Commit lokal belum di-push ke prod [6]:${NC}"
+  local to_prod=$(git log prod/main..main --oneline 2>/dev/null)
+  if [ -z "$to_prod" ]; then
+    echo "   (tidak ada)"
+  else
+    echo "$to_prod" | sed 's/^/   /'
   fi
   echo ""
 
