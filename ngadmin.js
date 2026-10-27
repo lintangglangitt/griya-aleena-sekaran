@@ -1166,7 +1166,7 @@ function lampiranImgError(img) {
 function lampiranItem(no, label, url, alts = []) {
   let body;
   if (!url) {
-    body = `<div class="lampiran-kosong">Belum diunggah</div>`;
+    body = `<div class="lampiran-kosong">Dokumen belum tersedia.</div>`;
   } else if (isPdfUrl(url)) {
     body = `<div class="lampiran-kosong">File berformat PDF, tidak dapat ditampilkan di sini.<br>
       <a href="${escapeHtml(url)}" target="_blank">Buka file</a></div>`;
