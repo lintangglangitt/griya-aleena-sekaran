@@ -911,7 +911,8 @@ function openInvoice(id) {
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Mohon dibayarkan sebelum menempati kamar kos.
+      Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
+      Mohon dibayarkan sebelum periode sewa dimulai: (${escapeHtml(fmtDateLong(o.tanggal_mulai))}).
     </p>
 
     <div class="inv-signature">
