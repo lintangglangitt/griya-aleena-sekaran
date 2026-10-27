@@ -986,9 +986,9 @@ function openInvoice(id) {
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
-      Mohon dibayarkan sebelum periode sewa dimulai: <strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.<br>
-      DP yang sudah dibayarkan tidak dapat ditarik kembali.
+
+      DP yang sudah dibayarkan tidak dapat ditarik kembali.<br>
+      Mohon Pelunasan dilakukan sebelum periode sewa dimulai: <strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.<br>
     </p>
 
     <div class="inv-signature">
@@ -998,6 +998,7 @@ function openInvoice(id) {
     </div>
 
     <div class="inv-footer">
+      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Mohon disimpan dengan baik. <br>
       Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
@@ -1107,7 +1108,7 @@ function openKuitansi(id) {
     </div>
 
     <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
-      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. <br>Mohon disimpan dengan baik.
+      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. <br> Mohon disimpan dengan baik.
     </p>
 
     <div class="inv-signature">
