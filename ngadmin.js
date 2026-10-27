@@ -496,20 +496,7 @@ async function init() {
         if (pjjInput) pjjInput.value = tglMulai;
       }
 
-        // ─── LOGIKA RESET DP SAAT STATUS BERUBAH ───
-  const statusSelect = document.getElementById('f-status');
-  const inputNominalDp = document.getElementById('f-nominal-dp');
-  
-  if (statusSelect && inputNominalDp && !statusSelect.dataset.dpListenerBound) {
-    statusSelect.addEventListener('change', () => {
-      // Jika status diubah menjadi 'belum', reset DP ke 0
-      if (statusSelect.value === 'belum') {
-        inputNominalDp.value = 0;
-      }
-    });
-    statusSelect.dataset.dpListenerBound = 'true';
-  }
-  // ──────────────────────────────────────────
+
       
       fillRoomSelect(EDITING_ID);
       updateHargaOtomatis();
@@ -537,6 +524,22 @@ async function init() {
   if (formAddRoom) {
     formAddRoom.addEventListener('submit', handleSaveRoom);
   }
+
+
+    // ─── LOGIKA RESET DP SAAT STATUS BERUBAH ───
+  const statusSelect = document.getElementById('f-status');
+  const inputNominalDp = document.getElementById('f-nominal-dp');
+  
+  if (statusSelect && inputNominalDp && !statusSelect.dataset.dpListenerBound) {
+    statusSelect.addEventListener('change', () => {
+      // Jika status diubah menjadi 'belum', reset DP ke 0
+      if (statusSelect.value === 'belum') {
+        inputNominalDp.value = 0;
+      }
+    });
+    statusSelect.dataset.dpListenerBound = 'true';
+  }
+  // ──────────────────────────────────────────
 
   console.log('[Init] Done.');
 }
@@ -1938,7 +1941,7 @@ function openModal(id) {
 
     document.getElementById('f-status').value = 'belum';
     document.getElementById('f-nominal-dp').value = '';
-    document.getElementById('wrap-nominal-dp').style.display = 'none';
+
   }
 
   fillRoomSelect(id);
