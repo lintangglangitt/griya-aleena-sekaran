@@ -957,11 +957,13 @@ function openInvoice(id) {
     </div>
 
 
-    ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
+    ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong><br>
+    ${escapeHtml(o.catatan)}<br>
+    (DP yang sudah dibayarkan tidak dapat ditarik kembali.) </div>` : ''}
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
-      Mohon dibayarkan sebelum periode sewa dimulai: ${escapeHtml(fmtDateLong(o.tanggal_mulai))}.
+      Invoice ini dibuat otomatis oleh sistem Griya Aleena. <br>
+      Mohon tagihan dapat dilunasi sebelum periode sewa dimulai: ${escapeHtml(fmtDateLong(o.tanggal_mulai))}.<br>
     </p>
 
     <div class="inv-signature">
@@ -994,9 +996,27 @@ function openKuitansi(id) {
   const noKuitansi = generateKuitansiNo(o.id, o.tanggal_mulai);
 
   const tglKuitansi = o.tgl_kuitansi || o.tanggal_mulai;
-  const today = fmtDateLong(tglKuitansi); // <-- Ganti todayISO() menjadi tglKuitansi
+  const today = fmtDateLong(tglKuitansi);
   
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
+
+  // ─── LOGIKA STATUS PEMBAYARAN ───
+  let statusLabel = '';
+  let statusClass = '';
+  let nominalDitampilkan = o.harga_total;
+
+  if (o.status_bayar === 'lunas') {
+    statusLabel = '✓ LUNAS';
+    statusClass = 'lunas'; // Hijau
+  } else if (o.status_bayar === 'dp') {
+    statusLabel = `BARU MEMBAYAR DP ${rupiahFull(o.harga_total)}`;
+    statusClass = 'belum'; // Merah
+  } else {
+    statusLabel = 'BELUM MEMBAYAR';
+    statusClass = 'belum'; // Merah
+    nominalDitampilkan = 0;
+  }
+  // ────────────────────────────────
 
   const html = `
     <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
@@ -1032,15 +1052,16 @@ function openKuitansi(id) {
       </tbody>
     </table>
 
-    <div class="kuitansi-amount-box">
+    <!-- KOTAK STATUS PEMBAYARAN -->
+    <div class="kuitansi-amount-box ${statusClass}">
       <div class="kuitansi-amount-label">Jumlah Dibayar</div>
-      <div class="kuitansi-amount-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
-      <div class="kuitansi-amount-text">(${escapeHtml(terbilangRupiah(o.harga_total))})</div>
-      ${o.status_bayar === 'lunas' ? '<div class="kuitansi-check">✓ LUNAS</div>' : ''}
-      ${o.status_bayar === 'dp' ? '<div class="kuitansi-check" style="background:#F5A623">DP</div>' : ''}
+      <div class="kuitansi-amount-value">${escapeHtml(rupiahFull(nominalDitampilkan))}</div>
+      ${nominalDitampilkan > 0 ? `<div class="kuitansi-amount-text">(${escapeHtml(terbilangRupiah(nominalDitampilkan))})</div>` : ''}
+      
+      ${statusClass === 'lunas' 
+        ? `<div class="kuitansi-check">${statusLabel}</div>` 
+        : `<div class="kuitansi-check kuitansi-check-red">${statusLabel}</div>`}
     </div>
-    <!-- Catatan dihilangkan khusus untuk Kuitansi -->
-    <!-- ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''} -->
 
     <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
       Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. <br>Mohon disimpan dengan baik.
@@ -1065,7 +1086,6 @@ function openKuitansi(id) {
   document.getElementById('kuitansi-content').innerHTML = html;
   openModalExclusive(document.getElementById('kuitansi-modal'));
 }
-
 
 // ═══════════════════════════════════════════════════════════
 // HALAMAN LAMPIRAN KTP / KTM
