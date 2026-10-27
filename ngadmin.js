@@ -210,6 +210,39 @@ function addDaysISO(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 
+// Helper untuk menghitung tanggal selesai berdasarkan tipe sewa
+function hitungTanggalSelesai(mulaiStr, tipe) {
+  if (!mulaiStr) return '';
+  const d = new Date(mulaiStr);
+  if (isNaN(d.getTime())) return '';
+
+  if (tipe === 'harian') {
+    d.setDate(d.getDate() + 1);
+  } else if (tipe === 'mingguan') {
+    d.setDate(d.getDate() + 7);
+  } else if (tipe === 'bulanan') {
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(d.getDate() - 1);
+  } else if (tipe === 'semesteran') {
+    d.setMonth(d.getMonth() + 6);
+    d.setDate(d.getDate() - 1);
+  } else if (tipe === 'tahunan') {
+    d.setFullYear(d.getFullYear() + 1);
+    d.setDate(d.getDate() - 1);
+  }
+  
+  // Kembalikan format YYYY-MM-DD
+  return d.toISOString().slice(0, 10);
+}
+
+// Helper untuk mengurangi/menambah hari dari tanggal (format YYYY-MM-DD)
+function shiftDate(dateStr, days) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function buildRiwayatKamar(roomId) {
   const today = todayISO();
 
@@ -441,17 +474,33 @@ async function init() {
 
   if (mulaiInput && !mulaiInput.dataset.roomDateBound) {
     mulaiInput.addEventListener('change', () => {
+      const tglMulai = mulaiInput.value;
+      const tipe = document.getElementById('f-tipe').value;
+
+      // 1. Update Tanggal Selesai
+      if (tglMulai && selesaiInput) {
+        selesaiInput.value = hitungTanggalSelesai(tglMulai, tipe);
+      }
+
+      // 2, 3, 4. Update Tanggal Invoice (-3 hari), Kuitansi, Perjanjian
+      if (tglMulai) {
+        const tglInvoice = shiftDate(tglMulai, -3);
+        const invInput = document.getElementById('f-tgl-invoice');
+        if (invInput) invInput.value = tglInvoice;
+
+        const kuiInput = document.getElementById('f-tgl-kuitansi');
+        if (kuiInput) kuiInput.value = tglMulai;
+
+        const pjjInput = document.getElementById('f-tgl-perjanjian');
+        if (pjjInput) pjjInput.value = tglMulai;
+      }
+
       fillRoomSelect(EDITING_ID);
-      
-      // Sinkronkan ke-3 tanggal jika tanggal mulai diubah
-      ['f-tgl-invoice', 'f-tgl-kuitansi', 'f-tgl-perjanjian'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = mulaiInput.value;
-      });
-    }); // <-- TUTUP addEventListener
+      updateHargaOtomatis();
+    }); 
 
     mulaiInput.dataset.roomDateBound = 'true';
-  } // <-- TUTUP if (mulaiInput)
+  }
 
   if (selesaiInput && !selesaiInput.dataset.roomDateBound) {
     selesaiInput.addEventListener('change', () => {
@@ -1694,7 +1743,22 @@ function openModal(id) {
   f.reset();
 
   if (!id) {
-    document.getElementById('f-mulai').value = todayISO();
+    const today = todayISO();
+    document.getElementById('f-mulai').value = today;
+    
+    // Set default tipe ke bulanan untuk memicu perhitungan
+    document.getElementById('f-tipe').value = 'bulanan'; 
+    
+    // Hitung tanggal selesai default
+    const tglSelesai = hitungTanggalSelesai(today, 'bulanan');
+    document.getElementById('f-selesai').value = tglSelesai;
+
+    // Default Tanggal Invoice (H-3)
+    document.getElementById('f-tgl-invoice').value = shiftDate(today, -3);
+    
+    // Default Tanggal Kuitansi & Perjanjian (Tanggal Mulai)
+    document.getElementById('f-tgl-kuitansi').value = today;
+    document.getElementById('f-tgl-perjanjian').value = today;
   }
 
   fillRoomSelect(id);
@@ -1830,17 +1894,52 @@ function openModal(id) {
 // AUTO HARGA
 // ═══════════════════════════════════════════════════════════
 function updateHargaOtomatis() {
+  const roomId = document.getElementById('f-room').value;
   const tipe = document.getElementById('f-tipe').value;
   const hargaInput = document.getElementById('f-harga');
-  if (!tipe || !hargaInput) return;
-  if (HARGA_DEFAULT[tipe]) hargaInput.value = HARGA_DEFAULT[tipe];
+  
+  if (!roomId || !tipe || !hargaInput) return;
+
+  const room = ROOMS.find(r => String(r.id) === String(roomId));
+  if (!room) return;
+
+  let harga = 0;
+  if (tipe === 'harian') harga = Number(room.harga_harian);
+  else if (tipe === 'mingguan') harga = Number(room.harga_mingguan);
+  else if (tipe === 'bulanan') harga = Number(room.harga_bulanan);
+  else if (tipe === 'semesteran') harga = Number(room.harga_semesteran);
+  else if (tipe === 'tahunan') harga = Number(room.harga_tahunan);
+
+  // Isi ke input form
+  hargaInput.value = harga > 0 ? harga : '';
 }
 
 function setupAutoHarga() {
   const tipeSelect = document.getElementById('f-tipe');
+  const roomSelect = document.getElementById('f-room');
+  const mulaiInput = document.getElementById('f-mulai');
+
+  // Listener saat Tipe Sewa berubah
   if (tipeSelect && !tipeSelect.dataset.listenerBound) {
-    tipeSelect.addEventListener('change', updateHargaOtomatis);
+    tipeSelect.addEventListener('change', () => {
+      updateHargaOtomatis();
+      
+      // ─── AUTO UPDATE TANGGAL SELESAI ───
+      const tglMulai = mulaiInput ? mulaiInput.value : '';
+      if (tglMulai) {
+        const tglSelesai = hitungTanggalSelesai(tglMulai, tipeSelect.value);
+        const selesaiInput = document.getElementById('f-selesai');
+        if (selesaiInput) selesaiInput.value = tglSelesai;
+      }
+      // ───────────────────────────────────
+    });
     tipeSelect.dataset.listenerBound = 'true';
+  }
+
+  // Listener saat Kamar berubah
+  if (roomSelect && !roomSelect.dataset.autoHargaListerner) {
+    roomSelect.addEventListener('change', updateHargaOtomatis);
+    roomSelect.dataset.autoHargaListerner = 'true';
   }
 }
 
