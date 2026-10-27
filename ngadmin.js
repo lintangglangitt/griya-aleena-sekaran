@@ -1490,6 +1490,7 @@ async function duplicateOcc(id) {
   if (!o) return;
 
   const mulai = addDaysISO(o.tanggal_selesai, 1);
+  // Perkiraan tanggal selesai (default 30 hari, nanti disesuaikan user jika perlu)
   const selesai = addDaysISO(mulai, 30);
 
   openModal(null);
@@ -1499,10 +1500,13 @@ async function duplicateOcc(id) {
     if (el) el.value = value ?? '';
   };
 
-  set('f-tipe', 'bulanan');
+  // ─── PERUBAHAN DI SINI ───
+  // Gunakan tipe sewa terakhir dari data lama, bukan hardcode 'bulanan'
+  set('f-tipe', o.tipe_sewa || 'bulanan'); 
+  // ─────────────────────────
+
   set('f-mulai', mulai);
   set('f-selesai', selesai);
-  set('f-harga', HARGA_DEFAULT.bulanan);
   set('f-status', 'belum');
 
   set('f-nama', o.nama_penyewa);
@@ -1517,10 +1521,16 @@ async function duplicateOcc(id) {
   set('f-hubungan', o.hubungan_keluarga);
   set('f-catatan', o.catatan);
 
-  document.getElementById('modal-title').textContent = 'Duplikasi Okupansi';
+  document.getElementById('modal-title').textContent = 'Duplikasi / Perpanjang Okupansi';
 
   fillRoomSelect(null);
   set('f-room', o.room_id);
+
+  // ─── PERUBAHAN DI SINI ───
+  // Panggil updateHargaOtomatis() agar harga langsung menyesuaikan
+  // dengan Kamar dan Tipe Sewa yang baru saja di-set
+  updateHargaOtomatis(); 
+  // ─────────────────────────
 
   const FILE_MAP = [
     { srcUrl: o.file_ktp_penyewa, cfgKey: 'f-file-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', statusId: 'upload-status-ktp-penyewa' },
@@ -1876,8 +1886,28 @@ function openAddRoomModal() {
 
   document.getElementById('ar-nama').value = `KAMAR NOMOR ${nextNomorKamar}`;
   document.getElementById('ar-tipe').value = 'NON-AC';
-  document.getElementById('ar-harga').value = 800000;
   document.getElementById('ar-urutan').value = nextUrutan;
+
+  // ─── AMBIL HARGA DARI DROPDOWN KAMAR YANG TERPILIH ───
+  const selectedRoomId = document.getElementById('f-room')?.value;
+  // Cari kamar yang dipilih, jika tidak ada (misal dropdown kosong), ambil kamar terakhir
+  const roomRef = ROOMS.find(r => String(r.id) === String(selectedRoomId)) || ROOMS[ROOMS.length - 1];
+
+  if (roomRef) {
+    document.getElementById('ar-harga-harian').value = roomRef.harga_harian || '';
+    document.getElementById('ar-harga-mingguan').value = roomRef.harga_mingguan || '';
+    document.getElementById('ar-harga-bulanan').value = roomRef.harga_bulanan || '';
+    document.getElementById('ar-harga-semesteran').value = roomRef.harga_semesteran || '';
+    document.getElementById('ar-harga-tahunan').value = roomRef.harga_tahunan || '';
+  } else {
+    // Jika sama sekali belum ada kamar di database, biarkan kosong
+    document.getElementById('ar-harga-harian').value = '';
+    document.getElementById('ar-harga-mingguan').value = '';
+    document.getElementById('ar-harga-bulanan').value = '';
+    document.getElementById('ar-harga-semesteran').value = '';
+    document.getElementById('ar-harga-tahunan').value = '';
+  }
+  // ───────────────────────────────────────────────────
 
   openModalExclusive(modal);
 
@@ -1895,16 +1925,17 @@ async function handleSaveRoom(e) {
 
   const nama_kamar = document.getElementById('ar-nama').value.trim();
   const tipe = document.getElementById('ar-tipe').value;
-  const harga_bulanan = Number(document.getElementById('ar-harga').value);
   const urutanInput = document.getElementById('ar-urutan').value;
   const urutan = urutanInput ? Number(urutanInput) : null;
 
+  const harga_harian = Number(document.getElementById('ar-harga-harian').value) || 0;
+  const harga_mingguan = Number(document.getElementById('ar-harga-mingguan').value) || 0;
+  const harga_bulanan = Number(document.getElementById('ar-harga-bulanan').value) || 0;
+  const harga_semesteran = Number(document.getElementById('ar-harga-semesteran').value) || 0;
+  const harga_tahunan = Number(document.getElementById('ar-harga-tahunan').value) || 0;
+
   if (!nama_kamar) {
     alert('Nama kamar wajib diisi');
-    return;
-  }
-  if (!harga_bulanan || harga_bulanan <= 0) {
-    alert('Harga bulanan wajib diisi (minimal Rp1.000)');
     return;
   }
 
@@ -1915,11 +1946,16 @@ async function handleSaveRoom(e) {
 
   try {
     const payload = {
-      nama_kamar: nama_kamar,
-      tipe: tipe,
-      harga_bulanan: harga_bulanan,
+      nama_kamar,
+      tipe,
+      urutan,
+      harga_harian,
+      harga_mingguan,
+      harga_bulanan,
+      harga_semesteran,
+      harga_tahunan
     };
-    if (urutan !== null) payload.urutan = urutan;
+    if (urutan === null) delete payload.urutan;
 
     const result = await api('/rooms', {
       method: 'POST',
@@ -1938,7 +1974,7 @@ async function handleSaveRoom(e) {
     fillRoomSelect(EDITING_ID);
 
     closeModal(document.getElementById('modal-add-room'));
-
+    
     setTimeout(() => {
       const newRoomId = result.id;
       if (newRoomId) {
