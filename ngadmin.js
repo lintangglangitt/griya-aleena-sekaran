@@ -981,15 +981,20 @@ function openInvoice(id) {
         </div>
       </div>
       
+      <div>
+      <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
+      DP yang sudah dibayarkan tidak dapat ditarik kembali.<br>
+      Mohon pelunasan dilakukan sebelum periode sewa dimulai: <strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.<br>
+      </p>
+      </div>
+         
     </div>
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
-    <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
-
-      DP yang sudah dibayarkan tidak dapat ditarik kembali.<br>
-      Mohon pelunasan dilakukan sebelum periode sewa dimulai: <strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.<br>
-    </p>
+      <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
+      <center>Invoice ini dicetak otomatis dari sistem Griya Aleena. </center>
+      </p>
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
@@ -998,7 +1003,6 @@ function openInvoice(id) {
     </div>
 
     <div class="inv-footer">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena. Mohon disimpan dengan baik. <br>
       Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
@@ -1083,7 +1087,8 @@ function openKuitansi(id) {
     </div>
 
     <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;text-align:center;">
-
+     <center> Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. </center> <br>
+       <center> Mohon disimpan dengan baik. </center> <br>
     </p>
 
     <div class="inv-signature">
@@ -1093,8 +1098,7 @@ function openKuitansi(id) {
     </div>
 
     <div class="inv-footer">
-      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah.<br>
-      Mohon disimpan dengan baik.<br>
+
       Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
