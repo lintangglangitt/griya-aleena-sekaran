@@ -1539,23 +1539,33 @@ async function duplicateOcc(id) {
   if (!o) return;
 
   const mulai = addDaysISO(o.tanggal_selesai, 1);
-  // Perkiraan tanggal selesai (default 30 hari, nanti disesuaikan user jika perlu)
-  const selesai = addDaysISO(mulai, 30);
+  
+  // Hitung tanggal selesai berdasarkan tipe sewa aslinya
+  const tipe = o.tipe_sewa || 'bulanan';
+  const selesai = hitungTanggalSelesai(mulai, tipe);
 
-  openModal(null);
+  openModal(null); // Buka form mode Tambah Baru
 
   const set = (fieldId, value) => {
     const el = document.getElementById(fieldId);
     if (el) el.value = value ?? '';
   };
 
-  // ─── PERUBAHAN DI SINI ───
-  // Gunakan tipe sewa terakhir dari data lama, bukan hardcode 'bulanan'
-  set('f-tipe', o.tipe_sewa || 'bulanan'); 
-  // ─────────────────────────
+  document.getElementById('modal-title').textContent = 'Duplikasi / Perpanjang Okupansi';
 
+  // ─── SET TANGGAL & TIPE ───
+  set('f-tipe', tipe);
   set('f-mulai', mulai);
   set('f-selesai', selesai);
+
+  // Sesuaikan tanggal Invoice (H-3 dari tanggal mulai baru)
+  set('f-tgl-invoice', shiftDate(mulai, -3));
+  
+  // Sesuaikan tanggal Kuitansi & Perjanjian (Sama dengan tanggal mulai baru)
+  set('f-tgl-kuitansi', mulai);
+  set('f-tgl-perjanjian', mulai);
+  // ─────────────────────────
+
   set('f-status', 'belum');
 
   set('f-nama', o.nama_penyewa);
@@ -1570,16 +1580,11 @@ async function duplicateOcc(id) {
   set('f-hubungan', o.hubungan_keluarga);
   set('f-catatan', o.catatan);
 
-  document.getElementById('modal-title').textContent = 'Duplikasi / Perpanjang Okupansi';
-
   fillRoomSelect(null);
   set('f-room', o.room_id);
 
-  // ─── PERUBAHAN DI SINI ───
-  // Panggil updateHargaOtomatis() agar harga langsung menyesuaikan
-  // dengan Kamar dan Tipe Sewa yang baru saja di-set
+  // Panggil updateHargaOtomatis agar harga sesuai kamar & tipe
   updateHargaOtomatis(); 
-  // ─────────────────────────
 
   const FILE_MAP = [
     { srcUrl: o.file_ktp_penyewa, cfgKey: 'f-file-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', statusId: 'upload-status-ktp-penyewa' },
