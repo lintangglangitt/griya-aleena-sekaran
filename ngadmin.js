@@ -1001,9 +1001,9 @@ function openInvoice(id) {
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
-      <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
-      <center>Invoice ini dicetak otomatis dari sistem Griya Aleena. </center>
-      </p>
+    <div class="inv-footer">
+     Invoice ini dicetak otomatis dari sistem Griya Aleena.
+    </div>
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
@@ -1095,10 +1095,10 @@ function openKuitansi(id) {
       
     </div>
 
-    <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;text-align:center;">
-     <center> Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. </center> <br>
-       <center> Mohon disimpan dengan baik. </center> <br>
-    </p>
+    <div class="inv-footer">
+    Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah.<br>
+    Mohon disimpan dengan baik.
+    </div>
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
@@ -1621,7 +1621,7 @@ async function duplicateOcc(id) {
   // ─────────────────────────
   
   set('f-status', 'belum');
-  set('f-nominal-dp', ''); // Reset DP saat perpanjangan
+  set('f-nominal-dp', 0); // Reset DP saat perpanjangan
 
 
   set('f-nama', o.nama_penyewa);
@@ -1847,7 +1847,7 @@ function openModal(id) {
     safeSet('f-harga', o.harga_total);
     safeSet('f-status', o.status_bayar);
 
-    safeSet('f-nominal-dp', o.nominal_dp || ''); // <-- TAMBAHKAN
+    safeSet('f-nominal-dp', o.nominal_dp || 0); // <-- TAMBAHKAN
     
     safeSet('f-nama', o.nama_penyewa);
     safeSet('f-ktp', o.no_ktp || '');
@@ -1940,7 +1940,7 @@ function openModal(id) {
     document.getElementById('f-tgl-perjanjian').value = today;
 
     document.getElementById('f-status').value = 'belum';
-    document.getElementById('f-nominal-dp').value = '';
+    document.getElementById('f-nominal-dp').value = 0;
 
   }
 
