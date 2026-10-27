@@ -988,7 +988,7 @@ function openInvoice(id) {
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
 
       DP yang sudah dibayarkan tidak dapat ditarik kembali.<br>
-      Mohon Pelunasan dilakukan sebelum periode sewa dimulai: <strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.<br>
+      Mohon pelunasan dilakukan sebelum periode sewa dimulai: <strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.<br>
     </p>
 
     <div class="inv-signature">
@@ -1026,25 +1026,8 @@ function openKuitansi(id) {
   
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
-  // ─── LOGIKA STATUS PEMBAYARAN ───
-  let statusLabel = '';
-  let statusClass = '';
-  let nominalDitampilkan = 0;
-
-  if (o.status_bayar === 'lunas') {
-    statusLabel = '✓ LUNAS';
-    statusClass = 'lunas'; // Hijau
-    nominalDitampilkan = o.harga_total;
-  } else if (o.status_bayar === 'dp') {
-    statusLabel = `BARU MEMBAYAR DP`;
-    statusClass = 'belum'; // Merah
-    nominalDitampilkan = o.nominal_dp || 0;
-  } else {
-    statusLabel = 'BELUM MEMBAYAR';
-    statusClass = 'belum'; // Merah
-    nominalDitampilkan = 0;
-  }
-  // ────────────────────────────────
+  // Cek status Lunas
+  const isLunas = o.status_bayar === 'lunas';
 
   const html = `
     <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
@@ -1081,34 +1064,26 @@ function openKuitansi(id) {
       </tbody>
     </table>
 
-    <!-- KOTAK STATUS PEMBAYARAN KUITANSI -->
-    <div class="kuitansi-amount-box ${statusClass}" style="padding: 20px; text-align: left;">
+    <!-- KOTAK KUITANSI DINAMIS -->
+    <div class="kuitansi-amount-box ${isLunas ? '' : 'belum'}" style="padding: 24px; text-align: center;">
       
-      ${o.status_bayar !== 'lunas' ? `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <div class="kuitansi-amount-label" style="margin: 0;">Telah Bayar DP</div>
-          <div style="font-size: 1.2rem; font-weight: 700;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
+      ${isLunas ? `
+        <div class="kuitansi-amount-label">TELAH DIBAYARKAN SEJUMLAH</div>
+        <div class="kuitansi-amount-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
+        <div class="kuitansi-amount-text">(${escapeHtml(terbilangRupiah(o.harga_total))})</div>
+        <div style="margin-top: 16px;">
+          <span class="kuitansi-check">✓ LUNAS</span>
         </div>
-      ` : ''}
-
-      <div style="display: flex; justify-content: space-between; align-items: center; ${o.status_bayar !== 'lunas' ? 'padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1);' : ''}">
-        <div class="kuitansi-amount-label" style="margin: 0; font-size: 0.9rem;">Total Tagihan</div>
-        <div class="kuitansi-amount-value" style="font-size: 1.8rem; margin: 0;">
-          ${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}
+      ` : `
+        <div style="color: #c0392b; font-weight: 700; font-size: 1.1rem; line-height: 1.5; padding: 20px 0;">
+          KUITANSI HANYA DAPAT DICETAK<br>JIKA STATUSNYA TELAH LUNAS
         </div>
-      </div>
-
-      ${nominalDitampilkan > 0 ? `<div class="kuitansi-amount-text" style="text-align: right; margin-top: 4px;">(${escapeHtml(terbilangRupiah(nominalDitampilkan))})</div>` : ''}
+      `}
       
-      <div style="text-align: center; margin-top: 16px;">
-        ${statusClass === 'lunas' 
-          ? `<div class="kuitansi-check">${statusLabel}</div>` 
-          : `<div class="kuitansi-check kuitansi-check-red">${statusLabel}</div>`}
-      </div>
     </div>
 
-    <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
-      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. <br> Mohon disimpan dengan baik.
+    <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;text-align:center;">
+
     </p>
 
     <div class="inv-signature">
@@ -1118,12 +1093,13 @@ function openKuitansi(id) {
     </div>
 
     <div class="inv-footer">
+      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. Mohon disimpan dengan baik.<br>
       Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
     <div class="invoice-actions">
       <button class="inv-btn-close" data-close-modal>Tutup</button>
-      <button class="inv-btn-print" data-filename="Kuitansi - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>
+      ${isLunas ? `<button class="inv-btn-print" data-filename="Kuitansi - ${escapeHtml(o.nama_penyewa)}">🖨️ Print / Simpan PDF</button>` : ''}
     </div>
   `;
 
