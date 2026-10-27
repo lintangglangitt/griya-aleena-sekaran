@@ -985,7 +985,8 @@ function openInvoice(id) {
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
       Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
-      Mohon dibayarkan sebelum periode sewa dimulai: ${escapeHtml(fmtDateLong(o.tanggal_mulai))}.
+      Mohon dibayarkan sebelum periode sewa dimulai:<strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.
+      DP yang sudah dibayarkan tidak dapat ditarik kembali.
     </p>
 
     <div class="inv-signature">
