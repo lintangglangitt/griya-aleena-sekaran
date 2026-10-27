@@ -1001,14 +1001,16 @@ function openInvoice(id) {
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
-    <div class="inv-footer">
-     Invoice ini diterbitkan otomatis dari sistem Griya Aleena.
-    </div>
 
     <div class="inv-signature">
       <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
       <div>Hormat kami,</div>
       <div class="inv-sign-role">Pemilik</div>
+    </div>
+
+    
+    <div class="inv-footer">
+     Invoice ini diterbitkan otomatis dari sistem Griya Aleena.
     </div>
 
     <div class="inv-footer">
@@ -1095,16 +1097,18 @@ function openKuitansi(id) {
       
     </div>
 
+     <div class="inv-signature">
+      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
+      <div>Hormat kami,</div>
+      <div class="inv-sign-role">Pemilik</div>
+    </div>
+
     <div class="inv-footer">
     Kuitansi ini diterbitkan otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah.<br>
     Mohon disimpan dengan baik.
     </div>
 
-    <div class="inv-signature">
-      <div class="inv-sign-date">Semarang, ${escapeHtml(today)}</div><br>
-      <div>Hormat kami,</div>
-      <div class="inv-sign-role">Pemilik</div>
-    </div>
+
 
     <div class="inv-footer">
 
