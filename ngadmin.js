@@ -1068,7 +1068,7 @@ function openKuitansi(id) {
     <div class="kuitansi-amount-box ${isLunas ? '' : 'belum'}" style="padding: 24px; text-align: center;">
       
       ${isLunas ? `
-        <div class="kuitansi-amount-label">TELAH DIBAYARKAN SEJUMLAH</div>
+        <div class="kuitansi-amount-label">SEJUMLAH</div>
         <div class="kuitansi-amount-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
         <div class="kuitansi-amount-text">(${escapeHtml(terbilangRupiah(o.harga_total))})</div>
         <div style="margin-top: 16px;">
@@ -1093,7 +1093,8 @@ function openKuitansi(id) {
     </div>
 
     <div class="inv-footer">
-      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. Mohon disimpan dengan baik.<br>
+      Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah.<br>
+      Mohon disimpan dengan baik.<br>
       Terima kasih atas kepercayaan Anda. Semoga nyaman tinggal dan belajar di Griya Aleena. 🏠
     </div>
 
