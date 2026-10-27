@@ -93,7 +93,7 @@ show_status() {
   fi
   echo ""
 
-  echo -e "${YELLOW}Commit lokal belum di-push ke prod [6 untuk push ke pprod]:${NC}"
+  echo -e "${YELLOW}Commit lokal belum di-push ke prod [6 untuk push ke prod]:${NC}"
   local to_prod=$(git log prod/main..main --oneline 2>/dev/null)
   if [ -z "$to_prod" ]; then
     echo "   (tidak ada)"
