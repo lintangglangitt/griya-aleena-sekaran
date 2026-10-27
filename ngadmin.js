@@ -210,6 +210,39 @@ function addDaysISO(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 
+// Helper untuk menghitung tanggal selesai berdasarkan tipe sewa
+function hitungTanggalSelesai(mulaiStr, tipe) {
+  if (!mulaiStr) return '';
+  const d = new Date(mulaiStr);
+  if (isNaN(d.getTime())) return '';
+
+  if (tipe === 'harian') {
+    d.setDate(d.getDate() + 1);
+  } else if (tipe === 'mingguan') {
+    d.setDate(d.getDate() + 7);
+  } else if (tipe === 'bulanan') {
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(d.getDate() - 1);
+  } else if (tipe === 'semesteran') {
+    d.setMonth(d.getMonth() + 6);
+    d.setDate(d.getDate() - 1);
+  } else if (tipe === 'tahunan') {
+    d.setFullYear(d.getFullYear() + 1);
+    d.setDate(d.getDate() - 1);
+  }
+  
+  // Kembalikan format YYYY-MM-DD
+  return d.toISOString().slice(0, 10);
+}
+
+// Helper untuk mengurangi/menambah hari dari tanggal (format YYYY-MM-DD)
+function shiftDate(dateStr, days) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function buildRiwayatKamar(roomId) {
   const today = todayISO();
 
@@ -411,6 +444,16 @@ async function init() {
 
   closeAllModals();
 
+    // Tampilkan input DP jika status = dp
+  const statusSelect = document.getElementById('f-status');
+  const wrapNominalDp = document.getElementById('wrap-nominal-dp');
+  if (statusSelect && wrapNominalDp) {
+    statusSelect.addEventListener('change', () => {
+      wrapNominalDp.style.display = statusSelect.value === 'dp' ? 'block' : 'none';
+    });
+  }
+  
+
   try {
     document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
     document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
@@ -441,17 +484,33 @@ async function init() {
 
   if (mulaiInput && !mulaiInput.dataset.roomDateBound) {
     mulaiInput.addEventListener('change', () => {
+      const tglMulai = mulaiInput.value;
+      const tipe = document.getElementById('f-tipe').value;
+
+      // 1. Update Tanggal Selesai
+      if (tglMulai && selesaiInput) {
+        selesaiInput.value = hitungTanggalSelesai(tglMulai, tipe);
+      }
+
+      // 2, 3, 4. Update Tanggal Invoice (-3 hari), Kuitansi, Perjanjian
+      if (tglMulai) {
+        const tglInvoice = shiftDate(tglMulai, -3);
+        const invInput = document.getElementById('f-tgl-invoice');
+        if (invInput) invInput.value = tglInvoice;
+
+        const kuiInput = document.getElementById('f-tgl-kuitansi');
+        if (kuiInput) kuiInput.value = tglMulai;
+
+        const pjjInput = document.getElementById('f-tgl-perjanjian');
+        if (pjjInput) pjjInput.value = tglMulai;
+      }
+
       fillRoomSelect(EDITING_ID);
-      
-      // Sinkronkan ke-3 tanggal jika tanggal mulai diubah
-      ['f-tgl-invoice', 'f-tgl-kuitansi', 'f-tgl-perjanjian'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = mulaiInput.value;
-      });
-    }); // <-- TUTUP addEventListener
+      updateHargaOtomatis();
+    }); 
 
     mulaiInput.dataset.roomDateBound = 'true';
-  } // <-- TUTUP if (mulaiInput)
+  }
 
   if (selesaiInput && !selesaiInput.dataset.roomDateBound) {
     selesaiInput.addEventListener('change', () => {
@@ -855,6 +914,7 @@ function buildDocHeader(title, no) {
   `;
 }
 
+
 // ═══════════════════════════════════════════════════════════
 // INVOICE
 // ═══════════════════════════════════════════════════════════
@@ -865,7 +925,7 @@ function openInvoice(id) {
   const invoiceNo = generateInvoiceNo(o.id, o.tanggal_mulai);
 
   const tglInvoice = o.tgl_invoice || o.tanggal_mulai;
-  const today = fmtDateLong(tglInvoice); // <-- Ganti todayISO() menjadi tglInvoic
+  const today = fmtDateLong(tglInvoice);
   
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
@@ -887,7 +947,7 @@ function openInvoice(id) {
         <tr>
           <th>Tipe Sewa</th>
           <th>Periode Sewa</th>
-          <th style="text-align:right">Jumlah</th>
+          <th style="text-align:right">Biaya Sewa</th>
         </tr>
       </thead>
       <tbody>
@@ -902,17 +962,31 @@ function openInvoice(id) {
       </tbody>
     </table>
 
-    <div class="inv-total">
-      <div><div class="inv-total-label">Total Tagihan</div></div>
-      <div class="inv-total-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
-    </div>
+    <!-- KOTAK TAGIHAN (Dinamis untuk semua status) -->
+    <div class="inv-total" style="flex-direction: column; gap: 8px; align-items: stretch; background: #f9fbfb; border: 1px solid #e3ebeb; padding: 20px;">
+      
+      ${o.status_bayar !== 'lunas' ? `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="inv-total-label" style="color: #a06800;">Telah Bayar DP</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #a06800;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
+        </div>
+      ` : ''}
 
+      <div style="display: flex; justify-content: space-between; align-items: center; ${o.status_bayar !== 'lunas' ? 'padding-top: 8px; border-top: 1px dashed #e3ebeb;' : ''}">
+        <div class="inv-total-label" style="color: #1a5c5c; font-weight: 800;">Total Tagihan</div>
+        <div class="inv-total-value" style="color: #1a5c5c; font-size: 1.6rem;">
+          ${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}
+        </div>
+      </div>
+      
+    </div>
 
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
       Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
-      Mohon dibayarkan sebelum periode sewa dimulai: ${escapeHtml(fmtDateLong(o.tanggal_mulai))}.
+      Mohon dibayarkan sebelum periode sewa dimulai:<strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.
+      DP yang sudah dibayarkan tidak dapat ditarik kembali.
     </p>
 
     <div class="inv-signature">
@@ -938,6 +1012,9 @@ function openInvoice(id) {
 // ═══════════════════════════════════════════════════════════
 // KUITANSI
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// KUITANSI
+// ═══════════════════════════════════════════════════════════
 function openKuitansi(id) {
   const o = OCCS.find(x => x.id === id);
   if (!o) { console.error('openKuitansi: occ not found', id); return; }
@@ -945,9 +1022,29 @@ function openKuitansi(id) {
   const noKuitansi = generateKuitansiNo(o.id, o.tanggal_mulai);
 
   const tglKuitansi = o.tgl_kuitansi || o.tanggal_mulai;
-  const today = fmtDateLong(tglKuitansi); // <-- Ganti todayISO() menjadi tglKuitansi
+  const today = fmtDateLong(tglKuitansi);
   
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
+
+  // ─── LOGIKA STATUS PEMBAYARAN ───
+  let statusLabel = '';
+  let statusClass = '';
+  let nominalDitampilkan = 0;
+
+  if (o.status_bayar === 'lunas') {
+    statusLabel = '✓ LUNAS';
+    statusClass = 'lunas'; // Hijau
+    nominalDitampilkan = o.harga_total;
+  } else if (o.status_bayar === 'dp') {
+    statusLabel = `BARU MEMBAYAR DP`;
+    statusClass = 'belum'; // Merah
+    nominalDitampilkan = o.nominal_dp || 0;
+  } else {
+    statusLabel = 'BELUM MEMBAYAR';
+    statusClass = 'belum'; // Merah
+    nominalDitampilkan = 0;
+  }
+  // ────────────────────────────────
 
   const html = `
     <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
@@ -963,12 +1060,13 @@ function openKuitansi(id) {
     </div>
 
     <p style="font-size:0.9rem;margin-bottom:8px;">Untuk pembayaran sewa kamar kos dengan rincian:</p>
+    
     <table class="inv-table">
       <thead>
         <tr>
           <th>Tipe Sewa</th>
-          <th>Periode</th>
-          <th style="text-align:right">Jumlah</th>
+          <th>Periode Sewa</th>
+          <th style="text-align:right">Biaya Sewa</th>
         </tr>
       </thead>
       <tbody>
@@ -983,15 +1081,31 @@ function openKuitansi(id) {
       </tbody>
     </table>
 
-    <div class="kuitansi-amount-box">
-      <div class="kuitansi-amount-label">Jumlah Dibayar</div>
-      <div class="kuitansi-amount-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
-      <div class="kuitansi-amount-text">(${escapeHtml(terbilangRupiah(o.harga_total))})</div>
-      ${o.status_bayar === 'lunas' ? '<div class="kuitansi-check">✓ LUNAS</div>' : ''}
-      ${o.status_bayar === 'dp' ? '<div class="kuitansi-check" style="background:#F5A623">DP</div>' : ''}
+    <!-- KOTAK STATUS PEMBAYARAN KUITANSI -->
+    <div class="kuitansi-amount-box ${statusClass}" style="padding: 20px; text-align: left;">
+      
+      ${o.status_bayar !== 'lunas' ? `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div class="kuitansi-amount-label" style="margin: 0;">Telah Bayar DP</div>
+          <div style="font-size: 1.2rem; font-weight: 700;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
+        </div>
+      ` : ''}
+
+      <div style="display: flex; justify-content: space-between; align-items: center; ${o.status_bayar !== 'lunas' ? 'padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1);' : ''}">
+        <div class="kuitansi-amount-label" style="margin: 0; font-size: 0.9rem;">Total Tagihan</div>
+        <div class="kuitansi-amount-value" style="font-size: 1.8rem; margin: 0;">
+          ${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}
+        </div>
+      </div>
+
+      ${nominalDitampilkan > 0 ? `<div class="kuitansi-amount-text" style="text-align: right; margin-top: 4px;">(${escapeHtml(terbilangRupiah(nominalDitampilkan))})</div>` : ''}
+      
+      <div style="text-align: center; margin-top: 16px;">
+        ${statusClass === 'lunas' 
+          ? `<div class="kuitansi-check">${statusLabel}</div>` 
+          : `<div class="kuitansi-check kuitansi-check-red">${statusLabel}</div>`}
+      </div>
     </div>
-    <!-- Catatan dihilangkan khusus untuk Kuitansi -->
-    <!-- ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''} -->
 
     <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
       Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah. <br>Mohon disimpan dengan baik.
@@ -1016,7 +1130,6 @@ function openKuitansi(id) {
   document.getElementById('kuitansi-content').innerHTML = html;
   openModalExclusive(document.getElementById('kuitansi-modal'));
 }
-
 
 // ═══════════════════════════════════════════════════════════
 // HALAMAN LAMPIRAN KTP / KTM
@@ -1490,20 +1603,36 @@ async function duplicateOcc(id) {
   if (!o) return;
 
   const mulai = addDaysISO(o.tanggal_selesai, 1);
-  const selesai = addDaysISO(mulai, 30);
+  
+  // Hitung tanggal selesai berdasarkan tipe sewa aslinya
+  const tipe = o.tipe_sewa || 'bulanan';
+  const selesai = hitungTanggalSelesai(mulai, tipe);
 
-  openModal(null);
+  openModal(null); // Buka form mode Tambah Baru
 
   const set = (fieldId, value) => {
     const el = document.getElementById(fieldId);
     if (el) el.value = value ?? '';
   };
 
-  set('f-tipe', 'bulanan');
+  document.getElementById('modal-title').textContent = 'Duplikasi / Perpanjang Okupansi';
+
+  // ─── SET TANGGAL & TIPE ───
+  set('f-tipe', tipe);
   set('f-mulai', mulai);
   set('f-selesai', selesai);
-  set('f-harga', HARGA_DEFAULT.bulanan);
+
+  // Sesuaikan tanggal Invoice (H-3 dari tanggal mulai baru)
+  set('f-tgl-invoice', shiftDate(mulai, -3));
+  
+  // Sesuaikan tanggal Kuitansi & Perjanjian (Sama dengan tanggal mulai baru)
+  set('f-tgl-kuitansi', mulai);
+  set('f-tgl-perjanjian', mulai);
+  // ─────────────────────────
+  
   set('f-status', 'belum');
+  set('f-nominal-dp', ''); // Reset DP saat perpanjangan
+  document.getElementById('wrap-nominal-dp').style.display = 'none';
 
   set('f-nama', o.nama_penyewa);
   set('f-ktp', o.no_ktp);
@@ -1517,10 +1646,11 @@ async function duplicateOcc(id) {
   set('f-hubungan', o.hubungan_keluarga);
   set('f-catatan', o.catatan);
 
-  document.getElementById('modal-title').textContent = 'Duplikasi Okupansi';
-
   fillRoomSelect(null);
   set('f-room', o.room_id);
+
+  // Panggil updateHargaOtomatis agar harga sesuai kamar & tipe
+  updateHargaOtomatis(); 
 
   const FILE_MAP = [
     { srcUrl: o.file_ktp_penyewa, cfgKey: 'f-file-ktp-penyewa', linkId: 'f-link-ktp-penyewa', previewId: 'link-preview-ktp-penyewa', statusId: 'upload-status-ktp-penyewa' },
@@ -1683,14 +1813,6 @@ function openModal(id) {
   const f = document.getElementById('form-occ');
   f.reset();
 
-  if (!id) {
-    document.getElementById('f-mulai').value = todayISO();
-  }
-
-  fillRoomSelect(id);
-  setupAutoHarga();
-  setupAddRoomListener();
-
   MODAL_STATE.editingId = id;
   MODAL_STATE.pendingUploads = {};
   MODAL_STATE.pendingDeletes = [];
@@ -1701,6 +1823,7 @@ function openModal(id) {
     if (el) el.value = val !== undefined && val !== null ? val : '';
   };
 
+  // Reset file uploads
   UPLOAD_CONFIGS.forEach(cfg => {
     const status = document.getElementById(cfg.statusId);
     const preview = document.getElementById(cfg.previewId);
@@ -1711,6 +1834,9 @@ function openModal(id) {
   });
 
   if (id) {
+    // ═══════════════════════════════════════════
+    // MODE EDIT
+    // ═══════════════════════════════════════════
     const o = OCCS.find(x => x.id === id);
     if (!o) { console.error('[openModal] occ not found', id); return; }
 
@@ -1721,15 +1847,21 @@ function openModal(id) {
     safeSet('f-mulai', o.tanggal_mulai);
     safeSet('f-selesai', o.tanggal_selesai);
 
-    safeSet('f-tgl-invoice', o.tgl_invoice || o.tanggal_mulai || ''); // <-- TAMBAH
-    safeSet('f-tgl-kuitansi', o.tgl_kuitansi || o.tanggal_mulai || ''); // <-- TAMBAH
-    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || o.tanggal_mulai || ''); // <-- TAMBAH
+    safeSet('f-tgl-invoice', o.tgl_invoice || o.tanggal_mulai || '');
+    safeSet('f-tgl-kuitansi', o.tgl_kuitansi || o.tanggal_mulai || '');
+    safeSet('f-tgl-perjanjian', o.tgl_perjanjian || o.tanggal_mulai || '');
     
     fillRoomSelect(o.id);
     safeSet('f-room', o.room_id);
 
     safeSet('f-harga', o.harga_total);
     safeSet('f-status', o.status_bayar);
+
+    safeSet('f-nominal-dp', o.nominal_dp || ''); // <-- TAMBAHKAN
+    
+    // Tampilkan wrapper DP jika statusnya DP
+    document.getElementById('wrap-nominal-dp').style.display = o.status_bayar === 'dp' ? 'block' : 'none';
+    
     safeSet('f-nama', o.nama_penyewa);
     safeSet('f-ktp', o.no_ktp || '');
     safeSet('f-alamat', o.alamat_penyewa || '');
@@ -1746,8 +1878,6 @@ function openModal(id) {
       'f-ktp-penyewa': { link: o.file_ktp_penyewa, preview: 'link-preview-ktp-penyewa', hidden: 'f-link-ktp-penyewa', field: 'file_ktp_penyewa' },
       'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu',    field: 'file_ktp_ortu' },
       'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm',         field: 'file_ktm' },
-      // HAPUS BARIS DI BAWAH INI:
-      // 'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
     };
 
     Object.values(fileMap).forEach(item => {
@@ -1795,24 +1925,46 @@ function openModal(id) {
         });
       }).catch(err => {
         console.warn('Gagal validasi file:', err);
-        Object.values(fileMap).forEach(item => {
-          if (!item.link) return;
-          const preview = document.getElementById(item.preview);
-          const hidden = document.getElementById(item.hidden);
-          if (preview) preview.innerHTML = '';
-          if (hidden) hidden.value = '';
-        });
       });
     }
+
   } else {
+    // ═══════════════════════════════════════════
+    // MODE TAMBAH BARU
+    // ═══════════════════════════════════════════
     document.getElementById('modal-title').textContent = 'Tambah Penyewa';
-    // OTOMATIS: Ikuti tanggal mulai kontrak
-    const tglMulai = document.getElementById('f-mulai').value;
-    document.getElementById('f-tgl-invoice').value = tglMulai; // <-- TAMBAH
-    document.getElementById('f-tgl-kuitansi').value = tglMulai; // <-- TAMBAH
-    document.getElementById('f-tgl-perjanjian').value = tglMulai; // <-- TAMBAH
+    
+    // 1. Set Tanggal Mulai
+    const today = todayISO();
+    document.getElementById('f-mulai').value = today;
+    
+    // 2. Set Tipe Sewa Default (Bulanan)
+    document.getElementById('f-tipe').value = 'bulanan';
+
+    // 3. Hitung dan Set Tanggal Selesai
+    const tglSelesai = hitungTanggalSelesai(today, 'bulanan');
+    document.getElementById('f-selesai').value = tglSelesai;
+
+    // 4. Set Tanggal Invoice (H-3 dari tanggal mulai)
+    document.getElementById('f-tgl-invoice').value = shiftDate(today, -3);
+
+    // 5. Set Tanggal Kuitansi & Perjanjian (Sama dengan tanggal mulai)
+    document.getElementById('f-tgl-kuitansi').value = today;
+    document.getElementById('f-tgl-perjanjian').value = today;
+
+    document.getElementById('f-status').value = 'belum';
+    document.getElementById('f-nominal-dp').value = '';
+    document.getElementById('wrap-nominal-dp').style.display = 'none';
+  }
+
+  fillRoomSelect(id);
+  setupAutoHarga();
+  setupAddRoomListener();
+  
+  if (!id) {
     updateHargaOtomatis();
   }
+
   openModalExclusive(document.getElementById('modal-occ'));
 }
 
@@ -1820,17 +1972,52 @@ function openModal(id) {
 // AUTO HARGA
 // ═══════════════════════════════════════════════════════════
 function updateHargaOtomatis() {
+  const roomId = document.getElementById('f-room').value;
   const tipe = document.getElementById('f-tipe').value;
   const hargaInput = document.getElementById('f-harga');
-  if (!tipe || !hargaInput) return;
-  if (HARGA_DEFAULT[tipe]) hargaInput.value = HARGA_DEFAULT[tipe];
+  
+  if (!roomId || !tipe || !hargaInput) return;
+
+  const room = ROOMS.find(r => String(r.id) === String(roomId));
+  if (!room) return;
+
+  let harga = 0;
+  if (tipe === 'harian') harga = Number(room.harga_harian);
+  else if (tipe === 'mingguan') harga = Number(room.harga_mingguan);
+  else if (tipe === 'bulanan') harga = Number(room.harga_bulanan);
+  else if (tipe === 'semesteran') harga = Number(room.harga_semesteran);
+  else if (tipe === 'tahunan') harga = Number(room.harga_tahunan);
+
+  // Isi ke input form
+  hargaInput.value = harga > 0 ? harga : '';
 }
 
 function setupAutoHarga() {
   const tipeSelect = document.getElementById('f-tipe');
+  const roomSelect = document.getElementById('f-room');
+  const mulaiInput = document.getElementById('f-mulai');
+
+  // Listener saat Tipe Sewa berubah
   if (tipeSelect && !tipeSelect.dataset.listenerBound) {
-    tipeSelect.addEventListener('change', updateHargaOtomatis);
+    tipeSelect.addEventListener('change', () => {
+      updateHargaOtomatis();
+      
+      // ─── AUTO UPDATE TANGGAL SELESAI ───
+      const tglMulai = mulaiInput ? mulaiInput.value : '';
+      if (tglMulai) {
+        const tglSelesai = hitungTanggalSelesai(tglMulai, tipeSelect.value);
+        const selesaiInput = document.getElementById('f-selesai');
+        if (selesaiInput) selesaiInput.value = tglSelesai;
+      }
+      // ───────────────────────────────────
+    });
     tipeSelect.dataset.listenerBound = 'true';
+  }
+
+  // Listener saat Kamar berubah
+  if (roomSelect && !roomSelect.dataset.autoHargaListerner) {
+    roomSelect.addEventListener('change', updateHargaOtomatis);
+    roomSelect.dataset.autoHargaListerner = 'true';
   }
 }
 
@@ -1876,8 +2063,28 @@ function openAddRoomModal() {
 
   document.getElementById('ar-nama').value = `KAMAR NOMOR ${nextNomorKamar}`;
   document.getElementById('ar-tipe').value = 'NON-AC';
-  document.getElementById('ar-harga').value = 800000;
   document.getElementById('ar-urutan').value = nextUrutan;
+
+  // ─── AMBIL HARGA DARI DROPDOWN KAMAR YANG TERPILIH ───
+  const selectedRoomId = document.getElementById('f-room')?.value;
+  // Cari kamar yang dipilih, jika tidak ada (misal dropdown kosong), ambil kamar terakhir
+  const roomRef = ROOMS.find(r => String(r.id) === String(selectedRoomId)) || ROOMS[ROOMS.length - 1];
+
+  if (roomRef) {
+    document.getElementById('ar-harga-harian').value = roomRef.harga_harian || '';
+    document.getElementById('ar-harga-mingguan').value = roomRef.harga_mingguan || '';
+    document.getElementById('ar-harga-bulanan').value = roomRef.harga_bulanan || '';
+    document.getElementById('ar-harga-semesteran').value = roomRef.harga_semesteran || '';
+    document.getElementById('ar-harga-tahunan').value = roomRef.harga_tahunan || '';
+  } else {
+    // Jika sama sekali belum ada kamar di database, biarkan kosong
+    document.getElementById('ar-harga-harian').value = '';
+    document.getElementById('ar-harga-mingguan').value = '';
+    document.getElementById('ar-harga-bulanan').value = '';
+    document.getElementById('ar-harga-semesteran').value = '';
+    document.getElementById('ar-harga-tahunan').value = '';
+  }
+  // ───────────────────────────────────────────────────
 
   openModalExclusive(modal);
 
@@ -1895,16 +2102,17 @@ async function handleSaveRoom(e) {
 
   const nama_kamar = document.getElementById('ar-nama').value.trim();
   const tipe = document.getElementById('ar-tipe').value;
-  const harga_bulanan = Number(document.getElementById('ar-harga').value);
   const urutanInput = document.getElementById('ar-urutan').value;
   const urutan = urutanInput ? Number(urutanInput) : null;
 
+  const harga_harian = Number(document.getElementById('ar-harga-harian').value) || 0;
+  const harga_mingguan = Number(document.getElementById('ar-harga-mingguan').value) || 0;
+  const harga_bulanan = Number(document.getElementById('ar-harga-bulanan').value) || 0;
+  const harga_semesteran = Number(document.getElementById('ar-harga-semesteran').value) || 0;
+  const harga_tahunan = Number(document.getElementById('ar-harga-tahunan').value) || 0;
+
   if (!nama_kamar) {
     alert('Nama kamar wajib diisi');
-    return;
-  }
-  if (!harga_bulanan || harga_bulanan <= 0) {
-    alert('Harga bulanan wajib diisi (minimal Rp1.000)');
     return;
   }
 
@@ -1915,11 +2123,16 @@ async function handleSaveRoom(e) {
 
   try {
     const payload = {
-      nama_kamar: nama_kamar,
-      tipe: tipe,
-      harga_bulanan: harga_bulanan,
+      nama_kamar,
+      tipe,
+      urutan,
+      harga_harian,
+      harga_mingguan,
+      harga_bulanan,
+      harga_semesteran,
+      harga_tahunan
     };
-    if (urutan !== null) payload.urutan = urutan;
+    if (urutan === null) delete payload.urutan;
 
     const result = await api('/rooms', {
       method: 'POST',
@@ -1938,7 +2151,7 @@ async function handleSaveRoom(e) {
     fillRoomSelect(EDITING_ID);
 
     closeModal(document.getElementById('modal-add-room'));
-
+    
     setTimeout(() => {
       const newRoomId = result.id;
       if (newRoomId) {
@@ -2036,8 +2249,10 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
 
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
+     
       status_bayar: document.getElementById('f-status').value,
-
+      nominal_dp: Number(document.getElementById('f-nominal-dp').value) || 0, // <-- TAMBAHKAN
+      
       nama_penyewa: up('f-nama'),
       no_ktp: up('f-ktp'),
       alamat_penyewa: up('f-alamat'),
