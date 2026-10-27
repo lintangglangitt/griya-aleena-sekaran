@@ -929,6 +929,10 @@ function openInvoice(id) {
   
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
+  // Hitung sisa tagihan
+  const nominalDp = Number(o.nominal_dp) || 0;
+  const totalTagihan = o.harga_total - nominalDp;
+
   const html = `
     <button class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     ${buildDocHeader('INVOICE', invoiceNo)}
@@ -962,20 +966,18 @@ function openInvoice(id) {
       </tbody>
     </table>
 
-    <!-- KOTAK TAGIHAN (Dinamis untuk semua status) -->
+    <!-- KOTAK TAGIHAN (Format seragam untuk semua status) -->
     <div class="inv-total" style="flex-direction: column; gap: 8px; align-items: stretch; background: #f9fbfb; border: 1px solid #e3ebeb; padding: 20px;">
       
-      ${o.status_bayar !== 'lunas' ? `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="inv-total-label" style="color: #a06800;">Telah Bayar DP</div>
-          <div style="font-size: 1.1rem; font-weight: 700; color: #a06800;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
-        </div>
-      ` : ''}
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="inv-total-label" style="color: #a06800;">Telah Bayar DP</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: #a06800;">${escapeHtml(rupiahFull(nominalDp))}</div>
+      </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; ${o.status_bayar !== 'lunas' ? 'padding-top: 8px; border-top: 1px dashed #e3ebeb;' : ''}">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed #e3ebeb;">
         <div class="inv-total-label" style="color: #1a5c5c; font-weight: 800;">Total Tagihan</div>
         <div class="inv-total-value" style="color: #1a5c5c; font-size: 1.6rem;">
-          ${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}
+          ${escapeHtml(rupiahFull(totalTagihan))}
         </div>
       </div>
       
@@ -985,7 +987,7 @@ function openInvoice(id) {
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
       Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
-      Mohon dibayarkan sebelum periode sewa dimulai:<strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.
+      Mohon dibayarkan sebelum periode sewa dimulai: <strong> ${escapeHtml(fmtDateLong(o.tanggal_mulai))}</strong>.<br>
       DP yang sudah dibayarkan tidak dapat ditarik kembali.
     </p>
 
@@ -1009,9 +1011,6 @@ function openInvoice(id) {
   openModalExclusive(document.getElementById('invoice-modal'));
 }
 
-// ═══════════════════════════════════════════════════════════
-// KUITANSI
-// ═══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════
 // KUITANSI
 // ═══════════════════════════════════════════════════════════
