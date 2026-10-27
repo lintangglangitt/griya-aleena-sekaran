@@ -444,6 +444,16 @@ async function init() {
 
   closeAllModals();
 
+    // Tampilkan input DP jika status = dp
+  const statusSelect = document.getElementById('f-status');
+  const wrapNominalDp = document.getElementById('wrap-nominal-dp');
+  if (statusSelect && wrapNominalDp) {
+    statusSelect.addEventListener('change', () => {
+      wrapNominalDp.style.display = statusSelect.value === 'dp' ? 'block' : 'none';
+    });
+  }
+  
+
   try {
     document.getElementById('user-name').textContent = USER.nama_lengkap || USER.username || '—';
     document.getElementById('today-label').textContent = `(${fmtDate(todayISO())})`;
@@ -951,9 +961,22 @@ function openInvoice(id) {
       </tbody>
     </table>
 
-    <div class="inv-total">
-      <div><div class="inv-total-label">Total Tagihan</div></div>
-      <div class="inv-total-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
+    <div class="inv-total" style="flex-direction: column; gap: 12px; align-items: stretch;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="inv-total-label">Total Tagihan</div>
+        <div class="inv-total-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
+      </div>
+      
+      ${o.status_bayar === 'dp' ? `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px dashed #e3ebeb;">
+          <div class="inv-total-label" style="color: #a06800;">Telah Bayar DP</div>
+          <div style="font-size: 1.2rem; font-weight: 700; color: #a06800;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="inv-total-label" style="color: #e74c3c;">Kekurangan Bayar</div>
+          <div style="font-size: 1.2rem; font-weight: 700; color: #e74c3c;">${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}</div>
+        </div>
+      ` : ''}
     </div>
 
 
@@ -1003,14 +1026,23 @@ function openKuitansi(id) {
   // ─── LOGIKA STATUS PEMBAYARAN ───
   let statusLabel = '';
   let statusClass = '';
-  let nominalDitampilkan = o.harga_total;
+
+
+  let nominalDitampilkan = 0;
+  if (o.status_bayar === 'lunas') {
+    nominalDitampilkan = o.harga_total;
+  } else if (o.status_bayar === 'dp') {
+    nominalDitampilkan = o.nominal_dp || 0;
+  }
 
   if (o.status_bayar === 'lunas') {
     statusLabel = '✓ LUNAS';
     statusClass = 'lunas'; // Hijau
+    
   } else if (o.status_bayar === 'dp') {
-    statusLabel = `BARU MEMBAYAR DP ${rupiahFull(o.harga_total)}`;
+    statusLabel = `BARU MEMBAYAR DP ${rupiahFull(o.nominal_dp || 0)}`;
     statusClass = 'belum'; // Merah
+    
   } else {
     statusLabel = 'BELUM MEMBAYAR';
     statusClass = 'belum'; // Merah
@@ -1585,8 +1617,10 @@ async function duplicateOcc(id) {
   set('f-tgl-kuitansi', mulai);
   set('f-tgl-perjanjian', mulai);
   // ─────────────────────────
-
+  
   set('f-status', 'belum');
+  set('f-nominal-dp', ''); // Reset DP saat perpanjangan
+  document.getElementById('wrap-nominal-dp').style.display = 'none';
 
   set('f-nama', o.nama_penyewa);
   set('f-ktp', o.no_ktp);
@@ -1810,6 +1844,12 @@ function openModal(id) {
 
     safeSet('f-harga', o.harga_total);
     safeSet('f-status', o.status_bayar);
+
+    safeSet('f-nominal-dp', o.nominal_dp || ''); // <-- TAMBAHKAN
+    
+    // Tampilkan wrapper DP jika statusnya DP
+    document.getElementById('wrap-nominal-dp').style.display = o.status_bayar === 'dp' ? 'block' : 'none';
+    
     safeSet('f-nama', o.nama_penyewa);
     safeSet('f-ktp', o.no_ktp || '');
     safeSet('f-alamat', o.alamat_penyewa || '');
@@ -1899,6 +1939,10 @@ function openModal(id) {
     // 5. Set Tanggal Kuitansi & Perjanjian (Sama dengan tanggal mulai)
     document.getElementById('f-tgl-kuitansi').value = today;
     document.getElementById('f-tgl-perjanjian').value = today;
+
+    document.getElementById('f-status').value = 'belum';
+    document.getElementById('f-nominal-dp').value = '';
+    document.getElementById('wrap-nominal-dp').style.display = 'none';
   }
 
   fillRoomSelect(id);
@@ -2193,8 +2237,10 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
 
       harga_total: Number(document.getElementById('f-harga').value),
       link_kontrak: null,
+     
       status_bayar: document.getElementById('f-status').value,
-
+      nominal_dp: Number(document.getElementById('f-nominal-dp').value) || 0, // <-- TAMBAHKAN
+      
       nama_penyewa: up('f-nama'),
       no_ktp: up('f-ktp'),
       alamat_penyewa: up('f-alamat'),
