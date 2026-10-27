@@ -427,7 +427,7 @@
       <button type="button" class="modal-close-x" data-close-modal aria-label="Tutup">✕</button>
     </div>
 
-    <form id="form-add-room">
+       <form id="form-add-room">
       <div class="form-section">
         <div class="form-section-title">🏠 Data Kamar</div>
 
@@ -442,14 +442,31 @@
           </select>
         </label>
 
-        <label>Harga Bulanan (Rp)
-          <input type="number" id="ar-harga" min="0" step="50000" required
-                 value="800000" placeholder="Mis. 800000">
-        </label>
-
         <label>Urutan (Opsional)
           <input type="number" id="ar-urutan" min="0" step="1" placeholder="Kosongkan untuk otomatis">
         </label>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">💰 Harga Sewa (Rp)</div>
+        
+        <div class="grid-2">
+          <label>Harga Harian
+            <input type="number" id="ar-harga-harian" min="0" step="5000" value="100000">
+          </label>
+          <label>Harga Mingguan
+            <input type="number" id="ar-harga-mingguan" min="0" step="5000" value="500000">
+          </label>
+          <label>Harga Bulanan
+            <input type="number" id="ar-harga-bulanan" min="0" step="50000" value="800000">
+          </label>
+          <label>Harga Semesteran
+            <input type="number" id="ar-harga-semesteran" min="0" step="50000" value="4600000">
+          </label>
+          <label>Harga Tahunan
+            <input type="number" id="ar-harga-tahunan" min="0" step="50000" value="9100000">
+          </label>
+        </div>
       </div>
 
       <div class="modal-actions">
@@ -457,6 +474,7 @@
         <button type="submit" class="btn-primary" id="btn-save-room">Simpan Kamar</button>
       </div>
     </form>
+    
   </div>
 </div>
   
