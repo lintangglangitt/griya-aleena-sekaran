@@ -1,0 +1,9 @@
+DEPLOY WORKER DARI LOCAL:
+
+Tahap 1 - Edit worker di local dan deploy (wrangler.toml harus sudah benar, warangler sdh login di komputer ini):
+
+cd /Users/lintang/Library/CloudStorage/OneDrive-KemenkoInfrastrukturdanPembangunan/ALI\ HAKIM/GRIYA\ ALEENA/griya-aleena-sekaran/api/griya-api
+
+npx wrangler deploy
+
+tes di github page. sukses.
