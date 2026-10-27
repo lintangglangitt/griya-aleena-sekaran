@@ -729,3 +729,18 @@
     margin: 2cm;
   }
 }
+
+/* ─── STATUS BELUM BAYAR / DP ─── */
+.kuitansi-amount-box.belum {
+  background: #fdf2f2; /* Warna latar merah muda */
+  border-color: #e74c3c; /* Border merah */
+}
+
+.kuitansi-amount-box.belum .kuitansi-amount-label {
+  color: #c0392b;
+}
+
+.kuitansi-check-red {
+  background: #e74c3c !important; /* Tombol badge merah */
+  color: white;
+}
