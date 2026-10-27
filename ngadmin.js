@@ -1002,7 +1002,7 @@ function openInvoice(id) {
     ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <div class="inv-footer">
-     Invoice ini dicetak otomatis dari sistem Griya Aleena.
+     Invoice ini diterbitkan otomatis dari sistem Griya Aleena.
     </div>
 
     <div class="inv-signature">
@@ -1096,7 +1096,7 @@ function openKuitansi(id) {
     </div>
 
     <div class="inv-footer">
-    Kuitansi ini dibuat otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah.<br>
+    Kuitansi ini diterbitkan otomatis oleh sistem Griya Aleena dan merupakan bukti pembayaran yang sah.<br>
     Mohon disimpan dengan baik.
     </div>
 
