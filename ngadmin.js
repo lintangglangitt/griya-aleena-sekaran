@@ -703,10 +703,10 @@ function renderRooms() {
 
           if (sudahPerpanjang) {
             statusClass = 'status-habis-perpanjangan';
-            statusLabel = `⚠️ Habis dalam<br>${sisa} hari & <br>SUDAH PERPANJANGAN`;
+            statusLabel = `⚠️ HABIS DALAM<br>${sisa} hari & <br>KONFIRM PERPANJANGAN`;
           } else {
             statusClass = 'status-habis';
-            statusLabel = `⚠️ Habis dalam<br>${sisa} hari`;
+            statusLabel = `⚠️ HABIS DALAM<br>${sisa} hari`;
           }
         } else {
           statusClass = 'status-terisi';
@@ -912,7 +912,7 @@ function openInvoice(id) {
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
       Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
-      Mohon dibayarkan sebelum periode sewa dimulai: (${escapeHtml(fmtDateLong(o.tanggal_mulai))}).
+      Mohon dibayarkan sebelum periode sewa dimulai: ${escapeHtml(fmtDateLong(o.tanggal_mulai))}.
     </p>
 
     <div class="inv-signature">
