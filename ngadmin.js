@@ -914,6 +914,7 @@ function buildDocHeader(title, no) {
   `;
 }
 
+
 // ═══════════════════════════════════════════════════════════
 // INVOICE
 // ═══════════════════════════════════════════════════════════
@@ -924,7 +925,7 @@ function openInvoice(id) {
   const invoiceNo = generateInvoiceNo(o.id, o.tanggal_mulai);
 
   const tglInvoice = o.tgl_invoice || o.tanggal_mulai;
-  const today = fmtDateLong(tglInvoice); // <-- Ganti todayISO() menjadi tglInvoic
+  const today = fmtDateLong(tglInvoice);
   
   const durasi = hitungDurasi(o.tanggal_mulai, o.tanggal_selesai, o.tipe_sewa);
 
@@ -946,7 +947,7 @@ function openInvoice(id) {
         <tr>
           <th>Tipe Sewa</th>
           <th>Periode Sewa</th>
-          <th style="text-align:right">Jumlah</th>
+          <th style="text-align:right">Biaya Sewa</th>
         </tr>
       </thead>
       <tbody>
@@ -961,32 +962,30 @@ function openInvoice(id) {
       </tbody>
     </table>
 
-    <div class="inv-total" style="flex-direction: column; gap: 12px; align-items: stretch;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div class="inv-total-label">Total Tagihan</div>
-        <div class="inv-total-value">${escapeHtml(rupiahFull(o.harga_total))}</div>
-      </div>
+    <!-- KOTAK TAGIHAN (Dinamis untuk semua status) -->
+    <div class="inv-total" style="flex-direction: column; gap: 8px; align-items: stretch; background: #f9fbfb; border: 1px solid #e3ebeb; padding: 20px;">
       
-      ${o.status_bayar === 'dp' ? `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px dashed #e3ebeb;">
-          <div class="inv-total-label" style="color: #a06800;">Telah Bayar DP</div>
-          <div style="font-size: 1.2rem; font-weight: 700; color: #a06800;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
-        </div>
+      ${o.status_bayar !== 'lunas' ? `
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="inv-total-label" style="color: #e74c3c;">Kekurangan Bayar</div>
-          <div style="font-size: 1.2rem; font-weight: 700; color: #e74c3c;">${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}</div>
+          <div class="inv-total-label" style="color: #a06800;">Telah Bayar DP</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #a06800;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
         </div>
       ` : ''}
+
+      <div style="display: flex; justify-content: space-between; align-items: center; ${o.status_bayar !== 'lunas' ? 'padding-top: 8px; border-top: 1px dashed #e3ebeb;' : ''}">
+        <div class="inv-total-label" style="color: #1a5c5c; font-weight: 800;">Total Tagihan</div>
+        <div class="inv-total-value" style="color: #1a5c5c; font-size: 1.6rem;">
+          ${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}
+        </div>
+      </div>
+      
     </div>
 
-
-    ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong><br>
-    ${escapeHtml(o.catatan)}<br>
-    (DP yang sudah dibayarkan tidak dapat ditarik kembali.) </div>` : ''}
+    ${o.catatan ? `<div class="inv-notes"><strong>Catatan:</strong> ${escapeHtml(o.catatan)}</div>` : ''}
 
     <p style="font-size:0.85rem;color:#5a7373;margin:16px 0 20px;line-height:1.5;">
-      Invoice ini dibuat otomatis oleh sistem Griya Aleena. <br>
-      Mohon tagihan dapat dilunasi sebelum periode sewa dimulai: ${escapeHtml(fmtDateLong(o.tanggal_mulai))}.<br>
+      Invoice ini dibuat otomatis oleh sistem Griya Aleena.<br>
+      Mohon dibayarkan sebelum periode sewa dimulai: ${escapeHtml(fmtDateLong(o.tanggal_mulai))}.
     </p>
 
     <div class="inv-signature">
@@ -1012,6 +1011,9 @@ function openInvoice(id) {
 // ═══════════════════════════════════════════════════════════
 // KUITANSI
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// KUITANSI
+// ═══════════════════════════════════════════════════════════
 function openKuitansi(id) {
   const o = OCCS.find(x => x.id === id);
   if (!o) { console.error('openKuitansi: occ not found', id); return; }
@@ -1026,23 +1028,16 @@ function openKuitansi(id) {
   // ─── LOGIKA STATUS PEMBAYARAN ───
   let statusLabel = '';
   let statusClass = '';
-
-
   let nominalDitampilkan = 0;
-  if (o.status_bayar === 'lunas') {
-    nominalDitampilkan = o.harga_total;
-  } else if (o.status_bayar === 'dp') {
-    nominalDitampilkan = o.nominal_dp || 0;
-  }
 
   if (o.status_bayar === 'lunas') {
     statusLabel = '✓ LUNAS';
     statusClass = 'lunas'; // Hijau
-    
+    nominalDitampilkan = o.harga_total;
   } else if (o.status_bayar === 'dp') {
-    statusLabel = `BARU MEMBAYAR DP ${rupiahFull(o.nominal_dp || 0)}`;
+    statusLabel = `BARU MEMBAYAR DP`;
     statusClass = 'belum'; // Merah
-    
+    nominalDitampilkan = o.nominal_dp || 0;
   } else {
     statusLabel = 'BELUM MEMBAYAR';
     statusClass = 'belum'; // Merah
@@ -1064,12 +1059,13 @@ function openKuitansi(id) {
     </div>
 
     <p style="font-size:0.9rem;margin-bottom:8px;">Untuk pembayaran sewa kamar kos dengan rincian:</p>
+    
     <table class="inv-table">
       <thead>
         <tr>
           <th>Tipe Sewa</th>
-          <th>Periode</th>
-          <th style="text-align:right">Jumlah</th>
+          <th>Periode Sewa</th>
+          <th style="text-align:right">Biaya Sewa</th>
         </tr>
       </thead>
       <tbody>
@@ -1084,15 +1080,30 @@ function openKuitansi(id) {
       </tbody>
     </table>
 
-    <!-- KOTAK STATUS PEMBAYARAN -->
-    <div class="kuitansi-amount-box ${statusClass}">
-      <div class="kuitansi-amount-label">Jumlah Dibayar</div>
-      <div class="kuitansi-amount-value">${escapeHtml(rupiahFull(nominalDitampilkan))}</div>
-      ${nominalDitampilkan > 0 ? `<div class="kuitansi-amount-text">(${escapeHtml(terbilangRupiah(nominalDitampilkan))})</div>` : ''}
+    <!-- KOTAK STATUS PEMBAYARAN KUITANSI -->
+    <div class="kuitansi-amount-box ${statusClass}" style="padding: 20px; text-align: left;">
       
-      ${statusClass === 'lunas' 
-        ? `<div class="kuitansi-check">${statusLabel}</div>` 
-        : `<div class="kuitansi-check kuitansi-check-red">${statusLabel}</div>`}
+      ${o.status_bayar !== 'lunas' ? `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div class="kuitansi-amount-label" style="margin: 0;">Telah Bayar DP</div>
+          <div style="font-size: 1.2rem; font-weight: 700;">${escapeHtml(rupiahFull(o.nominal_dp || 0))}</div>
+        </div>
+      ` : ''}
+
+      <div style="display: flex; justify-content: space-between; align-items: center; ${o.status_bayar !== 'lunas' ? 'padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1);' : ''}">
+        <div class="kuitansi-amount-label" style="margin: 0; font-size: 0.9rem;">Total Tagihan</div>
+        <div class="kuitansi-amount-value" style="font-size: 1.8rem; margin: 0;">
+          ${escapeHtml(rupiahFull(o.harga_total - (o.nominal_dp || 0)))}
+        </div>
+      </div>
+
+      ${nominalDitampilkan > 0 ? `<div class="kuitansi-amount-text" style="text-align: right; margin-top: 4px;">(${escapeHtml(terbilangRupiah(nominalDitampilkan))})</div>` : ''}
+      
+      <div style="text-align: center; margin-top: 16px;">
+        ${statusClass === 'lunas' 
+          ? `<div class="kuitansi-check">${statusLabel}</div>` 
+          : `<div class="kuitansi-check kuitansi-check-red">${statusLabel}</div>`}
+      </div>
     </div>
 
     <p style="font-size:0.85rem;color:#5a7373;margin-bottom:24px;line-height:1.5;">
