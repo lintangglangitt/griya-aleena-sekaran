@@ -1199,13 +1199,20 @@ function buildLampiranPage(o) {
   return `
   <div class="lampiran-page" style="break-before:page;page-break-before:always;">
       <h2>Lampiran Dokumen</h2>
+      
+      <!-- BARIS 1: KTP PEMILIK -->
+      <div class="lampiran-grid" style="margin-bottom: 10mm;">
+        ${lampiranItem(1, 'KTP/SIM Pemilik', ktpPemilik, ktpPemilikAlts)}
+      </div>
+
+      <!-- BARIS 2: DOKUMEN PENYEWA -->
       <div class="lampiran-grid">
-        ${lampiranItem(1, 'KTP/SIM Pemilik', ktpPemilik, ktpPemilikAlts)} <br>
         ${lampiranItem(2, 'KTP/SIM Penyewa', o.file_ktp_penyewa)}
         ${lampiranItem(3, 'KTP/SIM Orang Tua/Wali/Kontak Darurat', o.file_ktp_ortu)}
         ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
-        ${lampiranItem(5, 'Bukti Pembayaran', o.file_perjanjian)} <!-- TAMBAHKAN INI -->
+        ${lampiranItem(5, 'Bukti Pembayaran', o.file_perjanjian)}
       </div>
+      
       <div class="inv-footer">
       Perjanjian ini diterbitkan otomatis dari sistem Griya Aleena. Wajib disimpan oleh Para Pihak.
       </div>
