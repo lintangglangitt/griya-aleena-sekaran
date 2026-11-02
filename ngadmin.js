@@ -1436,6 +1436,7 @@ function openPerjanjian(id) {
         <li>Foto KTP/SIM Penyewa.</li>
         <li>Foto KTP/SIM Orang Tua/Wali/Kontak Darurat.</li>
         <li>Foto Kartu Tanda Mahasiswa Penyewa.</li>
+        <li>Foto Bukti Pembayaran.</li> 
       </ol>
     </div>
 
