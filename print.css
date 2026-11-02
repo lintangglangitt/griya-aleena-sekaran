@@ -744,3 +744,15 @@
   background: #e74c3c !important; /* Tombol badge merah */
   color: white;
 }
+
+/* Membuat Lampiran 1 (KTP Pemilik) mengambil 1 baris penuh */
+.lampiran-item:first-child {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  margin-bottom: 10mm; /* Jarak antara baris 1 dan baris 2 */
+}
+
+/* Pastikan gambar di Lampiran 1 tetap proporsional (tidak melar) */
+.lampiran-item:first-child .lampiran-foto {
+  justify-content: center; 
+}
