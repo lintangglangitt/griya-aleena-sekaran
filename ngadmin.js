@@ -862,29 +862,26 @@ function renderTable() {
     return;
   }
 
-    tbody.innerHTML = filtered.map(o => {
+  tbody.innerHTML = filtered.map(o => {
     const sudahSelesai = o.tanggal_selesai < today;
     const akanHabis = !sudahSelesai &&
       o.tanggal_selesai >= today &&
       daysBetween(today, o.tanggal_selesai) <= 10 &&
       o.tanggal_mulai <= today;
       
-    // ─── TAMBAHKAN INI ───
     // Cek apakah tanggal mulai masih di masa depan (belum masuk periode)
     const akanDatang = o.tanggal_mulai > today;
-    // ─────────────────────
 
     const badgeClass = { lunas: 'lunas', dp: 'dp', belum: 'belum' }[o.status_bayar] || 'belum';
     const link = o.link_kontrak
       ? `<a href="${escapeHtml(o.link_kontrak)}" target="_blank" class="btn-icon" title="Buka kontrak">📄</a>`
       : '—';
 
-    // ─── UBAH LOGIKA ROW CLASS ───
+    // Logika Row Class
     let rowClass = 'baris-aktif';
     if (sudahSelesai) rowClass = 'kontrak-selesai';
     else if (akanHabis) rowClass = 'akan-habis';
     else if (akanDatang) rowClass = 'akan-datang'; // Prioritas jika belum masuk periode
-    // ─────────────────────────────
 
     return `
       <tr class="${rowClass}">
@@ -909,6 +906,7 @@ function renderTable() {
       </tr>
     `;
   }).join('');
+} // <-- INI KURUNG KURAWAL YANG HILANG SEBELUMNYA
 
 // ═══════════════════════════════════════════════════════════
 // DOC HEADER
