@@ -1099,7 +1099,7 @@ function openKuitansi(id) {
         </div>
       ` : `
         <div style="color: #c0392b; font-weight: 700; font-size: 1.1rem; line-height: 1.5; padding: 20px 0;">
-          KUITANSI HANYA DAPAT DICETAK<br>JIKA STATUSNYA TELAH LUNAS
+          KUITANSI HANYA DAPAT DICETAK<br>JIKA STATUS PEMBAYARAN TELAH LUNAS
         </div>
       `}
       
