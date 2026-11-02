@@ -316,9 +316,9 @@
 
 /* Tanggal Semarang */
 .perjanjian-wrapper .pj-tanggal {
-  text-align: right;
+  text-align: center;
   margin-top: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .perjanjian-wrapper .pj-tanggal .pj-tanggal-fill {
   display: inline-block;
