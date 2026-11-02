@@ -1,4 +1,4 @@
-/* print.css — styling invoice, kuitansi, perjanjian versi 1.0 */
+/* print.css — styling invoice, kuitansi, perjanjian versi 1.1 */
 
 /* ─── MODAL OVERLAY ─── */
 .invoice-modal {
@@ -184,6 +184,19 @@
   margin-top: 12px;
 }
 
+/* Kuitansi Belum Bayar / DP */
+.kuitansi-amount-box.belum {
+  background: #fdf2f2;
+  border-color: #e74c3c;
+}
+.kuitansi-amount-box.belum .kuitansi-amount-label {
+  color: #c0392b;
+}
+.kuitansi-check-red {
+  background: #e74c3c !important;
+  color: white;
+}
+
 /* ─── TANDA TANGAN ─── */
 .inv-signature {
   text-align: center;
@@ -239,10 +252,10 @@
   text-align: center;
   color: #1a5c5c;
   letter-spacing: 0.05em;
-  line-height: 1.3;              /* ⬅️ TAMBAH: rapatkan baris judul */
-  margin-top: 0;                 /* ⬅️ TAMBAH: hilangkan margin atas */
-  margin-bottom: 16px;           /* ⬅️ dari 20px → 16px */
-  padding-bottom: 10px;          /* ⬅️ dari 12px → 10px */
+  line-height: 1.3;
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
   border-bottom: 2px solid #1a5c5c;
 }
 .perjanjian-wrapper h2 {
@@ -406,7 +419,6 @@
   color: #1a5c5c;
 }
 
-
 /* ─── HALAMAN LAMPIRAN KTP/KTM ─── */
 .lampiran-page {
   margin-top: 40px;
@@ -467,16 +479,13 @@
 /* ─── SAAT PRINT ─── */
 /* ═══════════════════════════════════════════════ */
 @media print {
-
-  @media print {
-  /* ⬇️ TAMBAH INI */
   html, body {
     width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden !important;   /* ⬅️ PENTING: cegah overflow */
+    overflow: hidden !important;
   }
 
   body * {
@@ -520,8 +529,6 @@
     margin: 0 !important;
     padding: 0 !important;
   }
-  /* ⬆️ SAMPAI SINI */
-}
 
   /* Sembunyikan elemen dashboard */
   .admin-header,
@@ -574,12 +581,6 @@
     width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
-  }
-
-  /* Tombol aksi & silang disembunyikan */
-  .invoice-actions,
-  .modal-close-x {
-    display: none !important;
   }
 
   /* ─── LOGO UKURAN ─── */
@@ -636,9 +637,7 @@
     color-adjust: exact !important;
   }
 
-  /* ─── PAGE BREAK RULES (MINIMAL & AMAN) ─── */
-
-  /* Cegah heading "nyangkut" sendirian di bawah halaman */
+  /* ─── PAGE BREAK RULES ─── */
   .perjanjian-wrapper h1,
   .perjanjian-wrapper h2,
   .perjanjian-wrapper h3 {
@@ -646,13 +645,11 @@
     break-after: avoid !important;
   }
 
-  /* Cegah baris pj-field terpotong di tengah baris */
   .perjanjian-wrapper .pj-field {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
-  /* Cegah tabel invoice terpotong di tengah baris */
   .inv-table tr {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
@@ -661,28 +658,25 @@
     display: table-header-group;
   }
 
-  /* Cegah tanda tangan terpotong */
   .inv-signature,
   .perjanjian-wrapper .pj-sign-row {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
-  /* Hindari page break setelah footer */
   .inv-footer {
     page-break-after: avoid !important;
     break-after: avoid !important;
   }
 
-    .perjanjian-wrapper .pj-info-block {
+  .perjanjian-wrapper .pj-info-block {
     background: #f4f7f7 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
 
-
-    /* ─── HALAMAN LAMPIRAN: halaman baru, grid 2 kolom ─── */
+  /* ─── HALAMAN LAMPIRAN: halaman baru, grid 2 kolom ─── */
   .perjanjian-wrapper .lampiran-page {
     page-break-before: always !important;
     break-before: page !important;
@@ -698,9 +692,10 @@
     justify-content: center !important;
     align-items: flex-start !important;
     gap: 8mm 0 !important;
-    margin: 0 -4mm !important;      /* lebar jadi 178 mm, cukup untuk 2 x 85,6 mm */
+    margin: 0 -4mm !important;
     width: auto !important;
   }
+  
   .perjanjian-wrapper .lampiran-item {
     flex: 0 0 85.6mm !important;
     width: 85.6mm !important;
@@ -722,37 +717,9 @@
     height: 85.6mm !important;
   }
 
-  
-  /* A4 dengan margin 1.5cm */
+  /* A4 dengan margin 2cm */
   @page {
     size: A4;
     margin: 2cm;
   }
-}
-
-/* ─── STATUS BELUM BAYAR / DP ─── */
-.kuitansi-amount-box.belum {
-  background: #fdf2f2; /* Warna latar merah muda */
-  border-color: #e74c3c; /* Border merah */
-}
-
-.kuitansi-amount-box.belum .kuitansi-amount-label {
-  color: #c0392b;
-}
-
-.kuitansi-check-red {
-  background: #e74c3c !important; /* Tombol badge merah */
-  color: white;
-}
-
-/* Membuat Lampiran 1 (KTP Pemilik) mengambil 1 baris penuh */
-.lampiran-item:first-child {
-  flex: 0 0 100% !important;
-  width: 100% !important;
-  margin-bottom: 10mm; /* Jarak antara baris 1 dan baris 2 */
-}
-
-/* Pastikan gambar di Lampiran 1 tetap proporsional (tidak melar) */
-.lampiran-item:first-child .lampiran-foto {
-  justify-content: center; 
 }
