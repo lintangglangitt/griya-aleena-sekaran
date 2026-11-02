@@ -1339,9 +1339,9 @@ function openPerjanjian(id) {
           ${field('Periode', fmtDateLong(o.tanggal_mulai) + ' — ' + fmtDateLong(o.tanggal_selesai))}
         </div>
       </li>
-      <li>Pembayaran harus dilunasi sebelum unit kamar ditempati oleh Penyewa.</li>
+      <li>Biaya sewa harus dilunasi sebelum awal periode sewa di atas.</li>
       <li>Setiap kamar memiliki meteran listrik pribadi. Setiap Penyewa mengisi token listrik prabayar sendiri sesuai yang dibutuhkan (Penyewa boleh membawa alat elektronik yang dibutuhkan).</li>
-      <li>Penyewa bebas biaya air bulanan dan bebas iuran sampah bulanan.</li>
+      <li>Penyewa bebas dari biaya air bulanan dan iuran sampah bulanan.</li>
     </ol>
 
     <h2>Pasal 4 – Tata Tertib</h2>
