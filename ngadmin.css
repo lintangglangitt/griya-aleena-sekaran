@@ -1707,3 +1707,17 @@ tbody tr.kontrak-selesai:hover {
   line-height: 1.3;
   text-align: center;
 }
+
+/* BARIS BELUM MASUK PERIODE (BIRU) */
+tbody tr.akan-datang {
+  background: #e3f2fd !important; /* Latar biru muda */
+  box-shadow: inset 6px 0 0 0 #2196F3; /* Garis kiri biru tegas */
+}
+
+tbody tr.akan-datang td {
+  color: var(--text) !important; /* Teks tetap hitam agar terbaca */
+}
+
+tbody tr.akan-datang:hover {
+  background: #bbdefb !important; /* Sedikit lebih gelap saat di-hover */
+}
