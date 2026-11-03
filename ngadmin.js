@@ -758,7 +758,7 @@ function renderRooms() {
     if (active) {
       penyewa = active.nama_penyewa;
       tanggal = `${fmtDate(active.tanggal_mulai)} — ${fmtDate(active.tanggal_selesai)}`;
-      const sisa = daysBetween(today, active.tanggal_selesai);
+      const sisa = daysBetween(today, active.tanggal_selesai) + 1;
 
       if (active.status_bayar === 'lunas') {
         if (sisa <= 10) {
