@@ -1431,7 +1431,7 @@ function openPerjanjian(id) {
 
     <div class="pj-lampiran">
       <h3>Lampiran:</h3>
-      <ol type="a">
+      <ol type="1">
         <li>Foto KTP/SIM Pemilik.</li>
         <li>Foto KTP/SIM Penyewa.</li>
         <li>Foto KTP/SIM Orang Tua/Wali/Kontak Darurat.</li>
