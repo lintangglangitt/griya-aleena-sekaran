@@ -1676,7 +1676,7 @@ async function duplicateOcc(id) {
     { srcUrl: o.file_ktp_ortu,    cfgKey: 'f-file-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    statusId: 'upload-status-ktp-ortu' },
     { srcUrl: o.file_ktm,         cfgKey: 'f-file-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         statusId: 'upload-status-ktm' },
     // TAMBAHKAN BARIS INI:
-    { srcUrl: o.bukti_pembayaran,  cfgKey: 'f-file-pembayaran',  linkId: 'f-link-pembayaran',  previewId: 'link-preview-pembayaran',  statusId: 'upload-status-pembayaran' },
+    // { srcUrl: o.bukti_pembayaran,  cfgKey: 'f-file-pembayaran',  linkId: 'f-link-pembayaran',  previewId: 'link-preview-pembayaran',  statusId: 'upload-status-pembayaran' },
   ];
 
   const toCopy = FILE_MAP.filter(item => item.srcUrl);
