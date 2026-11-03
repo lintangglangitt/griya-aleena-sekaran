@@ -51,7 +51,7 @@ const UPLOAD_CONFIGS = [
   { key: 'f-file-ktp-ortu',    statusId: 'upload-status-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    field: 'file_ktp_ortu' },
   { key: 'f-file-ktm',         statusId: 'upload-status-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         field: 'file_ktm' },
   // TAMBAHKAN BARIS INI (Hapus komentar):
-  { key: 'f-file-perjanjian',  statusId: 'upload-status-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  field: 'file_perjanjian' },
+  { key: 'f-file-pembayaran',  statusId: 'upload-status-pembayaran',  linkId: 'f-link-pembayaran',  previewId: 'link-preview-pembayaran',  field: 'bukti_pembayaran' },
 ];
 
 if (!TOKEN) window.location.href = 'ibun.html';
@@ -1210,7 +1210,7 @@ function buildLampiranPage(o) {
         ${lampiranItem(2, 'KTP/SIM Penyewa', o.file_ktp_penyewa)}
         ${lampiranItem(3, 'KTP/SIM Orang Tua/Wali/Kontak Darurat', o.file_ktp_ortu)}
         ${lampiranItem(4, 'Kartu Tanda Mahasiswa Penyewa', o.file_ktm)}
-        ${lampiranItem(5, 'Bukti Pembayaran', o.file_perjanjian)}
+        ${lampiranItem(5, 'Bukti Pembayaran', o.bukti_pembayaran)}
       </div>
       
       <div class="inv-footer">
@@ -1676,7 +1676,7 @@ async function duplicateOcc(id) {
     { srcUrl: o.file_ktp_ortu,    cfgKey: 'f-file-ktp-ortu',    linkId: 'f-link-ktp-ortu',    previewId: 'link-preview-ktp-ortu',    statusId: 'upload-status-ktp-ortu' },
     { srcUrl: o.file_ktm,         cfgKey: 'f-file-ktm',         linkId: 'f-link-ktm',         previewId: 'link-preview-ktm',         statusId: 'upload-status-ktm' },
     // TAMBAHKAN BARIS INI:
-    { srcUrl: o.file_perjanjian,  cfgKey: 'f-file-perjanjian',  linkId: 'f-link-perjanjian',  previewId: 'link-preview-perjanjian',  statusId: 'upload-status-perjanjian' },
+    { srcUrl: o.bukti_pembayaran,  cfgKey: 'f-file-pembayaran',  linkId: 'f-link-pembayaran',  previewId: 'link-preview-pembayaran',  statusId: 'upload-status-pembayaran' },
   ];
 
   const toCopy = FILE_MAP.filter(item => item.srcUrl);
@@ -1898,7 +1898,7 @@ function openModal(id) {
       'f-ktp-ortu':    { link: o.file_ktp_ortu,    preview: 'link-preview-ktp-ortu',    hidden: 'f-link-ktp-ortu',    field: 'file_ktp_ortu' },
       'f-ktm':         { link: o.file_ktm,         preview: 'link-preview-ktm',         hidden: 'f-link-ktm',         field: 'file_ktm' },
       // TAMBAHKAN BARIS INI:
-      'f-perjanjian':  { link: o.file_perjanjian,  preview: 'link-preview-perjanjian',  hidden: 'f-link-perjanjian',  field: 'file_perjanjian' },
+      'f-pembayaran':  { link: o.bukti_pembayaran,  preview: 'link-preview-pembayaran',  hidden: 'f-link-pembayaran',  field: 'bukti_pembayaran' },
     };
 
     Object.values(fileMap).forEach(item => {
@@ -2297,7 +2297,7 @@ document.getElementById('form-occ').addEventListener('submit', async (e) => {
       file_ktp_penyewa: document.getElementById('f-link-ktp-penyewa')?.value.trim() || null,
       file_ktp_ortu: document.getElementById('f-link-ktp-ortu')?.value.trim() || null,
       file_ktm: document.getElementById('f-link-ktm')?.value.trim() || null,
-      file_perjanjian: document.getElementById('f-link-perjanjian')?.value.trim() || null,
+      bukti_pembayaran: document.getElementById('f-link-pembayaran')?.value.trim() || null,
 
       catatan: document.getElementById('f-catatan').value.trim() || null,
     };
@@ -2558,7 +2558,7 @@ function handleExportCsv() {
     ['Kamar','Penyewa','No HP','Prodi/Jurusan & Kampus','Tipe Sewa','Mulai','Selesai','Total','Status',
      'Link Kontrak','Catatan','No KTP','Alamat',
      'Nama Ortu','No KTP Ortu','No HP Ortu','Alamat Ortu','Hubungan Keluarga',
-     'File KTP Penyewa','File KTP Ortu','File KTM','File Perjanjian'],
+     'File KTP Penyewa','File KTP Ortu','File KTM','File Bukti Pembayaran'],
     ...OCCS.map(o => [
       o.nama_kamar || '', o.nama_penyewa || '', o.no_hp || '', o.asal_kampus || '',
       o.tipe_sewa || '', o.tanggal_mulai || '', o.tanggal_selesai || '',
@@ -2566,7 +2566,7 @@ function handleExportCsv() {
       o.no_ktp || '', o.alamat_penyewa || '',
       o.nama_ortu || '', o.no_ktp_ortu || '', o.no_hp_ortu || '', o.alamat_ortu || '',
       o.hubungan_keluarga || '',
-      o.file_ktp_penyewa || '', o.file_ktp_ortu || '', o.file_ktm || '', o.file_perjanjian || ''
+      o.file_ktp_penyewa || '', o.file_ktp_ortu || '', o.file_ktm || '', o.bukti_pembayaran || ''
     ])
   ];
   const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -2667,7 +2667,7 @@ async function handleImportFile(file) {
       file_ktp_penyewa: r['File KTP Penyewa'] || r['file_ktp_penyewa'] || null,
       file_ktp_ortu: r['File KTP Ortu'] || r['file_ktp_ortu'] || null,
       file_ktm: r['File KTM'] || r['file_ktm'] || null,
-      file_perjanjian: r['File Perjanjian'] || r['file_perjanjian'] || null,
+      bukti_pembayaran: r['Bukti Pembayaran'] || r['bukti_pembayaran'] || null,
     }));
 
     const result = await api('/occupancies/bulk', {
