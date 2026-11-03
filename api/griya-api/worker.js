@@ -1014,7 +1014,7 @@ async function handleCreateOccupancy(request, env, user) {
        link_kontrak, catatan,
        no_ktp, alamat_penyewa,
        no_ktp_ortu, nama_ortu, no_hp_ortu, alamat_ortu, hubungan_keluarga,
-       file_ktp_penyewa, file_ktp_ortu, file_ktm, file_perjanjian)
+       file_ktp_penyewa, file_ktp_ortu, file_ktm, bukti_pembayaran)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     newId,
@@ -1043,7 +1043,7 @@ async function handleCreateOccupancy(request, env, user) {
     b.file_ktp_penyewa || null,
     b.file_ktp_ortu || null,
     b.file_ktm || null,
-    b.file_perjanjian || null
+    b.bukti_pembayaran || null
   ).run();
 
   await logActivity(
@@ -1098,7 +1098,7 @@ async function handleBulkImport(request, env, user) {
            link_kontrak, catatan,
            no_ktp, alamat_penyewa,
            no_ktp_ortu, nama_ortu, no_hp_ortu, alamat_ortu, hubungan_keluarga,
-           file_ktp_penyewa, file_ktp_ortu, file_ktm, file_perjanjian)
+           file_ktp_penyewa, file_ktp_ortu, file_ktm, bukti_pembayaran)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(
         roomId,
@@ -1126,7 +1126,7 @@ async function handleBulkImport(request, env, user) {
         b.file_ktp_penyewa || null,
         b.file_ktp_ortu || null,
         b.file_ktm || null,
-        b.file_perjanjian || null
+        b.bukti_pembayaran || null
       ).run();
       sukses++;
     } catch (e) {
@@ -1162,7 +1162,7 @@ async function handleUpdateOccupancy(id, request, env, user) {
       no_ktp = ?, alamat_penyewa = ?,
       no_ktp_ortu = ?, nama_ortu = ?, no_hp_ortu = ?, alamat_ortu = ?,
       hubungan_keluarga = ?,
-      file_ktp_penyewa = ?, file_ktp_ortu = ?, file_ktm = ?, file_perjanjian = ?,
+      file_ktp_penyewa = ?, file_ktp_ortu = ?, file_ktm = ?, bukti_pembayaran = ?,
       updated_at = CURRENT_TIMESTAMP
      WHERE id = ?`
   ).bind(
@@ -1191,7 +1191,7 @@ async function handleUpdateOccupancy(id, request, env, user) {
     b.file_ktp_penyewa || null,
     b.file_ktp_ortu || null,
     b.file_ktm || null,
-    b.file_perjanjian || null,
+    b.bukti_pembayaran || null,
     id
   ).run();
 
@@ -1204,7 +1204,7 @@ __name(handleUpdateOccupancy, "handleUpdateOccupancy");
 async function handleDeleteOccupancy(id, env, user) {
   // ─── Ambil data lengkap termasuk URL file SEBELUM hapus ───
   const row = await env.DB.prepare(
-    `SELECT nama_penyewa, file_ktp_penyewa, file_ktp_ortu, file_ktm, file_perjanjian
+    `SELECT nama_penyewa, file_ktp_penyewa, file_ktp_ortu, file_ktm, bukti_pembayaran
      FROM occupancies WHERE id = ?`
   ).bind(id).first();
 
@@ -1220,7 +1220,7 @@ async function handleDeleteOccupancy(id, env, user) {
     row.file_ktp_penyewa,
     row.file_ktp_ortu,
     row.file_ktm,
-    row.file_perjanjian,
+    row.bukti_pembayaran,
   ].filter(Boolean);
 
   const deletedFiles = [];

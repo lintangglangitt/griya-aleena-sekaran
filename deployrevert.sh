@@ -55,7 +55,7 @@ show_status() {
   git remote -v | sed 's/^/   /'
   echo ""
 
-  echo -e "${YELLOW}Perubahan lokal belum di-commit [2 utk commit]:${NC}"
+  echo -e "${YELLOW}Perubahan lokal belum di-commit [2 untuk commit]:${NC}"
   local lokal_changes=$(git status --short)
   if [ -z "$lokal_changes" ]; then
     echo "   (tidak ada)"
