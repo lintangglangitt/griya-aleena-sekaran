@@ -1467,9 +1467,16 @@ function buildUploadFilename(cfg, roomId, tanggalMulai, originalName) {
   const match = namaKamar.match(/\d+/);
   const nomorKamar = match ? match[0] : String(roomId || 'x');
 
-  const jenis = (cfg?.field || cfg || '')
+  // ─── UBAH BAGIAN INI ───
+  let jenis = (cfg?.field || cfg || '')
     .replace(/^file_/, '')
     .replace(/_/g, '-');
+
+  // Paksa ganti nama 'perjanjian' menjadi 'bukti-pembayaran'
+  if (jenis === 'perjanjian') {
+    jenis = 'bukti-pembayaran';
+  }
+  // ──────────────────────
 
   const tgl = String(tanggalMulai || todayISO()).replace(/-/g, '');
 
