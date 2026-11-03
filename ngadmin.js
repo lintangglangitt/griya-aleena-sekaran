@@ -1932,11 +1932,21 @@ function openModal(id) {
           const cfg = UPLOAD_CONFIGS.find(c => c.linkId === item.hidden);
           const deleteBtn = cfg ? document.querySelector(`[data-delete-file="${cfg.key}"]`) : null;
           const status = cfg ? document.getElementById(cfg.statusId) : null;
-
+/*
           const exist = results[item.link];
           if (exist === true) {
             if (preview) preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 Lihat file yang tersimpan</a>`;
             if (deleteBtn) deleteBtn.style.display = 'inline-block';
+*/
+          const exist = results[item.link];
+          if (exist === true) {
+            if (preview) {
+              // Ambil nama file dari URL
+              const fileName = item.link.split('/').pop().split('?')[0];
+              preview.innerHTML = `<a href="${escapeHtml(item.link)}" target="_blank">📄 ${escapeHtml(fileName)}</a>`;
+            }
+            if (deleteBtn) deleteBtn.style.display = 'inline-block';
+          
           } else if (exist === false) {
             if (preview) preview.innerHTML = '';
             if (deleteBtn) deleteBtn.style.display = 'none';
