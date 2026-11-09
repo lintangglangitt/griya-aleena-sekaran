@@ -83,6 +83,9 @@ var worker_default = {
         res = await withAuth(request, env, () => handleUnseenCount(env));
       } else if (path === "/analytics/delete" && request.method === "DELETE") {
         res = await withAuth(request, env, () => handleDeleteVisitorLogs(request, env));
+      } else if (path === "/cron/reminder" && request.method === "GET") {
+        // RUTE BARU UNTUK CRON-JOB.ORG
+        res = await handleCronReminder(env);
       } else {
         res = json({ error: "Not found" }, 404);
       }
@@ -103,6 +106,63 @@ function json(data, status = 200, extraHeaders = {}) {
   });
 }
 __name(json, "json");
+
+// ═══════════════════════════════════════════════════════════
+// FUNGSI CRON REMINDER (TELEGRAM)
+// ═══════════════════════════════════════════════════════════
+async function handleCronReminder(env) {
+  try {
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    // Cari kontrak yang selesai antara hari ini sampai 5 hari ke depan
+    const { results } = await env.DB.prepare(
+      `SELECT o.nama_penyewa, o.tanggal_selesai, r.nama_kamar,
+              CAST(julianday(o.tanggal_selesai) - julianday(?) AS INTEGER) as sisa_hari
+       FROM occupancies o
+       JOIN rooms r ON r.id = o.room_id
+       WHERE o.tanggal_selesai >= ? 
+         AND o.tanggal_selesai <= date(?, '+5 days')
+       ORDER BY o.tanggal_selesai ASC`
+    ).bind(todayStr, todayStr, todayStr).all();
+
+    if (results.length > 0) {
+      let message = `🔔 <b>Pengingat Perpanjangan Kos (H-5 s/d H-0)</b>\n\n`;
+      
+      results.forEach(item => {
+        let sisaLabel = '';
+        if (item.sisa_hari === 5) sisaLabel = 'H-5 (5 hari lagi)';
+        else if (item.sisa_hari === 4) sisaLabel = 'H-4 (4 hari lagi)';
+        else if (item.sisa_hari === 3) sisaLabel = 'H-3 (3 hari lagi)';
+        else if (item.sisa_hari === 2) sisaLabel = 'H-2 (2 hari lagi)';
+        else if (item.sisa_hari === 1) sisaLabel = 'H-1 (Besok)';
+        else if (item.sisa_hari === 0) sisaLabel = 'H-0 (Hari ini)';
+        else sisaLabel = `${item.sisa_hari} hari lagi`;
+
+        message += `• Kamar: <b>${item.nama_kamar}</b>\n  Penyewa: ${item.nama_penyewa}\n  Berakhir: ${item.tanggal_selesai} (${sisaLabel})\n\n`;
+      });
+      
+      message += `Segera hubungi penyewa untuk konfirmasi perpanjangan.`;
+
+      // Kirim ke Telegram
+      const telegramUrl = `https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendMessage`;
+      await fetch(telegramUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: env.TELEGRAM_CHAT_ID,
+          text: message,
+          parse_mode: 'HTML'
+        })
+      });
+    }
+
+    return json({ ok: true, found: results.length, data: results });
+  } catch (err) {
+    console.error("Cron Reminder Error:", err);
+    return json({ error: err.message }, 500);
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // CATAT AKTIVITAS USER
