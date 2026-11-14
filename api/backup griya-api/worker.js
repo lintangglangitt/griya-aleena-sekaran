@@ -84,8 +84,9 @@ var worker_default = {
       } else if (path === "/analytics/delete" && request.method === "DELETE") {
         res = await withAuth(request, env, () => handleDeleteVisitorLogs(request, env));
       } else if (path === "/cron/reminder" && request.method === "GET") {
-        // RUTE BARU UNTUK CRON-JOB.ORG
         res = await handleCronReminder(env);
+      } else if (path === "/telegram/webhook" && request.method === "POST") {
+        res = await handleTelegramWebhook(request, env);
       } else {
         res = json({ error: "Not found" }, 404);
       }
@@ -108,51 +109,103 @@ function json(data, status = 200, extraHeaders = {}) {
 __name(json, "json");
 
 // ═══════════════════════════════════════════════════════════
-// FUNGSI CRON REMINDER (TELEGRAM)
+// TELEGRAM HELPER & WEBHOOK
 // ═══════════════════════════════════════════════════════════
-async function handleCronReminder(env) {
+async function sendTelegramMessage(env, chatId, text) {
+  const url = `https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendMessage`;
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: text,
+      parse_mode: 'HTML'
+    })
+  });
+}
+__name(sendTelegramMessage, "sendTelegramMessage");
+
+async function handleTelegramWebhook(request, env) {
+  try {
+    const body = await request.json();
+    const message = body.message;
+
+    if (message && message.text) {
+      const chatId = message.chat.id;
+      const text = message.text.toLowerCase().trim();
+
+      if (text === '/cek' || text === 'cek') {
+        await sendTelegramMessage(env, chatId, "⏳ Sedang mengecek data perpanjangan...");
+        await prosesCekPerpanjangan(env, chatId);
+      } else {
+        await sendTelegramMessage(env, chatId, "Ketik <b>cek</b> untuk melihat daftar perpanjangan kos (H-5 s/d H-0).");
+      }
+    }
+    return json({ ok: true });
+  } catch (err) {
+    console.error("Webhook Error:", err);
+    return json({ error: err.message }, 500);
+  }
+}
+__name(handleTelegramWebhook, "handleTelegramWebhook");
+
+async function prosesCekPerpanjangan(env, specificChatId = null) {
   try {
     const today = new Date();
     const todayStr = today.toISOString().slice(0, 10);
 
-    // Cari kontrak yang selesai antara hari ini sampai 3 hari ke depan
     const { results } = await env.DB.prepare(
       `SELECT o.nama_penyewa, o.tanggal_selesai, r.nama_kamar,
-              CAST(julianday(o.tanggal_selesai) - julianday(?) AS INTEGER) as sisa_hari
+              CAST(julianday(o.tanggal_selesai) - julianday(?) AS INTEGER) + 1 as sisa_hari,
+              
+              -- Subquery untuk mengecek apakah sudah ada perpanjangan
+              (SELECT COUNT(*) 
+               FROM occupancies sub 
+               WHERE sub.room_id = o.room_id 
+                 AND UPPER(sub.nama_penyewa) = UPPER(o.nama_penyewa) 
+                 AND sub.tanggal_mulai > o.tanggal_selesai
+              ) as sudah_perpanjang
+              
        FROM occupancies o
        JOIN rooms r ON r.id = o.room_id
        WHERE o.tanggal_selesai >= ? 
-         AND o.tanggal_selesai <= date(?, '+3 days')
+         AND o.tanggal_selesai <= date(?, '+5 days')
        ORDER BY o.tanggal_selesai ASC`
     ).bind(todayStr, todayStr, todayStr).all();
 
+    let message = '';
     if (results.length > 0) {
-      let message = `🔔 <b>Pengingat Perpanjangan Kos (H-3 s/d H-0)</b>\n\n`;
+      message = `🔔 <b>Pengingat Perpanjangan Kos (H-5 s/d H-1)</b>\n\n`;
       
       results.forEach(item => {
         let sisaLabel = '';
-        if (item.sisa_hari === 3) sisaLabel = 'H-3 (3 hari lagi)';
-        else if (item.sisa_hari === 2) sisaLabel = 'H-2 (2 hari lagi)';
-        else if (item.sisa_hari === 1) sisaLabel = 'H-1 (Besok)';
-        else if (item.sisa_hari === 0) sisaLabel = 'H-0 (Hari ini)';
+        if (item.sisa_hari === 1) sisaLabel = 'Hari ini (H-1)';
         else sisaLabel = `${item.sisa_hari} hari lagi`;
 
-        message += `• Kamar: <b>${item.nama_kamar}</b>\n  Penyewa: ${item.nama_penyewa}\n  Berakhir: ${item.tanggal_selesai} (${sisaLabel})\n\n`;
+        message += `• Kamar: <b>${item.nama_kamar}</b>\n  Penyewa: ${item.nama_penyewa}\n  Berakhir: ${item.tanggal_selesai} (${sisaLabel})\n`;
+        
+        // Jika subquery menemukan data perpanjangan (> 0)
+        if (item.sudah_perpanjang > 0) {
+          message += `  ✅ <i>Sudah konfirm melakukan perpanjangan.</i>\n`;
+        }
+        message += `\n`;
       });
       
       message += `Segera hubungi penyewa untuk konfirmasi perpanjangan.`;
+    } else {
+      message = `✅ Tidak ada penyewa yang masa sewanya berakhir dalam 5 hari ke depan.`;
+    }
 
-      // Kirim ke Telegram
-      const telegramUrl = `https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendMessage`;
-      await fetch(telegramUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: env.TELEGRAM_CHAT_ID,
-          text: message,
-          parse_mode: 'HTML'
-        })
-      });
+    // Jika dipanggil dari Webhook (targetChatId diisi)
+    if (specificChatId) {
+      await sendTelegramMessage(env, specificChatId, message);
+      return json({ ok: true, found: results.length });
+    }
+    
+    // Jika dipanggil dari Cronjob
+    const chatIds = [env.TELEGRAM_CHAT_ID, env.TELEGRAM_CHAT_ID_2].filter(Boolean);
+    for (const id of chatIds) {
+      await sendTelegramMessage(env, id, message);
     }
 
     return json({ ok: true, found: results.length, data: results });
@@ -161,6 +214,12 @@ async function handleCronReminder(env) {
     return json({ error: err.message }, 500);
   }
 }
+
+
+async function handleCronReminder(env) {
+  return await prosesCekPerpanjangan(env, null);
+}
+__name(handleCronReminder, "handleCronReminder");
 
 // ═══════════════════════════════════════════════════════════
 // CATAT AKTIVITAS USER
@@ -1117,7 +1176,6 @@ async function handleCreateOccupancy(request, env, user) {
 }
 __name(handleCreateOccupancy, "handleCreateOccupancy");
 
-
 async function handleBulkImport(request, env, user) {
   const { rows } = await request.json();
   if (!Array.isArray(rows) || rows.length === 0) {
@@ -1208,7 +1266,6 @@ async function handleBulkImport(request, env, user) {
 }
 __name(handleBulkImport, "handleBulkImport");
 
-
 async function handleUpdateOccupancy(id, request, env, user) {
   const b = await request.json();
   await env.DB.prepare(
@@ -1260,7 +1317,6 @@ async function handleUpdateOccupancy(id, request, env, user) {
 __name(handleUpdateOccupancy, "handleUpdateOccupancy");
 
 async function handleDeleteOccupancy(id, env, user) {
-  // ─── Ambil data lengkap termasuk URL file SEBELUM hapus ───
   const row = await env.DB.prepare(
     `SELECT nama_penyewa, file_ktp_penyewa, file_ktp_ortu, file_ktm, bukti_pembayaran
      FROM occupancies WHERE id = ?`
@@ -1270,10 +1326,8 @@ async function handleDeleteOccupancy(id, env, user) {
     return json({ error: "Data tidak ditemukan" }, 404);
   }
 
-  // ─── Hapus baris dari DB ───
   await env.DB.prepare("DELETE FROM occupancies WHERE id = ?").bind(id).run();
 
-  // ─── Hapus file-file dari R2 ───
   const fileUrls = [
     row.file_ktp_penyewa,
     row.file_ktp_ortu,
@@ -1303,10 +1357,8 @@ async function handleDeleteOccupancy(id, env, user) {
     }
   }
 
-  // ─── Catat aktivitas ───
   await logActivity(env, user, "delete", "occupancy", id, row?.nama_penyewa || `ID ${id}`);
 
-  // ─── Log hapus file (kalau ada) ───
   if (deletedFiles.length > 0) {
     await logActivity(
       env,

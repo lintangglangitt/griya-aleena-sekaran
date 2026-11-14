@@ -6,4 +6,7 @@ cd /Users/lintang/Library/CloudStorage/OneDrive-KemenkoInfrastrukturdanPembangun
 
 npx wrangler deploy
 
+npx wrangler secret bulk .env
+
 tes di github page. sukses.
+
