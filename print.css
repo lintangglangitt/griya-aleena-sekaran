@@ -65,7 +65,7 @@
   font-size: 0.78rem; 
   color: #5a7373; 
   line-height: 1.5; 
-  white-space: nowrap; /* <-- TAMBAHKAN INI */
+  white-space: wrap; /* nowrap <-- TAMBAHKAN INI */
 }
 
 .inv-title-block { text-align: right; flex-shrink: 0; }
