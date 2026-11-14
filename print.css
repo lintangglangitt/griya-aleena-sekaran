@@ -38,21 +38,21 @@
 
 .inv-brand { 
   display: flex; 
-  align-items: center; /* Pastikan sejajar tengah */
+  align-items: center; /* Menyejajarkan logo dan teks di tengah secara vertikal */
   gap: 14px; 
   flex: 1 1 auto; 
 }
 
 .inv-brand img { 
-  max-height: 75px; /* <-- UBAH DARI 60px JADI 80px */
-  max-width: 75px;  /* <-- UBAH DARI 60px JADI 80px */
+  max-height: 70px; 
+  max-width: 70px; 
   width: auto; 
   height: auto; 
   flex-shrink: 0; 
   object-fit: contain; 
-  align-self: stretch; /* <-- TAMBAHKAN INI agar logo menyesuaikan tinggi teks */
+  /* HAPUS align-self: stretch; atau ganti menjadi center */
+  align-self: center; 
 }
-
 
 .inv-brand h1 {
   font-family: 'Sora', sans-serif;
