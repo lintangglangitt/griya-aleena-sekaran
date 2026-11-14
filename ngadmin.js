@@ -1203,6 +1203,7 @@ function buildLampiranPage(o) {
       <!-- BARIS 1: KTP PEMILIK -->
       <div class="lampiran-grid" style="margin-bottom: 10mm;">
         ${lampiranItem(1, 'KTP/SIM Pemilik', ktpPemilik, ktpPemilikAlts)}
+        <br>
       </div>
 
       <!-- BARIS 2: DOKUMEN PENYEWA -->
