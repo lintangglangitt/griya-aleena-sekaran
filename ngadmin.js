@@ -29,8 +29,8 @@ const MODAL_STATE = {
 const PEMILIK = {
   nama: 'Nawang Wulan',
   no_ktp: '3304025911900001',
-  alamat: 'Jl. Margasatwa, Gg. Sadewa No. 14, Sekaran 005/005, Kec. Gunungpati, Kota Semarang, Jawa Tengah, 50229',
-  alamat_singkat: 'Jl. Margasatwa, Gg. Sadewa No. 14, Sekaran, Gunungpati, Semarang.',
+  alamat: 'Jl. Margasatwa, Gg. Sadewa No. 14, Kel. Sekaran 005/005, Kec. Gunungpati, Kota Semarang, Jawa Tengah, 50229',
+  alamat_singkat: 'Jl. Margasatwa, Gg. Sadewa No. 14, Kel. Sekaran 5/5, Kec. Gunungpati, Kota Semarang.',
   no_hp: '0898-5446-121',
   no_hp_perjanjian: '0899-5677-419',
 };
