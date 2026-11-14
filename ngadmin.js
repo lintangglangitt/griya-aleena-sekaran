@@ -920,7 +920,8 @@ function buildDocHeader(title, no) {
         <div>
           <h1>GRIYA ALEENA</h1>
           <p>Kos Putri Nyaman, Kampus Unnes Sekaran.<br>
-          ${escapeHtml(PEMILIK.alamat_singkat)} <br> Telp/WA: ${escapeHtml(PEMILIK.no_hp)}</p>
+          ${escapeHtml(PEMILIK.alamat_singkat)} <br> <br> 
+          Telp/WA: ${escapeHtml(PEMILIK.no_hp)}</p>
         </div>
       </div>
       <div class="inv-title-block">
