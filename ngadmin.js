@@ -30,7 +30,7 @@ const PEMILIK = {
   nama: 'Nawang Wulan',
   no_ktp: '3304025911900001',
   alamat: 'Jl. Margasatwa, Gg. Sadewa No. 14, Kel. Sekaran 005/005, Kec. Gunungpati, Kota Semarang, Jawa Tengah, 50229',
-  alamat_singkat: 'Jl. Margasatwa, Gg. Sadewa No. 14, Kel. Sekaran 5/5, Kec. Gunungpati, Kota Semarang.',
+  alamat_singkat: 'Jl. Margasatwa, Gg. Sadewa No. 14, Kel. Sekaran 5/5, <br> Kec. Gunungpati, Kota Semarang.',
   no_hp: '0898-5446-121',
   no_hp_perjanjian: '0899-5677-419',
 };
@@ -921,7 +921,7 @@ function buildDocHeader(title, no) {
           <h1>GRIYA ALEENA</h1>
           <p>Kos Putri Nyaman, Kampus Unnes Sekaran.<br>
           ${escapeHtml(PEMILIK.alamat_singkat)}
-          Telp/WA: ${escapeHtml(PEMILIK.no_hp)}</p>
+          Telp/WA: ${escapeHtml(PEMILIK.no_hp)}.</p>
         </div>
       </div>
       <div class="inv-title-block">
