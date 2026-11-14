@@ -44,8 +44,8 @@
 }
 
 .inv-brand img { 
-  max-height: 80px; /* <-- UBAH DARI 60px JADI 80px */
-  max-width: 80px;  /* <-- UBAH DARI 60px JADI 80px */
+  max-height: 75px; /* <-- UBAH DARI 60px JADI 80px */
+  max-width: 75px;  /* <-- UBAH DARI 60px JADI 80px */
   width: auto; 
   height: auto; 
   flex-shrink: 0; 
