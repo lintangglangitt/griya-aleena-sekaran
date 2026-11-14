@@ -43,7 +43,13 @@
   color: #1a5c5c;
   margin-bottom: 4px;
 }
-.inv-brand p { font-size: 0.78rem; color: #5a7373; line-height: 1.5; }
+
+.inv-brand p { 
+  font-size: 0.78rem; 
+  color: #5a7373; 
+  line-height: 1.5; 
+  white-space: nowrap; /* <-- TAMBAHKAN INI */
+}
 
 .inv-title-block { text-align: right; flex-shrink: 0; }
 .inv-title-block h2 {
