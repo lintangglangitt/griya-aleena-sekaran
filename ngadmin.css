@@ -1723,3 +1723,25 @@ tbody tr.kontrak-selesai:hover {
     justify-content: center;
   }
 }
+
+
+/* ─── SORTING ICON ─── */
+th[data-sort] {
+  position: relative;
+  user-select: none;
+}
+th[data-sort]:hover {
+  background-color: var(--teal-mid); /* Efek hover pada header */
+}
+.sort-icon {
+  font-size: 0.65rem;
+  margin-left: 4px;
+  opacity: 0.5;
+  display: inline-block;
+  transition: opacity 0.2s, color 0.2s;
+}
+th.sort-asc .sort-icon,
+th.sort-desc .sort-icon {
+  opacity: 1;
+  color: var(--amber-light); /* Warna kuning/amber saat aktif */
+}
