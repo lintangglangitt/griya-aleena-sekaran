@@ -91,13 +91,21 @@
 
   <div class="table-wrap">
     <table id="occ-table">
+      
       <thead>
         <tr>
-          <th>Kamar</th><th>Penyewa</th><th>No. HP</th><th>Tipe</th>
-          <th>Mulai</th><th>Selesai</th><th>Biaya Sewa</th>
-          <th>Status</th><th>Aksi</th>
+          <th data-sort="nama_kamar" style="cursor:pointer;">Kamar <span class="sort-icon">▲▼</span></th>
+          <th data-sort="nama_penyewa" style="cursor:pointer;">Penyewa <span class="sort-icon">▲▼</span></th>
+          <th data-sort="no_hp" style="cursor:pointer;">No. HP <span class="sort-icon">▲▼</span></th>
+          <th data-sort="tipe_sewa" style="cursor:pointer;">Tipe <span class="sort-icon">▲▼</span></th>
+          <th data-sort="tanggal_mulai" style="cursor:pointer;">Mulai <span class="sort-icon">▲▼</span></th>
+          <th data-sort="tanggal_selesai" style="cursor:pointer;">Selesai <span class="sort-icon">▲▼</span></th>
+          <th data-sort="harga_total" style="cursor:pointer;">Biaya Sewa <span class="sort-icon">▲▼</span></th>
+          <th data-sort="status_bayar" style="cursor:pointer;">Status <span class="sort-icon">▲▼</span></th>
+          <th>Aksi</th>
         </tr>
       </thead>
+      
       <tbody id="occ-body"></tbody>
     </table>
   </div>
