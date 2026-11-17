@@ -16,6 +16,8 @@ let OCCS = [];
 let EDITING_ID = null;
 let ACTIVE_ROOM_FILTER = 'all';
 let ACTIVE_INCOME_FILTER = null;
+let SORT_COLUMN = 'tanggal_mulai'; // Default sort berdasarkan tanggal mulai
+let SORT_ORDER = 'desc';           // 'asc' atau 'desc'
 
 // ─── State Modal Okupansi ──────────────────────────────────
 const MODAL_STATE = {
@@ -841,7 +843,29 @@ function renderTable() {
   const fs = document.getElementById('filter-status').value;
   const today = todayISO();
 
-  const filtered = OCCS.filter(o => {
+    // ─── LOGIKA SORTING ───
+  let sortedOCCS = [...OCCS];
+
+  sortedOCCS.sort((a, b) => {
+    let valA = a[SORT_COLUMN] || '';
+    let valB = b[SORT_COLUMN] || '';
+
+    if (SORT_COLUMN === 'harga_total') {
+      valA = Number(valA);
+      valB = Number(valB);
+    } else {
+      valA = String(valA).toLowerCase();
+      valB = String(valB).toLowerCase();
+    }
+
+    if (valA < valB) return SORT_ORDER === 'asc' ? -1 : 1;
+    if (valA > valB) return SORT_ORDER === 'asc' ? 1 : -1;
+    return 0;
+  });
+  // ───────────────────────
+
+  // Pastikan menggunakan sortedOCCS, bukan OCCS
+  const filtered = sortedOCCS.filter(o => {
     if (!passesIncomeFilter(o)) return false;
     if (!ACTIVE_INCOME_FILTER) {
       if (fTahun) {
@@ -3334,6 +3358,29 @@ document.addEventListener('keydown', (e) => {
     }
   }
 }, true);
+
+// ═══════════════════════════════════════════════════════════
+// KLIK HEADER UNTUK SORTING  <-- TAMBAHKAN DI SINI
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('#occ-table th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const column = th.getAttribute('data-sort');
+
+    if (SORT_COLUMN === column) {
+      SORT_ORDER = SORT_ORDER === 'asc' ? 'desc' : 'asc';
+    } else {
+      SORT_COLUMN = column;
+      SORT_ORDER = 'asc';
+    }
+
+    document.querySelectorAll('#occ-table th[data-sort]').forEach(h => {
+      h.classList.remove('sort-asc', 'sort-desc');
+    });
+    th.classList.add(SORT_ORDER === 'asc' ? 'sort-asc' : 'sort-desc');
+
+    renderTable();
+  });
+});
 
 // ═══════════════════════════════════════════════════════════
 // START
